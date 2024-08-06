@@ -28,7 +28,7 @@
         <div class="bg-[#F4CF41] pt-24 relative">
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full">
                 <p class="font-extrabold text-center text-2xl tracking-widest">
-                    <span class="text-[#DC2626]">酒</span><span class="text-lg text-[#DC2626]">の</span>ステップ<br>
+                    <span class="text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ<br>
                     オンライン注文
                 </p>
             </div>
