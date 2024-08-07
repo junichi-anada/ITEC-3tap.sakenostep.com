@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3TAPシステム|酒のステップ</title>
-    @vite('resources/css/app.css')
 
+    <!-- Adobe Font -->
     <script>
         (function (d) {
             var config = {
@@ -17,91 +17,110 @@
                 h = d.documentElement, t = setTimeout(function () { h.className = h.className.replace(/\bwf-loading\b/g, "") + " wf-inactive"; }, config.scriptTimeout), tk = d.createElement("script"), f = false, s = d.getElementsByTagName("script")[0], a; h.className += " wf-loading"; tk.src = 'https://use.typekit.net/' + config.kitId + '.js'; tk.async = true; tk.onload = tk.onreadystatechange = function () { a = this.readyState; if (f || a && a != "complete" && a != "loaded") return; f = true; clearTimeout(t); try { Typekit.load(config) } catch (e) { } }; s.parentNode.insertBefore(tk, s)
         })(document);
     </script>
+
+    <!-- font-awesome -->
+    <script src="https://kit.fontawesome.com/de1548f7bd.js" crossorigin="anonymous"></script>
+
+    @vite('resources/css/app.css')
+
 </head>
 
 <body class="font-body">
     <!-- container -->
-    <div class="w-full max-w-[375px] mx-auto border border-gray-300">
+    <div class="w-full max-w-[400px] mx-auto border border-gray-300 overflow-x-hidden relative">
 
         <!-- header -->
         <div class="bg-[#F4CF41] py-1 relative">
-            <a href="./">
-                <p class="font-extrabold text-center text-xl tracking-widest">
-                    <span class="text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ
-                </p>
-            </a>
+            <div class="flex justify-center">
+                <a href="./" class="tracking-widest text-xl font-extrabold">
+                    <span class=" text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ
+                </a>
+            </div>
+
             <!-- menu -->
-            <!-- <div class="bg-[#F4CF41] absolute right-0 top-0 px-5 py-5">
-                <div>
-                    <div class="w-[22px]">
-                        <img src="{{ asset('image/user/mymenu/svg/line.svg') }}" alt="LINE">
-                    </div>
-                </div>
-                <ul class="flex flex-col gap-y-1 pb-3">
-                    <li class="border-b border-gray-400 py-2 px-2">
-                        <a href="#" class="inline-block w-full"><span class="text-base">注文履歴</span></a>
-                    </li>
-                    <li class="border-b border-gray-400 pb-2 px-2">
-                        <a href="#" class="inline-block  w-full"><span class="text-base">商品一覧</span></a>
-                    </li>
-                    <li class="indent-2 border-b border-gray-400 pb-1">
-                        <a href="#" class="inline-block w-full">
-                            <span class="text-sm">日本酒</span>
-                        </a>
-                    </li>
-                    <li class="indent-2 border-b border-gray-400 pb-1">
-                        <a href="#" class="inline-block w-full">
-                            <span class="text-sm">焼酎</span>
-                        </a>
-                    </li>
-                    <li class="indent-2 border-b border-gray-400 pb-1">
-                        <a href="#" class="inline-block w-full">
-                            <span class="text-sm">ワイン</span>
-                        </a>
-                    </li>
-                    <li class="indent-2 border-b border-gray-400 pb-1">
-                        <a href="#" class="inline-block w-full">
-                            <span class="text-sm">ビール</span>
-                        </a>
-                    </li>
-                    <li class="indent-2 border-b border-gray-400 pb-1">
-                        <a href="#" class="inline-block w-full">
-                            <span class="text-sm">ウイスキー</span>
-                        </a>
-                    </li>
-                    <li class="indent-2 border-b border-gray-400 pb-1">
-                        <a href="#" class="inline-block w-full">
-                            <span class="text-sm">リキュール</span>
-                        </a>
-                    </li>
-                    <li class="indent-2 border-b border-gray-400 pb-1">
-                        <a href="#" class="inline-block w-full">
-                            <span class="text-sm">その他</span>
-                        </a>
-                    </li>
-                </ul>
-                <div class="flex justify-center gap-x-4">
-                    <div>
-                        <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
-                            <div class="w-[22px]">
-                                <img src="{{ asset('image/user/mymenu/svg/search.svg') }}" alt="">
-                            </div>
-                            <span class="text-xs">注文について</span>
-                        </a>
-                    </div>
-                    <div>
-                        <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
-                            <div class="w-[22px]">
-                                <img src="{{ asset('image/user/mymenu/svg/search.svg') }}" alt="">
-                            </div>
-                            <span class="text-xs">配送について</span>
-                        </a>
-                    </div>
-                </div>
-            </div> -->
+            <div class="absolute top-1 right-6">
+                <button id="hamburger" type="button" class="fixed z-20">
+                    <i id="bars" class="fa-solid fa-bars fa-lg"></i>
+                    <i id="xmark" class="fa-solid fa-xmark fa-lg hidden text-black"></i>
+                </button>
+            </div>
             <!-- //menu -->
+
         </div>
         <!-- //header -->
+
+        <!-- nav -->
+        <div class="bg-[#F4CF41] absolute px-5 py-2 right-0 top-0 transition-all ease-linear translate-x-full"
+            id="menu">
+            <div>
+                <div class="w-[22px]">
+                    <img src="{{ asset('image/user/mymenu/svg/line.svg') }}" alt="LINE">
+                </div>
+            </div>
+            <ul class="flex flex-col gap-y-1 pb-3">
+                <li class="border-b border-gray-400 py-2 px-2">
+                    <a href="#" class="inline-block w-full"><span class="text-base">注文履歴</span></a>
+                </li>
+                <li class="border-b border-gray-400 pb-2 px-2">
+                    <a href="#" class="inline-block  w-full"><span class="text-base">商品一覧</span></a>
+                </li>
+                <li class="indent-2 border-b border-gray-400 pb-1">
+                    <a href="#" class="inline-block w-full">
+                        <span class="text-sm">日本酒</span>
+                    </a>
+                </li>
+                <li class="indent-2 border-b border-gray-400 pb-1">
+                    <a href="#" class="inline-block w-full">
+                        <span class="text-sm">焼酎</span>
+                    </a>
+                </li>
+                <li class="indent-2 border-b border-gray-400 pb-1">
+                    <a href="#" class="inline-block w-full">
+                        <span class="text-sm">ワイン</span>
+                    </a>
+                </li>
+                <li class="indent-2 border-b border-gray-400 pb-1">
+                    <a href="#" class="inline-block w-full">
+                        <span class="text-sm">ビール</span>
+                    </a>
+                </li>
+                <li class="indent-2 border-b border-gray-400 pb-1">
+                    <a href="#" class="inline-block w-full">
+                        <span class="text-sm">ウイスキー</span>
+                    </a>
+                </li>
+                <li class="indent-2 border-b border-gray-400 pb-1">
+                    <a href="#" class="inline-block w-full">
+                        <span class="text-sm">リキュール</span>
+                    </a>
+                </li>
+                <li class="indent-2 border-b border-gray-400 pb-1">
+                    <a href="#" class="inline-block w-full">
+                        <span class="text-sm">その他</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="flex justify-center gap-x-4">
+                <div>
+                    <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
+                        <div class="w-[22px]">
+                            <img src="{{ asset('image/user/mymenu/svg/search.svg') }}" alt="">
+                        </div>
+                        <span class="text-xs">注文について</span>
+                    </a>
+                </div>
+                <div>
+                    <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
+                        <div class="w-[22px]">
+                            <img src="{{ asset('image/user/mymenu/svg/search.svg') }}" alt="">
+                        </div>
+                        <span class="text-xs">配送について</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- //nav -->
+
 
         <!-- content -->
         <div class="flex flex-col py-2 px-2 h-[calc(100vh-(3rem+8rem+2px))] bg-[#F6F6F6]">
@@ -352,7 +371,7 @@
         <!-- //content -->
 
         <!-- footer -->
-        <div class=" w-full max-w-[375px] mx-auto">
+        <div class=" w-full mx-auto">
             <div class="flex">
                 <a href="./history"
                     class="flex items-center w-1/2 text-center py-2 px-3 border border-black border-r-0">
@@ -387,6 +406,9 @@
 
     </div>
     <!-- // container -->
+
+    <!-- Script -->
+    <script src="{{ asset('js/hamberger.js') }}"></script>
 </body>
 
 </html>
