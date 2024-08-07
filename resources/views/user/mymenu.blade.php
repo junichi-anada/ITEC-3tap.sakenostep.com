@@ -18,8 +18,9 @@
         })(document);
     </script>
 
-    <!-- font-awesome -->
-    <script src="https://kit.fontawesome.com/de1548f7bd.js" crossorigin="anonymous"></script>
+    <!-- Google Font Icon -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
 
     @vite('resources/css/app.css')
 
@@ -38,10 +39,10 @@
             </div>
 
             <!-- menu -->
-            <div class="absolute top-1 right-6">
+            <div class="absolute top-1 right-8">
                 <button id="hamburger" type="button" class="fixed z-20">
-                    <i id="bars" class="fa-solid fa-bars fa-lg"></i>
-                    <i id="xmark" class="fa-solid fa-xmark fa-lg hidden text-black"></i>
+                    <span id="bars" class="material-symbols-outlined">menu </span>
+                    <span id="xmark" class="material-symbols-outlined hidden">close</span>
                 </button>
             </div>
             <!-- //menu -->
@@ -103,17 +104,13 @@
             <div class="flex justify-center gap-x-4">
                 <div>
                     <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
-                        <div class="w-[22px]">
-                            <img src="{{ asset('image/user/mymenu/svg/search.svg') }}" alt="">
-                        </div>
+                        <span class="material-symbols-outlined text-3xl">description</span>
                         <span class="text-xs">注文について</span>
                     </a>
                 </div>
                 <div>
                     <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
-                        <div class="w-[22px]">
-                            <img src="{{ asset('image/user/mymenu/svg/search.svg') }}" alt="">
-                        </div>
+                        <span class="material-symbols-outlined text-3xl">local_shipping</span>
                         <span class="text-xs">配送について</span>
                     </a>
                 </div>
@@ -121,15 +118,14 @@
         </div>
         <!-- //nav -->
 
-
         <!-- content -->
         <div class="flex flex-col py-2 px-2 h-[calc(100vh-(3rem+8rem+2px))] bg-[#F6F6F6]">
             <!-- Search Window -->
             <div class="flex items-center justify-between border border-gray-400 mb-2">
-                <button class="w-[30px] bg-white py-2 px-2">
-                    <img src="{{ asset('image/user/mymenu/svg/search.svg') }}" alt="">
+                <button class="w-[30px] bg-white py-0.5 px-2">
+                    <span class="material-symbols-outlined text-xl font-bold">search</span>
                 </button>
-                <input type="text" class="text-sm w-full py-1 pl-2" placeholder="商品名・商品コードで検索">
+                <input type="text" class="text-sm w-full py-1.5 pl-2" placeholder="商品名・商品コードで検索">
             </div>
             <!-- //Search Window -->
 
@@ -137,42 +133,32 @@
             <div class="overflow-x-scroll hide-scrollbar h-auto">
                 <div class="flex flex-nowrap">
                     <a href="#" class="py-2 px-3 whitespace-nowrap block bg-white rounded-t-xl">
-                        <div class="flex items-center gap-x-2">
-                            <div class="w-[12px]">
-                                <img src="{{ asset('image/user/mymenu/svg/repeat.svg') }}" alt="" class="filter">
-                            </div>
+                        <div class="flex items-center gap-x-1">
+                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">repeat</span>
                             <span class="text-xs">注文リスト</span>
                         </div>
                     </a>
                     <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
-                        <div class="flex items-center gap-x-2">
-                            <div class="w-[12px]">
-                                <img src="{{ asset('image/user/mymenu/svg/repeat.svg') }}" alt="">
-                            </div>
+                        <div class="flex items-center gap-x-1">
+                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">star</span>
                             <span class="text-xs">マイリスト</span>
                         </div>
                     </a>
                     <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
                         <div class="flex items-center gap-x-2">
-                            <div class="w-[12px]">
-                                <img src="{{ asset('image/user/mymenu/svg/repeat.svg') }}" alt="">
-                            </div>
+                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">thumb_up</span>
                             <span class="text-xs">おすすめ</span>
                         </div>
                     </a>
                     <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
                         <div class="flex items-center gap-x-2">
-                            <div class="w-[12px]">
-                                <img src="{{ asset('image/user/mymenu/svg/repeat.svg') }}" alt="">
-                            </div>
+                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">format_list_bulleted</span>
                             <span class="text-xs">商品一覧</span>
                         </div>
                     </a>
                     <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
                         <div class="flex items-center gap-x-2">
-                            <div class="w-[12px]">
-                                <img src="{{ asset('image/user/mymenu/svg/repeat.svg') }}" alt="">
-                            </div>
+                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">search</span>
                             <span class="text-xs">検索結果</span>
                         </div>
                     </a>
@@ -193,9 +179,7 @@
                             <div>
                                 <button class="border-2 border-red-500 px-2 py-1">
                                     <div class="flex items-center gap-x-2 py-1">
-                                        <div class="w-[18px]">
-                                            <img src="{{ asset('image/user/mymenu/svg/delete.svg') }}" alt="リストから削除">
-                                        </div>
+                                        <span class="material-symbols-outlined text-red-500">cancel</span>
                                         <span class="text-xs">リストから削除</span>
                                     </div>
                                 </button>
@@ -221,9 +205,7 @@
                             <div>
                                 <button class="border-2 border-red-500 px-2 py-1">
                                     <div class="flex items-center gap-x-2 py-1">
-                                        <div class="w-[18px]">
-                                            <img src="{{ asset('image/user/mymenu/svg/delete.svg') }}" alt="リストから削除">
-                                        </div>
+                                        <span class="material-symbols-outlined text-red-500">cancel</span>
                                         <span class="text-xs">リストから削除</span>
                                     </div>
                                 </button>
@@ -249,9 +231,7 @@
                             <div>
                                 <button class="border-2 border-red-500 px-2 py-0.5">
                                     <div class="flex items-center gap-x-2 py-1">
-                                        <div class="w-[18px]">
-                                            <img src="{{ asset('image/user/mymenu/svg/delete.svg') }}" alt="リストから削除">
-                                        </div>
+                                        <span class="material-symbols-outlined text-red-500">cancel</span>
                                         <span class="text-xs">リストから削除</span>
                                     </div>
                                 </button>
@@ -277,9 +257,7 @@
                             <div>
                                 <button class="border-2 border-red-500 px-2 py-1">
                                     <div class="flex items-center gap-x-2 py-1">
-                                        <div class="w-[18px]">
-                                            <img src="{{ asset('image/user/mymenu/svg/delete.svg') }}" alt="リストから削除">
-                                        </div>
+                                        <span class="material-symbols-outlined text-red-500">cancel</span>
                                         <span class="text-xs">リストから削除</span>
                                     </div>
                                 </button>
@@ -305,9 +283,7 @@
                             <div>
                                 <button class="border-2 border-red-500 px-2 py-1">
                                     <div class="flex items-center gap-x-2 py-1">
-                                        <div class="w-[18px]">
-                                            <img src="{{ asset('image/user/mymenu/svg/delete.svg') }}" alt="リストから削除">
-                                        </div>
+                                        <span class="material-symbols-outlined text-red-500">cancel</span>
                                         <span class="text-xs">リストから削除</span>
                                     </div>
                                 </button>
@@ -333,10 +309,7 @@
                             <div>
                                 <button class="border-2 border-red-500 px-2 py-1">
                                     <div class="flex items-center gap-x-2 py-1">
-                                        <div class="w-[18px]">
-                                            <img src="{{ asset('image/user/mymenu/svg/delete.svg') }}" alt="リストから削除"
-                                                class="filter">
-                                        </div>
+                                        <span class="material-symbols-outlined text-red-500">cancel</span>
                                         <span class="text-xs">リストから削除</span>
                                     </div>
                                 </button>
@@ -375,17 +348,13 @@
             <div class="flex">
                 <a href="./history"
                     class="flex items-center w-1/2 text-center py-2 px-3 border border-black border-r-0">
-                    <div class="w-[15%]">
-                        <img src="{{ asset('image/user/mymenu/svg/history.svg') }}" alt="">
-                    </div>
+                    <span class="material-symbols-outlined text-4xl">history</span>
                     <p class="flex-grow font-normal">
                         ご注文履歴
                     </p>
                 </a>
                 <a href="./contact" class="flex items-center w-1/2 text-center py-2 px-3 border border-black">
-                    <div class="w-[15%]">
-                        <img src="{{ asset('image/user/mymenu/svg/phone.svg') }}" alt="">
-                    </div>
+                    <span class="material-symbols-outlined text-4xl">phone_in_talk</span>
                     <div class="flex-grow relative -top-1">
                         <p class="text-lg font-bold leading-5">
                             <span class="text-xs font-normal">お電話でのお問合せ</span><br>
