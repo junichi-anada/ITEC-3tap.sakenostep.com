@@ -28,7 +28,7 @@
 
 <body class="font-body">
     <!-- container -->
-    <div class="w-full max-w-[400px] mx-auto border border-gray-300 overflow-x-hidden relative">
+    <div class="w-full max-w-[480px] mx-auto border border-gray-300 overflow-x-hidden relative">
 
         <!-- header -->
         <div class="bg-[#F4CF41] py-1 relative">
@@ -119,7 +119,7 @@
         <!-- //nav -->
 
         <!-- content -->
-        <div class="flex flex-col py-2 px-2 h-[calc(100vh-(3rem+8rem+2px))] bg-[#F6F6F6]">
+        <div class="flex flex-col py-2 px-2 h-[calc(100vh-(3rem+6rem+2px))] bg-[#F6F6F6]">
             <!-- Search Window -->
             <div class="flex items-center justify-between border border-gray-400 mb-2">
                 <button class="w-[30px] bg-white py-0.5 px-2">
@@ -334,7 +334,7 @@
             <!-- //Items -->
 
             <!-- Control -->
-            <div class="bg-transparent py-6">
+            <div class="bg-transparent pt-6 pb-4">
                 <div class="flex justify-center gap-x-16">
                     <button class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
                         全て削除
@@ -348,7 +348,7 @@
         <!-- //content -->
 
         <!-- footer -->
-        <div class=" w-full mx-auto">
+        <div class="w-full mx-auto">
             <div class="flex">
                 <a href="./history"
                     class="flex items-center w-1/2 text-center py-2 px-3 border border-black border-r-0">
