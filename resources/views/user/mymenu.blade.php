@@ -130,39 +130,43 @@
             <!-- //Search Window -->
 
             <!-- Tab -->
-            <div class="overflow-x-scroll hide-scrollbar h-auto">
-                <div class="flex flex-nowrap">
-                    <a href="#" class="py-2 px-3 whitespace-nowrap block bg-white rounded-t-xl">
-                        <div class="flex items-center gap-x-1">
-                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">repeat</span>
-                            <span class="text-xs">注文リスト</span>
-                        </div>
-                    </a>
-                    <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
-                        <div class="flex items-center gap-x-1">
-                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">star</span>
-                            <span class="text-xs">マイリスト</span>
-                        </div>
-                    </a>
-                    <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
-                        <div class="flex items-center gap-x-2">
-                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">thumb_up</span>
-                            <span class="text-xs">おすすめ</span>
-                        </div>
-                    </a>
-                    <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
-                        <div class="flex items-center gap-x-2">
-                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">format_list_bulleted</span>
-                            <span class="text-xs">商品一覧</span>
-                        </div>
-                    </a>
-                    <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
-                        <div class="flex items-center gap-x-2">
-                            <span class="material-symbols-outlined text-xl text-[#F4CF41]">search</span>
-                            <span class="text-xs">検索結果</span>
-                        </div>
-                    </a>
+            <div class="h-[44px]">
+                <div class="overflow-x-scroll hide-scrollbar">
+                    <div class="flex flex-nowrap">
+                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-white rounded-t-xl">
+                            <div class="flex items-center gap-x-1">
+                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">repeat</span>
+                                <span class="text-xs">注文リスト</span>
+                            </div>
+                        </a>
+                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                            <div class="flex items-center gap-x-1">
+                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">star</span>
+                                <span class="text-xs">マイリスト</span>
+                            </div>
+                        </a>
+                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                            <div class="flex items-center gap-x-2">
+                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">thumb_up</span>
+                                <span class="text-xs">おすすめ</span>
+                            </div>
+                        </a>
+                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                            <div class="flex items-center gap-x-2">
+                                <span
+                                    class="material-symbols-outlined text-xl text-[#F4CF41]">format_list_bulleted</span>
+                                <span class="text-xs">商品一覧</span>
+                            </div>
+                        </a>
+                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                            <div class="flex items-center gap-x-2">
+                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">search</span>
+                                <span class="text-xs">検索結果</span>
+                            </div>
+                        </a>
+                    </div>
                 </div>
+
             </div>
             <!-- //Tab -->
 
