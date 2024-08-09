@@ -189,146 +189,15 @@
                                 </button>
                             </div>
                             <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-xs">－</button>
+                                <button class="border px-1.5 py-0.5 border-r-0 text-sm">－</button>
                                 <input type="text" name="" value="2"
-                                    class="w-16 border border-r-0 text-center py-0.5 text-xs">
-                                <button class="border px-1.5 py-0.5 text-xs">＋</button>
-                                <span class="inline-block ml-2 text-xs">本</span>
+                                    class="w-16 border border-r-0 text-center py-0.5 text-lg">
+                                <button class="border px-1.5 py-0.5 text-lg">＋</button>
+                                <span class="inline-block ml-2 text-lg">本</span>
                             </div>
                         </div>
                     </div>
                     <!-- //Item -->
-
-                    <!-- Item -->
-                    <div class="flex flex-col gap-y-4 border-b pb-3">
-                        <p class="font-bold leading-5">
-                            大七 純米生酛 生詰め<br>
-                            <span class="text-xs font-normal">大七酒造</span>
-                        </p>
-                        <div class="flex justify-between">
-                            <div>
-                                <button class="border-2 border-red-500 px-2 py-1">
-                                    <div class="flex items-center gap-x-2 py-1">
-                                        <span class="material-symbols-outlined text-red-500">cancel</span>
-                                        <span class="text-xs">リストから削除</span>
-                                    </div>
-                                </button>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-xs">－</button>
-                                <input type="text" name="" value="2"
-                                    class="w-16 border border-r-0 text-center py-0.5 text-xs">
-                                <button class="border px-1.5 py-0.5 text-xs">＋</button>
-                                <span class="inline-block ml-2 text-xs">本</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- //Item -->
-
-                    <!-- Item -->
-                    <div class="flex flex-col gap-y-4 border-b pb-3">
-                        <p class="font-bold leading-5">
-                            大七 純米生酛 生詰め<br>
-                            <span class="text-xs font-normal">大七酒造</span>
-                        </p>
-                        <div class="flex justify-between">
-                            <div>
-                                <button class="border-2 border-red-500 px-2 py-0.5">
-                                    <div class="flex items-center gap-x-2 py-1">
-                                        <span class="material-symbols-outlined text-red-500">cancel</span>
-                                        <span class="text-xs">リストから削除</span>
-                                    </div>
-                                </button>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-xs">－</button>
-                                <input type="text" name="" value="2"
-                                    class="w-16 border border-r-0 text-center py-0.5 text-xs">
-                                <button class="border px-1.5 py-0.5 text-xs">＋</button>
-                                <span class="inline-block ml-2 text-xs">本</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- //Item -->
-
-                    <!-- Item -->
-                    <div class="flex flex-col gap-y-4 border-b pb-3">
-                        <p class="font-bold leading-5">
-                            大七 純米生酛 生詰め<br>
-                            <span class="text-xs font-normal">大七酒造</span>
-                        </p>
-                        <div class="flex justify-between">
-                            <div>
-                                <button class="border-2 border-red-500 px-2 py-1">
-                                    <div class="flex items-center gap-x-2 py-1">
-                                        <span class="material-symbols-outlined text-red-500">cancel</span>
-                                        <span class="text-xs">リストから削除</span>
-                                    </div>
-                                </button>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-xs">－</button>
-                                <input type="text" name="" value="2"
-                                    class="w-16 border border-r-0 text-center py-0.5 text-xs">
-                                <button class="border px-1.5 py-0.5 text-xs">＋</button>
-                                <span class="inline-block ml-2 text-xs">本</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- //Item -->
-
-                    <!-- Item -->
-                    <div class="flex flex-col gap-y-4 border-b pb-3">
-                        <p class="font-bold leading-5">
-                            大七 純米生酛 生詰め<br>
-                            <span class="text-xs font-normal">大七酒造</span>
-                        </p>
-                        <div class="flex justify-between">
-                            <div>
-                                <button class="border-2 border-red-500 px-2 py-1">
-                                    <div class="flex items-center gap-x-2 py-1">
-                                        <span class="material-symbols-outlined text-red-500">cancel</span>
-                                        <span class="text-xs">リストから削除</span>
-                                    </div>
-                                </button>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-xs">－</button>
-                                <input type="text" name="" value="2"
-                                    class="w-16 border border-r-0 text-center py-0.5 text-xs">
-                                <button class="border px-1.5 py-0.5 text-xs">＋</button>
-                                <span class="inline-block ml-2 text-xs">本</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- //Item -->
-
-                    <!-- Item -->
-                    <div class="flex flex-col gap-y-4 border-b pb-3">
-                        <p class="font-bold leading-5">
-                            大七 純米生酛 生詰め<br>
-                            <span class="text-xs font-normal">大七酒造</span>
-                        </p>
-                        <div class="flex justify-between">
-                            <div>
-                                <button class="border-2 border-red-500 px-2 py-1">
-                                    <div class="flex items-center gap-x-2 py-1">
-                                        <span class="material-symbols-outlined text-red-500">cancel</span>
-                                        <span class="text-xs">リストから削除</span>
-                                    </div>
-                                </button>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-xs">－</button>
-                                <input type="text" name="" value="2"
-                                    class="w-16 border border-r-0 text-center py-0.5 text-xs">
-                                <button class="border px-1.5 py-0.5 text-xs">＋</button>
-                                <span class="inline-block ml-2 text-xs">本</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- //Item -->
-
                 </div>
             </div>
             <!-- //Items -->
