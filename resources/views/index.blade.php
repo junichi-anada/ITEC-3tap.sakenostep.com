@@ -22,7 +22,7 @@
 
 <body class="font-body">
     <!-- container -->
-    <div class="w-full max-w-[375px] mx-auto border border-gray-300">
+    <div class="w-full max-w-[480px] mx-auto border border-gray-300">
 
         <!-- header(top only) -->
         <div class="bg-[#F4CF41] pt-24 relative">
