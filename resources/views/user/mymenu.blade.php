@@ -189,7 +189,7 @@
                                 </button>
                             </div>
                             <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-sm">－</button>
+                                <button class="border px-1.5 py-0.5 border-r-0 text-lg">－</button>
                                 <input type="text" name="" value="2"
                                     class="w-16 border border-r-0 text-center py-0.5 text-lg">
                                 <button class="border px-1.5 py-0.5 text-lg">＋</button>
