@@ -118,6 +118,22 @@
         </div>
         <!-- //nav -->
 
+        <!-- モーダルの構造 -->
+        <div id="modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md">
+                <h2 class="text-2xl font-bold mb-4" id="modalTitle">モーダルタイトル</h2>
+                <p class="mb-4" id="modalContent">これはモーダルの内容です。ここに必要な情報や操作を追加してください。</p>
+                <div class="flex justify-center gap-x-8">
+                    <button id="execModal" class="bg-red-500 text-white px-4 py-2 rounded">
+                        注文する
+                    </button>
+                    <button id="closeModal" class="bg-red-500 text-white px-4 py-2 rounded">
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- content -->
         <div class="flex flex-col py-2 px-2 h-[calc(100vh-(3rem+6rem+2px))] bg-[#F6F6F6]">
             <!-- Search Window -->
@@ -171,7 +187,7 @@
             <!-- //Tab -->
 
             <!-- Items -->
-            <div class="overflow-y-auto bg-white py-3 px-3">
+            <div class="overflow-y-auto bg-white py-3 px-3 h-full">
                 <div class="flex flex-col gap-y-3">
                     <!-- Item -->
                     <div class="flex flex-col gap-y-4 border-b pb-3">
@@ -203,12 +219,12 @@
             <!-- //Items -->
 
             <!-- Control -->
-            <div class="bg-transparent pt-6 pb-4">
+            <div class="bg-transparent pt-6 pb-4 h-[120px] relative bottom-0">
                 <div class="flex justify-center gap-x-16">
                     <button class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
                         全て削除
                     </button>
-                    <button class="bg-red-600 text-white px-6 py-1.5  rounded-xl">
+                    <button class="bg-red-600 text-white px-6 py-1.5  rounded-xl" id="openOrderModal">
                         注文する
                     </button>
                 </div>
@@ -251,6 +267,9 @@
 
     <!-- Script -->
     <script src="{{ asset('js/hamberger.js') }}"></script>
+    <script src="{{ asset('js/modal/open_order.js') }}"></script>
+
+
 </body>
 
 </html>
