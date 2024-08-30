@@ -38,14 +38,14 @@
                 </a>
             </div>
 
-            <!-- menu -->
+            <!-- hamberger menu -->
             <div class="absolute top-1 right-8">
                 <button id="hamburger" type="button" class="fixed z-20">
                     <span id="bars" class="material-symbols-outlined">menu </span>
                     <span id="xmark" class="material-symbols-outlined hidden">close</span>
                 </button>
             </div>
-            <!-- //menu -->
+            <!-- //hamberger menu -->
 
         </div>
         <!-- //header -->
@@ -118,7 +118,7 @@
         </div>
         <!-- //nav -->
 
-        <!-- モーダルの構造 -->
+        <!-- Modal -->
         <div id="modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden z-50">
             <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md">
                 <h2 class="text-2xl font-bold mb-4" id="modalTitle">モーダルタイトル</h2>
@@ -127,35 +127,37 @@
                     <button id="execModal" class="bg-red-500 text-white px-4 py-2 rounded">
                         注文する
                     </button>
-                    <button id="closeModal" class="bg-red-500 text-white px-4 py-2 rounded">
+                    <button id="cancelModal" class="bg-red-500 text-white px-4 py-2 rounded">
                         閉じる
                     </button>
                 </div>
             </div>
         </div>
+        <!-- //Modal -->
 
-        <!-- content -->
-        <div class="flex flex-col py-2 px-2 h-[calc(100vh-(3rem+6rem+2px))] bg-[#F6F6F6]">
-            <!-- Search Window -->
-            <div class="flex items-center justify-between border border-gray-400 mb-2">
+        <!-- Search Window Wrapper -->
+        <div class="flex flex-col pt-2 px-2 bg-[#F6F6F6]">
+            <div class="flex items-center justify-between border border-gray-400">
                 <button class="w-[30px] bg-white py-0.5 px-2">
                     <span class="material-symbols-outlined text-xl font-bold">search</span>
                 </button>
                 <input type="text" class="text-sm w-full py-1.5 pl-2" placeholder="商品名・商品コードで検索">
             </div>
-            <!-- //Search Window -->
+        </div>
+        <!-- //Search Window Wrapper -->
 
-            <!-- Tab -->
+        <!-- Tab Navi Wrapper -->
+        <div class="flex flex-col pt-2 px-2 bg-[#F6F6F6]">
             <div class="h-[44px]">
                 <div class="overflow-x-scroll hide-scrollbar">
                     <div class="flex flex-nowrap">
-                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-white rounded-t-xl">
+                        <a href="./order" class="py-2 px-3 whitespace-nowrap block {{ request()->is('order') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }} ">
                             <div class="flex items-center gap-x-1">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">repeat</span>
                                 <span class="text-xs">注文リスト</span>
                             </div>
                         </a>
-                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                        <a href="./favorites" class="py-2 px-3 whitespace-nowrap block {{ request()->is('favorites') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }} ">
                             <div class="flex items-center gap-x-1">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">star</span>
                                 <span class="text-xs">マイリスト</span>
@@ -182,94 +184,9 @@
                         </a>
                     </div>
                 </div>
-
-            </div>
-            <!-- //Tab -->
-
-            <!-- Items -->
-            <div class="overflow-y-auto bg-white py-3 px-3 h-full">
-                <div class="flex flex-col gap-y-3">
-                    <!-- Item -->
-                    <div class="flex flex-col gap-y-4 border-b pb-3">
-                        <p class="font-bold leading-5">
-                            大七 純米生酛 生詰め<br>
-                            <span class="text-xs font-normal">大七酒造</span>
-                        </p>
-                        <div class="flex justify-between">
-                            <div>
-                                <button class="border-2 border-red-500 px-2 py-1">
-                                    <div class="flex items-center gap-x-2 py-1">
-                                        <span class="material-symbols-outlined text-red-500">cancel</span>
-                                        <span class="text-xs">リストから削除</span>
-                                    </div>
-                                </button>
-                            </div>
-                            <div class="flex items-center">
-                                <button class="border px-1.5 py-0.5 border-r-0 text-lg">－</button>
-                                <input type="text" name="" value="2"
-                                    class="w-16 border border-r-0 text-center py-0.5 text-lg">
-                                <button class="border px-1.5 py-0.5 text-lg">＋</button>
-                                <span class="inline-block ml-2 text-lg">本</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- //Item -->
-                </div>
-            </div>
-            <!-- //Items -->
-
-            <!-- Control -->
-            <div class="bg-transparent pt-6 pb-4 h-[120px] relative bottom-0">
-                <div class="flex justify-center gap-x-16">
-                    <button class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
-                        全て削除
-                    </button>
-                    <button class="bg-red-600 text-white px-6 py-1.5  rounded-xl" id="openOrderModal">
-                        注文する
-                    </button>
-                </div>
             </div>
         </div>
-        <!-- //content -->
-
-        <!-- footer -->
-        <div class="w-full mx-auto">
-            <div class="flex">
-                <a href="./history"
-                    class="flex items-center w-1/2 text-center py-2 px-3 border border-black border-r-0">
-                    <span class="material-symbols-outlined text-4xl">history</span>
-                    <p class="flex-grow font-normal">
-                        ご注文履歴
-                    </p>
-                </a>
-                <a href="./contact" class="flex items-center w-1/2 text-center py-2 px-3 border border-black">
-                    <span class="material-symbols-outlined text-4xl">phone_in_talk</span>
-                    <div class="flex-grow relative -top-1">
-                        <p class="text-lg font-bold leading-5">
-                            <span class="text-xs font-normal">お電話でのお問合せ</span><br>
-                            9:00～20:00
-                        </p>
-                    </div>
-                </a>
-            </div>
-            <div class="bg-[#F4CF41] pt-12 relative">
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full">
-                    <p class="font-extrabold text-sm text-center">
-                        ©sakenostep.com All rights reserved
-                    </p>
-                </div>
-            </div>
-        </div>
-        <!-- //footer -->
-
-    </div>
-    <!-- // container -->
-
-    <!-- Script -->
-    <script src="{{ asset('js/hamberger.js') }}"></script>
-    <script src="{{ asset('js/modal/open_order.js') }}"></script>
+        <!-- //Tab Navi Wrapper -->
 
 
-</body>
 
-</html>

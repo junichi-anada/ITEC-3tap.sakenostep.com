@@ -10,11 +10,14 @@ document
         document.getElementById("modalTitle").textContent = "注文確認";
         document.getElementById("modalContent").textContent =
             "注文確認の文章が入ります。";
+        document.getElementById("execModal").textContent = "注文する";
+        document.getElementById("cancelModal").textContent = "閉じる";
+
         document.getElementById("modal").classList.remove("hidden");
         // #modalの中にある#modaleTitleと#modalContentにテキストを追加
     });
 
-document.getElementById("closeModal").addEventListener("click", function () {
+document.getElementById("cancelModal").addEventListener("click", function () {
     document.getElementById("modal").classList.add("hidden");
 });
 
