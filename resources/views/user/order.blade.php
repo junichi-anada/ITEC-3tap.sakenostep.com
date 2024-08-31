@@ -75,4 +75,7 @@
 </div>
 <!-- //content -->
 
+<script src="{{ asset('js/modal/open_order.js') }}"></script>
+<script src="{{ asset('js/volume.js') }}"></script>
+
 @include('user.layouts.footer')

@@ -33,8 +33,6 @@
 
     <!-- Script -->
     <script src="{{ asset('js/hamberger.js') }}"></script>
-    <script src="{{ asset('js/modal/open_order.js') }}"></script>
-    <script src="{{ asset('js/modal/volume.js') }}"></script>
 
 </body>
 

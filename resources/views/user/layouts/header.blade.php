@@ -32,6 +32,12 @@
 
         <!-- header -->
         <div class="bg-[#F4CF41] py-1 relative">
+            <!-- logout -->
+            <div class="absolute top-1 left-2">
+                <a href="./logout"><span class="material-symbols-outlined">logout</span></a>
+            </div>
+            <!-- //logout -->
+
             <div class="flex justify-center">
                 <a href="./" class="tracking-widest text-xl font-extrabold">
                     <span class=" text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ
@@ -151,19 +157,19 @@
             <div class="h-[44px]">
                 <div class="overflow-x-scroll hide-scrollbar">
                     <div class="flex flex-nowrap">
-                        <a href="./order" class="py-2 px-3 whitespace-nowrap block {{ request()->is('order') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }} ">
+                        <a href="./order" class="py-2 px-3 whitespace-nowrap block {{ request()->is('order') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-1">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">repeat</span>
                                 <span class="text-xs">注文リスト</span>
                             </div>
                         </a>
-                        <a href="./favorites" class="py-2 px-3 whitespace-nowrap block {{ request()->is('favorites') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }} ">
+                        <a href="./favorites" class="py-2 px-3 whitespace-nowrap block {{ request()->is('favorites') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-1">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">star</span>
                                 <span class="text-xs">マイリスト</span>
                             </div>
                         </a>
-                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                        <a href="./recommendations" class="py-2 px-3 whitespace-nowrap block {{ request()->is('recommendations') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-2">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">thumb_up</span>
                                 <span class="text-xs">おすすめ</span>

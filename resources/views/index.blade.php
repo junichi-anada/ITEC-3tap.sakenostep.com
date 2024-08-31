@@ -17,7 +17,6 @@
                 h = d.documentElement, t = setTimeout(function () { h.className = h.className.replace(/\bwf-loading\b/g, "") + " wf-inactive"; }, config.scriptTimeout), tk = d.createElement("script"), f = false, s = d.getElementsByTagName("script")[0], a; h.className += " wf-loading"; tk.src = 'https://use.typekit.net/' + config.kitId + '.js'; tk.async = true; tk.onload = tk.onreadystatechange = function () { a = this.readyState; if (f || a && a != "complete" && a != "loaded") return; f = true; clearTimeout(t); try { Typekit.load(config) } catch (e) { } }; s.parentNode.insertBefore(tk, s)
         })(document);
     </script>
-
 </head>
 
 <body class="font-body">
@@ -37,16 +36,25 @@
 
         <!-- content -->
         <div class="h-[calc(100vh-(6rem+4rem+2px))]">
-            <form action="./mymenu">
+            <form action="{{ route('login') }}" method="POST">
+                @csrf
                 <div class="flex flex-col py-8 px-6 gap-y-6">
                     <div>
                         <label>■ 当社にご登録の電話番号</label>
-                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full">
+                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full" name="login_code" value="test_user"  required autofocus>
                     </div>
                     <div>
                         <label>■ お客様番号</label>
-                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full">
+                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full" name="password" value="test_user" required>
                     </div>
+                    @error('login_code')
+                    <div>
+                            <span class="invalid-feedback text-red-600" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                    </div>
+                    @enderror
+                    <input type="hidden" name="site_code" value="SITE-UUID-1234-5678">
                     <button class="bg-[#F4CF41] text-black rounded-lg p-2 mt-4 font-bold">ログイン</button>
                 </div>
             </form>

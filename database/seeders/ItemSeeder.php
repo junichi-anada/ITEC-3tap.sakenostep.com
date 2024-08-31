@@ -40,14 +40,29 @@ class ItemSeeder extends Seeder
             'site_id' => 1,  // site_id = 1 固定
             'category_id' => 1,  // category_id = 1 固定
             'maker_name' => 'サッポロビール',
-            'name' => 'サッポロ生ビール黒ラベル',
-            'description' => '(テストデータ) サッポロ生ビール黒ラベル 350ml缶',
+            'name' => '(Test)サッポロ生ビール黒ラベル',
+            'description' => '(Test) サッポロ生ビール黒ラベル 350ml缶',
             'unit_price' => 5000.00,
             'unit_id' => 1,  //  unit_id = 1 固定
             'from_source' => 'MANUAL',
             'is_recommended' => true,
             'published_at' => now(),
         ]);
+
+        Item::create([
+            'item_code' => 'ITEM-UUID-5678-1234',
+            'site_id' => 1,  // site_id = 1 固定
+            'category_id' => 1,  // category_id = 1 固定
+            'maker_name' => 'アサヒビール',
+            'name' => '(Test)スーパードライ',
+            'description' => '(Test) アサヒスーパードライ 350ml缶',
+            'unit_price' => 5000.00,
+            'unit_id' => 1,  //  unit_id = 1 固定
+            'from_source' => 'MANUAL',
+            'is_recommended' => true,
+            'published_at' => now(),
+        ]);
+
 
         // 4. ランダムなサンプルデータを挿入（例: 10件）
         Item::factory()->count(10)->create();

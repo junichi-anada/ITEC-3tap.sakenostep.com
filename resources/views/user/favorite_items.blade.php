@@ -9,11 +9,11 @@
             <?php /* favoriteItemsが空の場合 */ ?>
             @if (empty($favoriteItems))
             <div class="text-center">
-                <p class="text-lg font-bold">お気に入りリストに商品がありません。</p>
+                <p class="text-lg font-bold">マイリストに商品がありません。</p>
             </div>
             @elseif (count($favoriteItems) === 0)
             <div class="text-center">
-                <p class="text-lg font-bold">お気に入りリストに商品がありません。</p>
+                <p class="text-lg font-bold">マイリストに商品がありません。</p>
             </div>
             @else
                 @foreach($favoriteItems as $favoriteItem)
@@ -60,5 +60,8 @@
     </div>
 </div>
 <!-- //content -->
+
+<script src="{{ asset('js/favorite/add.js') }}"></script>
+<script src="{{ asset('js/favorite/delete.js') }}"></script>
 
 @include('user.layouts.footer')
