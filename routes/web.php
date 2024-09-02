@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\FavoriteItemController as UserFavoriteItemController;
 use App\Http\Controllers\User\RecommendedItemController as UserRecommendedItemController;
 use App\Http\Controllers\User\OrderController as UserOrderController;
+use App\Http\Controllers\User\SearchController as UserSearchController;
 use App\Http\Controllers\Auth\LoginController;
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -25,18 +26,18 @@ Route::middleware(['web', 'auth'])->group(function () {
      * 注文リスト
      */
     Route::prefix('order')->group(function () {
-        Route::get('/', [UserOrderController::class, 'index'])->name('user.order');
-        Route::post('/add', [UserOrderController::class, 'store'])->name('user.order.add');
-        Route::delete('/remove/{detailCode}', [UserOrderController::class, 'destroy'])->name('user.order.remove');
+        Route::get('/', [UserOrderController::class, 'index'])->name('user.order.item.list');
+        Route::post('/add', [UserOrderController::class, 'store'])->name('user.order.item.list.add');
+        Route::delete('/remove/{detailCode}', [UserOrderController::class, 'destroy'])->name('user.order.item.list.remove');
     });
 
     /**
      * お気に入り商品関連のルーティング
      */
     Route::prefix('favorites')->group(function () {
-        Route::post('/add', [UserFavoriteItemController::class, 'store'])->name('user.favorites.add');
-        Route::delete('/remove/{id}', [UserFavoriteItemController::class, 'destroy'])->name('user.favorites.remove');
-        Route::get('/', [UserFavoriteItemController::class, 'index'])->name('user.favorites.list');
+        Route::post('/add', [UserFavoriteItemController::class, 'store'])->name('user.favorite.item.add');
+        Route::delete('/remove/{id}', [UserFavoriteItemController::class, 'destroy'])->name('user.favorite.item.remove');
+        Route::get('/', [UserFavoriteItemController::class, 'index'])->name('user.favorite.item.list');
     });
 
 
@@ -44,7 +45,15 @@ Route::middleware(['web', 'auth'])->group(function () {
      * おすすめ商品関連のルーティング
      */
     Route::prefix('recommendations')->group(function () {
-        Route::get('/', [UserRecommendedItemController::class, 'index'])->name('user.recommendations.index');
+        Route::get('/', [UserRecommendedItemController::class, 'index'])->name('user.recommended.item.list');
+    });
+
+    /**
+     * 検索関連のルーティング
+     */
+    Route::prefix('search')->group(function () {
+        Route::post('/', [UserSearchController::class, 'index'])->name('user.search.item.list');
+        Route::get('/', [UserSearchController::class, 'index']);
     });
 
 });

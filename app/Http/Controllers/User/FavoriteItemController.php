@@ -34,7 +34,7 @@ class FavoriteItemController extends Controller
         })->select('item_id', 'detail_code')->get()->toArray();
 
         // Viewで表示する
-        return view('user.favorite_items', compact('favoriteItems', 'entity', 'unorderedItems'));
+        return view('user.favorite', compact('favoriteItems', 'entity', 'unorderedItems'));
 
         // return response()->json($favoriteItems);
     }

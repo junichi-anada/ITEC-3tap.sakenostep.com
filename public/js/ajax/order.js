@@ -72,7 +72,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((data) => {
                     if (data.message) {
                         alert(data.message); // 成功メッセージの表示
-
                         // 追加ボタンがあった場合はボタンの切り替え
                         if (this.previousElementSibling) {
                             // ボタンの表示切り替え

@@ -52,7 +52,7 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->intended(route('user.order')); // ログイン後のリダイレクト先
+            return redirect()->intended(route('user.order.item.list')); // ログイン後のリダイレクト先
         }
 
         throw ValidationException::withMessages([

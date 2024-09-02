@@ -27,12 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((data) => {
                     if (data.message) {
                         alert(data.message); // 成功メッセージの表示
-
-                        // add-to-favoritesの入っているbuttonを非表示にする
-                        this.style.display = "none";
-
-                        // del-to-favoritesの入っている要素を表示する
-                        this.nextElementSibling.style.display = "block";
+                        // ボタンの表示切り替え
+                        this.classList.add("hidden"); // 追加ボタンを非表示
+                        this.nextElementSibling.classList.remove("hidden"); // 削除ボタンを表示
                     } else {
                         alert("エラーが発生しました。");
                     }
@@ -76,9 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         if (this.previousElementSibling) {
                             // ボタンの表示切り替え
                             this.classList.add("hidden"); // 削除ボタンを非表示
-                            // 削除ボタンのdata-detail-code属性を削除
-                            this.removeAttribute("data-detail-code");
-
                             this.previousElementSibling.classList.remove(
                                 "hidden"
                             ); // 追加ボタンを表示

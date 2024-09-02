@@ -1,7 +1,7 @@
 @include('user.layouts.header')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <!-- content -->
-<div class="flex flex-col pb-2 px-2 h-[calc(100vh-(3rem+6rem+2px))] bg-[#F6F6F6]">
+<div class="flex flex-col pb-2 px-2 h-[calc(100vh-(9rem+6rem+2px))] bg-[#F6F6F6]">
 
     <!-- Items -->
     <div class="overflow-y-auto bg-white py-3 px-3 h-full">
@@ -38,7 +38,7 @@
                         </div>
                         <div class="flex items-center">
                             <button class="border px-1.5 py-0.5 border-r-0 text-lg">－</button>
-                            <input type="text" name="" value="1"
+                            <input type="text" name="volume" value="1"
                                 class="w-16 border border-r-0 text-center py-0.5 text-lg">
                             <button class="border px-1.5 py-0.5 text-lg">＋</button>
                             <span class="inline-block ml-2 text-lg">本</span>

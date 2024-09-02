@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".flex.items-center").forEach(function (item) {
         const minusButton = item.querySelector("button:first-of-type"); // 「－」ボタン
         const plusButton = item.querySelector("button:last-of-type"); // 「＋」ボタン
-        const inputField = item.querySelector('input[type="text"]'); // 数値入力フィールド
+        const inputField = item.querySelector('input[name="volume"]'); // 数値入力フィールド
 
         // 各ボタンと入力フィールドが存在する場合のみ処理を追加
         if (minusButton && plusButton && inputField) {

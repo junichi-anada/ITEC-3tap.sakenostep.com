@@ -143,12 +143,15 @@
 
         <!-- Search Window Wrapper -->
         <div class="flex flex-col pt-2 px-2 bg-[#F6F6F6]">
-            <div class="flex items-center justify-between border border-gray-400">
-                <button class="w-[30px] bg-white py-0.5 px-2">
-                    <span class="material-symbols-outlined text-xl font-bold">search</span>
-                </button>
-                <input type="text" class="text-sm w-full py-1.5 pl-2" placeholder="商品名・商品コードで検索">
-            </div>
+            <form action="{{ route('user.search.item.list') }}" method="POST">
+                @csrf
+                <div class="flex items-center justify-between border border-gray-400">
+                        <button class="w-[30px] bg-white py-0.5 px-2" type="submit">
+                            <span class="material-symbols-outlined text-xl font-bold">search</span>
+                        </button>
+                        <input type="text" class="text-sm w-full py-1.5 pl-2" placeholder="商品名・商品コードで検索" name="keyword" @if(!empty(trim($keyword ?? ''))) value="{{ trim($keyword) }}" @endif>
+                </div>
+            </form>
         </div>
         <!-- //Search Window Wrapper -->
 
@@ -157,19 +160,19 @@
             <div class="h-[44px]">
                 <div class="overflow-x-scroll hide-scrollbar">
                     <div class="flex flex-nowrap">
-                        <a href="./order" class="py-2 px-3 whitespace-nowrap block {{ request()->is('order') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
+                        <a href="{{ route('user.order.item.list') }}" class="py-2 px-3 whitespace-nowrap block {{ request()->is('order') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-1">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">repeat</span>
                                 <span class="text-xs">注文リスト</span>
                             </div>
                         </a>
-                        <a href="./favorites" class="py-2 px-3 whitespace-nowrap block {{ request()->is('favorites') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
+                        <a href="{{ route('user.favorite.item.list') }}" class="py-2 px-3 whitespace-nowrap block {{ request()->is('favorites') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-1">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">star</span>
                                 <span class="text-xs">マイリスト</span>
                             </div>
                         </a>
-                        <a href="./recommendations" class="py-2 px-3 whitespace-nowrap block {{ request()->is('recommendations') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
+                        <a href="{{ route('user.recommended.item.list') }}" class="py-2 px-3 whitespace-nowrap block {{ request()->is('recommendations') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-2">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">thumb_up</span>
                                 <span class="text-xs">おすすめ</span>
@@ -182,7 +185,7 @@
                                 <span class="text-xs">商品一覧</span>
                             </div>
                         </a>
-                        <a href="#" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                        <a href="{{ route('user.search.item.list') }}" id="search-tab" class="py-2 px-3 whitespace-nowrap block {{ request()->is('search') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-2">
                                 <span class="material-symbols-outlined text-xl text-[#F4CF41]">search</span>
                                 <span class="text-xs">検索結果</span>
@@ -194,5 +197,25 @@
         </div>
         <!-- //Tab Navi Wrapper -->
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // "検索結果" タブが選択されている場合
+    const searchTab = document.getElementById('search-tab');
 
+    if (searchTab && searchTab.classList.contains('bg-white')) {
+        // 親のスクロールコンテナを取得
+        const scrollContainer = searchTab.closest('.overflow-x-scroll');
+
+        // 親コンテナ内でタブをスクロールして表示
+        if (scrollContainer) {
+            // スクロールさせるために、ターゲットの位置を計算してスクロール
+            const tabPosition = searchTab.offsetLeft - scrollContainer.offsetLeft;
+            scrollContainer.scrollTo({
+                left: tabPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+});
+</script>
 

@@ -47,6 +47,6 @@ class RecommendedItemController extends Controller
         })->select('item_id', 'detail_code')->get()->toArray();
 
         // ビューで表示する
-        return view('user.recommend_items', compact('recommendedItems', 'favoriteItems', 'unorderedItems'));
+        return view('user.recommend', compact('recommendedItems', 'favoriteItems', 'unorderedItems'));
     }
 }

@@ -1,7 +1,7 @@
 @include('user.layouts.header')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <!-- content -->
-<div class="flex flex-col pb-2 px-2 h-[calc(100vh-(3rem+6rem+2px))] bg-[#F6F6F6]">
+<div class="flex flex-col pb-2 px-2 h-[calc(100vh-(9rem+6rem+2px))] bg-[#F6F6F6]">
 
     <!-- Items -->
     <div class="overflow-y-auto bg-white py-3 px-3 h-full">
@@ -62,7 +62,7 @@
                         </div>
                         <div class="flex items-center ml-auto">
                             <button class="border px-1.5 py-0.5 border-r-0">－</button>
-                            <input type="text" name="" value="1"
+                            <input type="text" name="volume" value="1"
                                 class="w-16 border border-r-0 text-center py-0.5">
                             <button class="border px-1.5 py-0.5">＋</button>
                             <span class="inline-block ml-2 text-sm">本</span>
@@ -78,7 +78,7 @@
     <!-- Control -->
     <div class="bg-transparent pt-6 pb-4 h-[120px] relative bottom-0">
         <div class="flex justify-center gap-x-16">
-            <a href="{{ route('user.order') }}" class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
+            <a href="{{ route('user.order.item.list') }}" class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
                 注文リストへ
             </a>
         </div>
