@@ -29,13 +29,25 @@ class UserSeeder extends Seeder
         User::create([
             'user_code' => 'USER-UUID-5678-1234',
             'site_id' => 1,  // site_id = 1 固定
-            'name' => 'Itec Test User ',
+            'name' => 'Itec User ',
             'postal_code' => '020-0000',
             'address' => '青森県八戸市市川町1-1-1',
             'phone' => '090-0000-0000',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        User::create([
+            'user_code' => 'USER-UUID-1256-3478',
+            'site_id' => 1,  // site_id = 1 固定
+            'name' => 'Step User ',
+            'postal_code' => '020-0000',
+            'address' => '青森県十和田市稲生町1-1-1',
+            'phone' => '080-0000-0000',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
 
         // ランダムなサンプルデータを挿入（例: 10件）
         User::factory()->count(10)->create();

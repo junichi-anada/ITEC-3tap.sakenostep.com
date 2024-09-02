@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use App\Models\FavoriteItem;
 use App\Models\Item;
+use App\Models\OrderDetail;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class FavoriteItemController extends Controller
@@ -18,14 +20,21 @@ class FavoriteItemController extends Controller
         // var_dump($auth);
 
         // 現在のユーザーのお気に入り商品を取得
-        $favoriteItems = FavoriteItem::where('user_id', $auth->id)->with('item')->get();
+        $favoriteItems = FavoriteItem::where('user_id', $auth->id)->where('site_id', $auth->site_id)->with('item')->get();
 
         // entity リレーションを通じて関連する User モデルを取得
         $entity = $auth->entity;
         // var_dump($entity);
 
+        // ログインしているサイトでのユーザーの未注文リストの商品を取得
+        $unorderedItems = OrderDetail::whereHas('order', function ($query) use ($auth) {
+            $query->where('user_id', $auth->id)
+                ->where('site_id', $auth->site_id)
+                ->whereNull('ordered_at');  // 未注文の条件
+        })->select('item_id', 'detail_code')->get()->toArray();
+
         // Viewで表示する
-        return view('user.favorite_items', compact('favoriteItems', 'entity'));
+        return view('user.favorite_items', compact('favoriteItems', 'entity', 'unorderedItems'));
 
         // return response()->json($favoriteItems);
     }

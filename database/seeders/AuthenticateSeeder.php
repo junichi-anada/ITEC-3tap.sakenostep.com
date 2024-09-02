@@ -33,8 +33,20 @@ class AuthenticateSeeder extends Seeder
             'site_id' => 1, // 必要に応じて適切な site_id に変更
             'entity_type' => 'App\Models\User', // 対象のエンティティタイプ
             'entity_id' => 2, // 必要に応じて適切なユーザーIDに変更
-            'login_code' => 'test_user', // サンプルのログインID
-            'password' => Hash::make('test_user'), // パスワードをハッシュ化して保存
+            'login_code' => 'itec_user', // サンプルのログインID
+            'password' => Hash::make('itec_user'), // パスワードをハッシュ化して保存
+            'expires_at' => now()->addMonth(), // 有効期限を設定
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Authenticate::create([
+            'auth_code' => Str::uuid(),
+            'site_id' => 1, // 必要に応じて適切な site_id に変更
+            'entity_type' => 'App\Models\User', // 対象のエンティティタイプ
+            'entity_id' => 3, // 必要に応じて適切なユーザーIDに変更
+            'login_code' => 'step_user', // サンプルのログインID
+            'password' => Hash::make('step_user'), // パスワードをハッシュ化して保存
             'expires_at' => now()->addMonth(), // 有効期限を設定
             'created_at' => now(),
             'updated_at' => now(),

@@ -19,6 +19,10 @@
             <?php /* recommendedItemsがあった場合 */ ?>
             @else
                 @foreach($recommendedItems as $recommendedItem)
+                @php
+                    // $unorderedItems の中で、現在の $recommendedItem の item_id に一致する detail_code を探す
+                    $unOrderItem = collect($unorderedItems)->firstWhere('item_id', $recommendedItem->id);
+                @endphp
                 <div class="flex flex-col gap-y-4 border-b pb-3">
                     <p class="font-bold leading-5">
                         {{ $recommendedItem->name }}<br>
@@ -26,19 +30,32 @@
                     </p>
                     <div class="flex gap-x-4">
                         <div>
-                            <button class="border-2 border-[#00D41C] px-2 py-1">
+                            <!-- 注文リストへの追加ボタン -->
+                            <button class="border-2 border-[#00D41C] px-2 py-1 add-to-order
+                                    {{ $unOrderItem ? 'hidden' : '' }}"
+                                    data-item-id="{{ $recommendedItem->id }}"
+                                    data-site-id="{{ $recommendedItem->site_id }}">
                                 <div class="flex items-center gap-x-2 py-1">
                                     <span class="material-symbols-outlined text-[#00D41C]">add_circle</span>
                                     <span class="text-xs">注文リスト</span>
+                                </div>
+                            </button>
+                            <!-- 注文リストから削除ボタン -->
+                            <button class="border-2 border-[#00D41C] bg-[#00D41C] px-2 py-1 del-to-order
+                                    {{ $unOrderItem ? '' : 'hidden' }}"
+                                    data-detail-code="{{ $unOrderItem['detail_code'] ?? '' }}">
+                                <div class="flex items-center gap-x-2 py-1">
+                                    <span class="material-symbols-outlined text-white">check_circle</span>
+                                    <span class="text-xs text-white">注文リスト</span>
                                 </div>
                             </button>
                         </div>
                         <div>
                             <!-- 初期表示で登録状況に応じてボタンを切り替え -->
                             <button class="border-2 border-[#008CD4] px-2 py-1 add-to-favorites
-                                    {{ in_array($recommendedItem->id, $favoriteItems) ? 'hidden' : '' }}"
-                                    data-item-id="{{ $recommendedItem->id }}"
-                                    data-site-id="{{ $recommendedItem->site_id }}">
+                                {{ in_array($recommendedItem->id, $favoriteItems) ? 'hidden' : '' }}"
+                                data-item-id="{{ $recommendedItem->id }}"
+                                data-site-id="{{ $recommendedItem->site_id }}">
                                 <div class="flex items-center gap-x-2 py-1">
                                     <span class="material-symbols-outlined text-[#008CD4]">add_circle</span>
                                     <span class="text-xs">マイリスト</span>
@@ -54,13 +71,13 @@
                                 </div>
                             </button>
                         </div>
-                        {{-- <div class="flex items-center">
+                        <div class="flex items-center ml-auto">
                             <button class="border px-1.5 py-0.5 border-r-0 text-sm">－</button>
                             <input type="text" name="" value="1"
                                 class="w-16 border border-r-0 text-center py-0.5 text-sm">
                             <button class="border px-1.5 py-0.5 text-sm">＋</button>
                             <span class="inline-block ml-2 text-sm">本</span>
-                        </div> --}}
+                        </div>
                     </div>
                 </div>
                 @endforeach
@@ -73,7 +90,7 @@
     <!-- Control -->
     <div class="bg-transparent pt-6 pb-4 h-[120px] relative bottom-0">
         <div class="flex justify-center gap-x-16">
-            <a href="{{ route('order') }}" class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
+            <a href="{{ route('user.order') }}" class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
                 注文リストへ
             </a>
         </div>
@@ -81,7 +98,8 @@
 </div>
 <!-- //content -->
 
-<script src="{{ asset('js/favorite/add.js') }}"></script>
-<script src="{{ asset('js/favorite/delete.js') }}"></script>
+<script src="{{ asset('js/volume.js') }}"></script>
+<script src="{{ asset('js/ajax/favorite.js') }}"></script>
+<script src="{{ asset('js/ajax/order.js') }}"></script>
 
 @include('user.layouts.footer')
