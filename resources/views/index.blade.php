@@ -21,7 +21,7 @@
 
 <body class="font-body">
     <!-- container -->
-    <div class="w-full max-w-[480px] mx-auto border border-gray-300">
+    <div class="w-full min-w-[360px] max-w-[420px] mx-auto border border-gray-300">
 
         <!-- header(top only) -->
         <div class="bg-[#F4CF41] pt-24 relative">
@@ -40,7 +40,7 @@
         <!-- //header -->
 
         <!-- content -->
-        <div class="h-[calc(100vh-(6rem+4rem+2px))]">
+        <div class="h-[calc(100vh-(4rem+6rem+2px+60px))]">
             <form action="{{ route('login') }}" method="POST">
                 @csrf
                 <div class="flex flex-col py-8 px-6 gap-y-6">
