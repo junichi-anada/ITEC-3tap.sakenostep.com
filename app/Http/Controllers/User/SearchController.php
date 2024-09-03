@@ -29,6 +29,7 @@ class SearchController extends Controller
             $items = Item::where('site_id', $auth->site_id) // サイトIDの条件を必須とする
                          ->where(function ($query) use ($keyword) { // 検索キーワードの条件をグループ化
                          $query->where('name', 'like', "%$keyword%")
+                           ->orWhere('item_code', 'like', "%$keyword%")
                            ->orWhere('description', 'like', "%$keyword%")
                            ->orWhereHas('category', function ($query) use ($keyword) {
                                $query->where('name', 'like', "%$keyword%");
