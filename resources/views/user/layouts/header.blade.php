@@ -28,7 +28,7 @@
 
 <body class="font-body">
     <!-- container -->
-    <div class="w-full max-w-[360px] mx-auto border border-gray-300 overflow-x-hidden relative">
+    <div class="w-full min-w-[360px] max-w-[420px] mx-auto border border-gray-300 overflow-x-hidden relative">
 
         <!-- header -->
         <div class="bg-[#F4CF41] py-1 relative">
