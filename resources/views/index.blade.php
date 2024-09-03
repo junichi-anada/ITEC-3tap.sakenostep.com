@@ -40,7 +40,7 @@
         <!-- //header -->
 
         <!-- content -->
-        <div class="h-[calc(100vh-(4rem+6rem+2px+60px))]">
+        <div class="h-[calc(100vh-(2rem+6rem+2px))]">
             <form action="{{ route('login') }}" method="POST">
                 @csrf
                 <div class="flex flex-col py-8 px-6 gap-y-6">
