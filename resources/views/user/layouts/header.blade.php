@@ -34,12 +34,12 @@
         <div class="bg-[#F4CF41] py-1 relative">
             <!-- logout -->
             <div class="absolute top-1 left-2">
-                <a href="./logout"><span class="material-symbols-outlined">logout</span></a>
+                <a href="{{ route('logout') }}"><span class="material-symbols-outlined">logout</span></a>
             </div>
             <!-- //logout -->
 
             <div class="flex justify-center">
-                <a href="./" class="tracking-widest text-xl font-extrabold">
+                <a href="{{ route('user.order.item.list') }}" class="tracking-widest text-xl font-extrabold">
                     <span class=" text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ
                 </a>
             </div>
