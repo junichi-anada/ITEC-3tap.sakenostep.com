@@ -91,7 +91,10 @@
     <div class="bg-transparent pt-4 pb-2 h-[60px] relative bottom-0">
         <div class="flex justify-center gap-x-16">
             <a href="{{ route('user.order.item.list') }}" class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
-                注文リストへ
+                <div class="flex items-center gap-x-1">
+                    <span class="material-symbols-outlined text-xl text-white">shopping_cart</span>
+                    <span>注文リストへ</span>
+                </div>
             </a>
         </div>
     </div>

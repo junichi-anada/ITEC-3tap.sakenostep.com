@@ -40,7 +40,10 @@
 
             <div class="flex justify-center">
                 <a href="{{ route('user.order.item.list') }}" class="tracking-widest text-xl font-extrabold">
-                    <span class=" text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ
+                    <div class="w-32">
+                        <img src="{{ asset('image/step_logo.png') }}" alt="酒のステップ">
+                    </div>
+                    {{-- <span class=" text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ --}}
                 </a>
             </div>
 
