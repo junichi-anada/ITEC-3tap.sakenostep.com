@@ -31,7 +31,7 @@ class FavoriteItemController extends Controller
             $query->where('user_id', $auth->id)
                 ->where('site_id', $auth->site_id)
                 ->whereNull('ordered_at');  // 未注文の条件
-        })->select('item_id', 'detail_code')->get()->toArray();
+        })->select('item_id', 'detail_code', 'volume')->get()->toArray();
 
         // Viewで表示する
         return view('user.favorite', compact('favoriteItems', 'entity', 'unorderedItems'));

@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const itemId = this.getAttribute("data-item-id");
             const siteId = this.getAttribute("data-site-id");
 
+            // 対応する入力フィールドの値を取得
+            const inputField = this.closest(".flex.gap-x-4").querySelector(
+                'input[name="volume"]'
+            );
+            const volume = inputField ? inputField.value : 1; // 値がなければデフォルトで1
+
             // CSRFトークンの取得
             const csrfToken = document
                 .querySelector('meta[name="csrf-token"]')
@@ -21,12 +27,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify({
                     item_id: itemId,
                     site_id: siteId,
+                    volume: volume,
                 }),
             })
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.message) {
-                        alert(data.message); // 成功メッセージの表示
+                        // alert(data.message); // 成功メッセージの表示
                         // ボタンの表示切り替え
                         this.classList.add("hidden"); // 追加ボタンを非表示
                         this.nextElementSibling.classList.remove("hidden"); // 削除ボタンを表示
@@ -71,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.message) {
-                        alert(data.message); // 成功メッセージの表示
+                        // alert(data.message); // 成功メッセージの表示
                         // 追加ボタンがあった場合はボタンの切り替え
                         if (this.previousElementSibling) {
                             // ボタンの表示切り替え

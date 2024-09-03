@@ -146,7 +146,7 @@ class OrderController extends Controller
     }
 
     /**
-     * 注文リストからの商品削除
+     * 注文詳細の指定削除
      * パラメータのdetailCodeに一致する注文詳細を削除する。
      *
      * @param string $detailCode
@@ -180,4 +180,5 @@ class OrderController extends Controller
 
         return response()->json(['message' => '注文リストから削除しました']);
     }
+
 }

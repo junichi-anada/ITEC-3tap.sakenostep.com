@@ -20,7 +20,7 @@
 
     <!-- Google Font Icon -->
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,1,0" />
 
     @vite('resources/css/app.css')
 
@@ -28,7 +28,7 @@
 
 <body class="font-body">
     <!-- container -->
-    <div class="w-full max-w-[480px] mx-auto border border-gray-300 overflow-x-hidden relative">
+    <div class="w-full max-w-[360px] mx-auto border border-gray-300 overflow-x-hidden relative">
 
         <!-- header -->
         <div class="bg-[#F4CF41] py-1 relative">
@@ -162,14 +162,14 @@
                     <div class="flex flex-nowrap">
                         <a href="{{ route('user.order.item.list') }}" class="py-2 px-3 whitespace-nowrap block {{ request()->is('order') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-1">
-                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">repeat</span>
+                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">shopping_cart</span>
                                 <span class="text-xs">注文リスト</span>
                             </div>
                         </a>
                         <a href="{{ route('user.favorite.item.list') }}" class="py-2 px-3 whitespace-nowrap block {{ request()->is('favorites') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
                             <div class="flex items-center gap-x-1">
-                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">star</span>
-                                <span class="text-xs">マイリスト</span>
+                                <span class="material-symbols-outlined text-xl text-[#F4CF41]">favorite</span>
+                                <span class="text-xs">お気に入り</span>
                             </div>
                         </a>
                         <a href="{{ route('user.recommended.item.list') }}" class="py-2 px-3 whitespace-nowrap block {{ request()->is('recommendations') ? 'bg-white rounded-t-xl': 'bg-gray-300 rounded-t-lg' }}">
@@ -197,25 +197,25 @@
         </div>
         <!-- //Tab Navi Wrapper -->
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // "検索結果" タブが選択されている場合
-    const searchTab = document.getElementById('search-tab');
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // "検索結果" タブが選択されている場合
+            const searchTab = document.getElementById('search-tab');
 
-    if (searchTab && searchTab.classList.contains('bg-white')) {
-        // 親のスクロールコンテナを取得
-        const scrollContainer = searchTab.closest('.overflow-x-scroll');
+            if (searchTab && searchTab.classList.contains('bg-white')) {
+                // 親のスクロールコンテナを取得
+                const scrollContainer = searchTab.closest('.overflow-x-scroll');
 
-        // 親コンテナ内でタブをスクロールして表示
-        if (scrollContainer) {
-            // スクロールさせるために、ターゲットの位置を計算してスクロール
-            const tabPosition = searchTab.offsetLeft - scrollContainer.offsetLeft;
-            scrollContainer.scrollTo({
-                left: tabPosition,
-                behavior: 'smooth'
-            });
-        }
-    }
-});
-</script>
+                // 親コンテナ内でタブをスクロールして表示
+                if (scrollContainer) {
+                    // スクロールさせるために、ターゲットの位置を計算してスクロール
+                    const tabPosition = searchTab.offsetLeft - scrollContainer.offsetLeft;
+                    scrollContainer.scrollTo({
+                        left: tabPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        });
+        </script>
 

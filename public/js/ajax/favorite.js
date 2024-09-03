@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.message) {
-                        alert(data.message); // 成功メッセージの表示
+                        // alert(data.message); // 成功メッセージの表示
                         // ボタンの表示切り替え
                         this.classList.add("hidden"); // 追加ボタンを非表示
                         this.nextElementSibling.classList.remove("hidden"); // 削除ボタンを表示
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then((response) => response.json())
                 .then((data) => {
                     if (data.message) {
-                        alert(data.message); // 成功メッセージの表示
+                        // alert(data.message); // 成功メッセージの表示
 
                         // 追加ボタンがあった場合はボタンの切り替え
                         if (this.previousElementSibling) {

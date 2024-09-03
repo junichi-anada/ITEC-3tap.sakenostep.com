@@ -53,8 +53,7 @@ class SearchController extends Controller
             $query->where('user_id', $auth->id)
                 ->where('site_id', $auth->site_id)
                 ->whereNull('ordered_at');  // 未注文の条件
-        })->select('item_id', 'detail_code')->get()->toArray();
-
+        })->select('item_id', 'detail_code', 'volume')->get()->toArray();
 
         // ビューで表示する
         return view('user.search', compact('items', 'keyword', 'favoriteItems', 'unorderedItems'));

@@ -18,9 +18,9 @@
                     </div>
                 </a>
             </div>
-            <div class="bg-[#F4CF41] pt-12 relative">
+            <div class="bg-[#F4CF41] pt-8 relative">
                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full">
-                    <p class="font-extrabold text-sm text-center">
+                    <p class="font-extrabold text-[10px] text-center">
                         ©sakenostep.com All rights reserved
                     </p>
                 </div>
