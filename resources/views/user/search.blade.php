@@ -37,7 +37,7 @@
                                     data-site-id="{{ $item->site_id }}">
                                 <div class="flex items-center gap-x-1 py-0.5">
                                     <span class="material-symbols-outlined text-[#00D41C] text-3xl">add_shopping_cart</span>
-                                    <span class="text-xs">追加</span>
+                                    <span class="text-xs">注文</span>
                                 </div>
                             </button>
                             <!-- 注文リストから削除ボタン -->
