@@ -58,4 +58,13 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 });
 
+/* 管理者用のルーティング */
+
+/**
+ * ダッシュボード
+ */
+Route::prefix('admin')->group(function () {
+    Route::get('/dashboard', function () { return view('admin.dashboard');})->name('admin.dashboard');
+
+});
 
