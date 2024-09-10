@@ -1,3 +1,8 @@
+/**
+ * 注文リストに追加・削除するためのAjax処理
+ * - 注文リストに追加ボタンのクリックイベント
+ * - 注文リストから削除ボタンのクリックイベント
+ */
 document.addEventListener("DOMContentLoaded", function () {
     // 注文リストに追加ボタンのクリックイベント
     document.querySelectorAll(".add-to-order").forEach((button) => {

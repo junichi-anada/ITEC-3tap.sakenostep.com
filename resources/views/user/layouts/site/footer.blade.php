@@ -6,3 +6,5 @@
     </div>
 </div>
 <!-- //footer -->
+
+@include('user.layouts.widgets.copyright')

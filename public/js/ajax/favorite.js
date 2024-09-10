@@ -1,5 +1,10 @@
+/**
+ * お気に入りに追加・削除するためのAjax処理
+ * - お気に入りに追加ボタンのクリックイベント
+ * - お気に入りから削除ボタンのクリックイベント
+ */
 document.addEventListener("DOMContentLoaded", function () {
-    // マイリストに追加ボタンのクリックイベント
+    // お気に入りに追加ボタンのクリックイベント
     document.querySelectorAll(".add-to-favorites").forEach((button) => {
         button.addEventListener("click", function () {
             // ボタンから item_id と site_id を取得
@@ -41,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // マイリストから削除ボタンのクリックイベント
+    // お気に入りから削除ボタンのクリックイベント
     document.querySelectorAll(".del-to-favorites").forEach((button) => {
         button.addEventListener("click", function () {
             // ボタンから item_id と site_id を取得
@@ -77,15 +82,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                 "hidden"
                             ); // 追加ボタンを表示
                         } else {
-                            // 追加ボタンがない場合はマイリストをリロード
+                            // 追加ボタンがない場合はお気に入りをリロード
                             location.reload();
                         }
-
-                        // del-to-favoritesの入っているbuttonを非表示にする
-                        // this.style.display = "none";
-
-                        // add-to-favoritesの入っている要素を表示する
-                        // this.previousElementSibling.style.display = "block";
                     } else {
                         alert("エラーが発生しました。");
                     }
