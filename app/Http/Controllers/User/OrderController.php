@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
 class OrderController extends Controller
 {
     /**
+     * index
      * 未注文商品リストの一覧表示
      * 未発注の注文に登録されている商品一覧を表示する。
      *

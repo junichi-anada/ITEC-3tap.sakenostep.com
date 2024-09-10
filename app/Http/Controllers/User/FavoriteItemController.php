@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class FavoriteItemController extends Controller
 {
     /**
+     * index
      * お気に入り商品の一覧表示
      */
     public function index()

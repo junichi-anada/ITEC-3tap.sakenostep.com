@@ -5,7 +5,9 @@ use App\Http\Controllers\User\FavoriteItemController as UserFavoriteItemControll
 use App\Http\Controllers\User\RecommendedItemController as UserRecommendedItemController;
 use App\Http\Controllers\User\OrderController as UserOrderController;
 use App\Http\Controllers\User\SearchController as UserSearchController;
+use App\Http\Controllers\User\CategoryController as UserCategoryController;
 use App\Http\Controllers\Auth\LoginController;
+
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -40,12 +42,18 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/', [UserFavoriteItemController::class, 'index'])->name('user.favorite.item.list');
     });
 
-
     /**
      * おすすめ商品関連のルーティング
      */
     Route::prefix('recommendations')->group(function () {
         Route::get('/', [UserRecommendedItemController::class, 'index'])->name('user.recommended.item.list');
+    });
+
+    /**
+     * 商品一覧関連のルーティング
+     */
+    Route::prefix('categories')->group(function () {
+        Route::get('/', [UserCategoryController::class, 'index'])->name('user.category.item.list');
     });
 
     /**

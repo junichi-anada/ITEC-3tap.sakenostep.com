@@ -27,8 +27,8 @@
 
         <!-- contents-header -->
         <div class="flex justify-end items-center bg-[#F4CF41] gap-x-6 px-2">
-            <p class="text-xl">アイテックユーザー 様</p>
-            <a href="{{ route('logout') }}"><span class="material-symbols-outlined text-4xl">logout</span></a>
+            <p class="text-base">アイテックユーザー 様</p>
+            <a href="{{ route('logout') }}"><span class="material-symbols-outlined text-3xl">logout</span></a>
         </div>
         <!-- //contents-header -->
 
