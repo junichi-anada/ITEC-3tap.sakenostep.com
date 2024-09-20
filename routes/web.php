@@ -70,10 +70,15 @@ Route::middleware(['web', 'auth'])->group(function () {
 /* 管理者用のルーティング */
 
 /**
- * ダッシュボード
+ * ここから下は認証済みユーザーのみアクセス可能
  */
-Route::prefix('admin')->group(function () {
-    Route::get('/dashboard', function () { return view('admin.dashboard');})->name('admin.dashboard');
+Route::middleware(['web', 'auth'])->group(function () {
+
+    /**
+     * ダッシュボード
+     */
+    Route::prefix('operator')->group(function () {
+        Route::get('/dashboard', function () { return view('operator.dashboard');})->name('operator.dashboard');
+    });
 
 });
-

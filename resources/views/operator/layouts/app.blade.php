@@ -1,4 +1,4 @@
-@include('admin.layouts.include.header')
+@include('operator.layouts.include.header')
 
 <!-- container -->
 <div class="w-full mx-auto border overflow-x-hidden flex relative">
@@ -20,7 +20,7 @@
     </div>
     <!-- //Modal -->
 
-    @include('admin.layouts.include.side')
+    @include('operator.layouts.include.side')
 
     <!-- contents -->
     <div class="flex flex-col w-full">
@@ -43,5 +43,5 @@
 </div>
 <!-- // container -->
 
-@include('admin.layouts.include.footer')
+@include('operator.layouts.include.footer')
 

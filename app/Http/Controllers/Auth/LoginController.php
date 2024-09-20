@@ -52,6 +52,13 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
+            // entity_type に応じてリダイレクト先を変更
+            if ($auth->entity_type === 'App\Models\User') {
+                return redirect()->intended(route('user.order.item.list')); // ログイン後のリダイレクト先
+            } elseif ($auth->entity_type === 'App\Models\Operator') {
+                return redirect()->intended(route('operator.dashboard')); // ログイン後のリダイレクト先
+            }
+
             return redirect()->intended(route('user.order.item.list')); // ログイン後のリダイレクト先
         }
 
