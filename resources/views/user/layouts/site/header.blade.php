@@ -15,7 +15,12 @@
         </a>
     </div>
 
-    @include('user.layouts.widgets.menu')
+    @component('user.layouts.widgets.menu')
+        {{-- categoriesが定義されていたら、引き渡し --}}
+        @if (isset($categories))
+            @slot('categories', $categories)
+        @endif
+    @endcomponent
 
 </div>
 <!-- //header -->

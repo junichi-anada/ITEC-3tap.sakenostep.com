@@ -1,7 +1,12 @@
 @extends('user.layouts.app')
 
 @section('items')
-{{-- favoriteItemsが空の場合 --}}
+
+<ul class="flex text-sm text-gray-600">
+    <li>商品一覧</li>
+</ul>
+
+{{-- categoriesが空の場合 --}}
 @if (empty($categories))
 <div class="text-center">
     <p class="text-lg font-bold">カテゴリがありません。</p>
@@ -13,9 +18,10 @@
 @else
     @foreach($categories as $category)
     <div class="flex flex-col gap-y-4 border-b pb-3">
-        <p class="font-bold leading-5">
-            {{ $category->name }}<br>
-        </p>
+        <a href="{{ route('user.category.item.list', ['code' => $category->category_code]) }}" class="flex items-center px-2">
+            <p class="font-bold">{{ $category->name }}</p>
+            <span class="material-symbols-outlined text-2xl text-black ml-auto">chevron_right</span>
+        </a>
     </div>
     <!-- //Item -->
     @endforeach

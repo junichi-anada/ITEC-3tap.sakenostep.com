@@ -53,7 +53,8 @@ Route::middleware(['web', 'auth'])->group(function () {
      * 商品一覧関連のルーティング
      */
     Route::prefix('categories')->group(function () {
-        Route::get('/', [UserCategoryController::class, 'index'])->name('user.category.item.list');
+        Route::get('/', [UserCategoryController::class, 'index'])->name('user.category.list');
+        Route::get('/{code}', [UserCategoryController::class, 'show'])->name('user.category.item.list');
     });
 
     /**

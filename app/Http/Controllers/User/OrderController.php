@@ -11,6 +11,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\ItemCategory;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
@@ -47,8 +48,11 @@ class OrderController extends Controller
                                      ->get();
         }
 
+        // 現在のサイトのカテゴリ一覧を取得
+        $categories = ItemCategory::where('site_id', $auth->site_id)->get();
+
         // ビューで表示する
-        return view('user.order', compact('orderItems'));
+        return view('user.order', compact('orderItems', 'categories'));
     }
 
 

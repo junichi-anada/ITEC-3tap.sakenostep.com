@@ -12,7 +12,9 @@
     id="menu">
     <div>
         <div class="w-[22px] ml-auto">
-            <img src="{{ asset('image/user/mymenu/svg/line.svg') }}" alt="LINE">
+            <a href="#">
+                <img src="{{ asset('image/user/mymenu/svg/line.svg') }}" alt="LINE">
+            </a>
         </div>
     </div>
     <ul class="flex flex-col gap-y-1 pb-3">
@@ -20,44 +22,26 @@
             <a href="#" class="inline-block w-full"><span class="text-base">注文履歴</span></a>
         </li>
         <li class="border-b border-gray-400 pb-2 px-2">
-            <a href="#" class="inline-block  w-full"><span class="text-base">商品一覧</span></a>
+            <a href="{{ route('user.category.list') }}" class="inline-block  w-full"><span class="text-base">商品一覧</span></a>
         </li>
-        <li class="indent-2 border-b border-gray-400 pb-1">
-            <a href="#" class="inline-block w-full">
-                <span class="text-sm">日本酒</span>
-            </a>
-        </li>
-        <li class="indent-2 border-b border-gray-400 pb-1">
-            <a href="#" class="inline-block w-full">
-                <span class="text-sm">焼酎</span>
-            </a>
-        </li>
-        <li class="indent-2 border-b border-gray-400 pb-1">
-            <a href="#" class="inline-block w-full">
-                <span class="text-sm">ワイン</span>
-            </a>
-        </li>
-        <li class="indent-2 border-b border-gray-400 pb-1">
-            <a href="#" class="inline-block w-full">
-                <span class="text-sm">ビール</span>
-            </a>
-        </li>
-        <li class="indent-2 border-b border-gray-400 pb-1">
-            <a href="#" class="inline-block w-full">
-                <span class="text-sm">ウイスキー</span>
-            </a>
-        </li>
-        <li class="indent-2 border-b border-gray-400 pb-1">
-            <a href="#" class="inline-block w-full">
-                <span class="text-sm">リキュール</span>
-            </a>
-        </li>
-        <li class="indent-2 border-b border-gray-400 pb-1">
-            <a href="#" class="inline-block w-full">
-                <span class="text-sm">その他</span>
-            </a>
-        </li>
+        {{-- categoriesが空の場合 --}}
+        @if (empty($categories))
+            <li class="text-lg font-bold">カテゴリがありません。</li>
+        @elseif (count($categories) === 0)
+            <li class="text-lg font-bold">カテゴリがありません。</li>
+        @else
+            @foreach($categories as $category)
+            {{-- category --}}
+            <li class="indent-2 border-b border-gray-400 pb-1">
+                <a href="#" class="inline-block w-full">
+                    <span class="text-sm">{{ $category->name }}</span>
+                </a>
+            </li>
+            {{-- //category --}}
+            @endforeach
+        @endif
     </ul>
+
     <div class="flex justify-center gap-x-4">
         <div>
             <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">

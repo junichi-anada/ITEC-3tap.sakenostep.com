@@ -12,6 +12,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\FavoriteItem;
 use App\Models\Item;
+use App\Models\ItemCategory;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,7 +47,10 @@ class RecommendedItemController extends Controller
                 ->whereNull('ordered_at');  // 未注文の条件
         })->select('item_id', 'detail_code', 'volume')->get()->toArray();
 
+        // 現在のサイトのカテゴリ一覧を取得
+        $categories = ItemCategory::where('site_id', $auth->site_id)->get();
+
         // ビューで表示する
-        return view('user.recommend', compact('recommendedItems', 'favoriteItems', 'unorderedItems'));
+        return view('user.recommend', compact('recommendedItems', 'favoriteItems', 'unorderedItems', 'categories'));
     }
 }

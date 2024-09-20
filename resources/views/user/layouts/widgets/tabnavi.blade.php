@@ -21,7 +21,7 @@
                         <span class="text-xs">おすすめ</span>
                     </div>
                 </a>
-                <a href="{{ route('user.category.item.list') }}" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
+                <a href="{{ route('user.category.list') }}" class="py-2 px-3 whitespace-nowrap block bg-gray-300 rounded-t-lg">
                     <div class="flex items-center gap-x-2">
                         <span
                             class="material-symbols-outlined text-xl text-[#F4CF41]">format_list_bulleted</span>
