@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\User\FavoriteItemController as UserFavoriteItemController;
 use App\Http\Controllers\User\RecommendedItemController as UserRecommendedItemController;
 use App\Http\Controllers\User\OrderController as UserOrderController;
@@ -78,7 +79,7 @@ Route::middleware(['web', 'auth'])->group(function () {
      * ダッシュボード
      */
     Route::prefix('operator')->group(function () {
-        Route::get('/dashboard', function () { return view('operator.dashboard');})->name('operator.dashboard');
+        Route::get('/dashboard', [OperatorDashboardController::class, 'index'])->name('operator.dashboard');
     });
 
 });

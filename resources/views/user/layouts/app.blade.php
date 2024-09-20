@@ -1,9 +1,9 @@
-@include('user.layouts.include.header')
+@include('user.layouts.include.page.header')
 
 {{-- container --}}
 <div class="w-full min-w-[360px] max-w-[420px] mx-auto border border-gray-300 overflow-x-hidden relative">
 
-    @include('user.layouts.site.header')
+    @include('user.layouts.include.site.header')
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -32,8 +32,6 @@
     {{-- 各ページに必要なjs --}}
     @yield('js')
 
-    @include('user.layouts.site.footer')
+    @include('user.layouts.include.site.footer')
 
-    @include('user.layouts.include.footer')
-
-
+    @include('user.layouts.include.page.footer')

@@ -4,7 +4,7 @@
         <div>
             <h2 class="font-bold pb-2 border-b text-xl">お知らせ</h2>
         </div>
-        <!-- お知らせ内容 -->
+        {{-- お知らせ内容 --}}
         <div class="flex flex-col gap-y-6 overflow-y-scroll h-[calc(100vh-13.5rem)] px-5">
             <div class="flex items-start gap-x-10 border-b border-b-[#a6a6a6] pb-3">
                 <p class="font-bold">2024.11.01</p>

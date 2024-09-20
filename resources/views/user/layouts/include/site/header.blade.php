@@ -15,7 +15,7 @@
         </a>
     </div>
 
-    @component('user.layouts.widgets.menu')
+    @component('user.widgets.menu')
         {{-- categoriesが定義されていたら、引き渡し --}}
         @if (isset($categories))
             @slot('categories', $categories)
@@ -25,9 +25,9 @@
 </div>
 <!-- //header -->
 
-@include('user.layouts.widgets.modal')
+@include('user.widgets.modal')
 
-@include('user.layouts.widgets.search')
+@include('user.widgets.search')
 
-@include('user.layouts.widgets.tabnavi')
+@include('user.widgets.tabnavi')
 
