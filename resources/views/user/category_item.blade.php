@@ -94,7 +94,7 @@
  */
 --}}
 @section('control')
-<a href="{{ route('user.order.item.list') }}" class="bg-red-600 text-white px-7 py-1.5  rounded-xl">
+<a href="{{ route('user.order.item.list') }}" class="bg-red-600 text-white px-7 py-1.5 rounded-xl">
     <div class="flex items-center gap-x-1">
         <span class="material-symbols-outlined text-xl text-white">shopping_cart</span>
         <span>注文リストへ</span>
