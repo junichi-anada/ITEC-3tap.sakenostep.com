@@ -1,3 +1,4 @@
+{{-- 問い合わせリンク --}}
 <a href="./contact" class="flex items-center w-1/2 text-center py-2 px-3 border border-black">
     <span class="material-symbols-outlined text-4xl">phone_in_talk</span>
     <div class="flex-grow relative -top-1">

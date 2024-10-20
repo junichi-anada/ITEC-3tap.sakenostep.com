@@ -1,3 +1,4 @@
+{{-- ハンバーガーメニュー --}}
 <!-- hamberger menu -->
 <div class="absolute top-1 left-2">
     <button id="hamburger" type="button" class="fixed z-20">
@@ -19,7 +20,7 @@
     </div>
     <ul class="flex flex-col gap-y-1 pb-3">
         <li class="border-b border-gray-400 py-2 px-2">
-            <a href="#" class="inline-block w-full"><span class="text-base">注文履歴</span></a>
+            <a href="{{ route('user.history.list') }}" class="inline-block w-full"><span class="text-base">注文履歴</span></a>
         </li>
         <li class="border-b border-gray-400 pb-2 px-2">
             <a href="{{ route('user.category.list') }}" class="inline-block  w-full"><span class="text-base">商品一覧</span></a>
@@ -33,7 +34,7 @@
             @foreach($categories as $category)
             {{-- category --}}
             <li class="indent-2 border-b border-gray-400 pb-1">
-                <a href="#" class="inline-block w-full">
+                <a href="{{ route('user.category.item.list', ['code' => $category->category_code]) }}" class="inline-block w-full">
                     <span class="text-sm">{{ $category->name }}</span>
                 </a>
             </li>
@@ -44,13 +45,13 @@
 
     <div class="flex justify-center gap-x-4">
         <div>
-            <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
+            <a href="{{ route('user.about.order') }}" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
                 <span class="material-symbols-outlined text-3xl">description</span>
                 <span class="text-xs">注文について</span>
             </a>
         </div>
         <div>
-            <a href="" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
+            <a href="{{ route('user.about.delivery') }}" class="bg-white flex flex-col items-center border border-gray-300 gap-y-3 py-3 px-3">
                 <span class="material-symbols-outlined text-3xl">local_shipping</span>
                 <span class="text-xs">配送について</span>
             </a>

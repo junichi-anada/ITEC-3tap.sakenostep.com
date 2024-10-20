@@ -3,60 +3,66 @@
  * - 注文リストに追加ボタンのクリックイベント
  * - 注文リストから削除ボタンのクリックイベント
  */
+import { makeOrderConfirmModal } from "../modal/order/order_confirm.js";
+import { makeOrderCompleteModal } from "../modal/order/order_complete.js";
+
 document.addEventListener("DOMContentLoaded", function () {
     // 注文リストに追加ボタンのクリックイベント
-    document.querySelectorAll(".add-to-order").forEach((button) => {
-        button.addEventListener("click", function () {
-            // 必要なデータを取得
-            const itemId = this.getAttribute("data-item-id");
-            const siteId = this.getAttribute("data-site-id");
+    const addToOrderButtons = document.querySelectorAll(".add-to-order");
+    if (addToOrderButtons) {
+        addToOrderButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                // 必要なデータを取得
+                const itemId = this.getAttribute("data-item-id");
+                const siteId = this.getAttribute("data-site-id");
 
-            // 対応する入力フィールドの値を取得
-            const inputField = this.closest(".flex.gap-x-4").querySelector(
-                'input[name="volume"]'
-            );
-            const volume = inputField ? inputField.value : 1; // 値がなければデフォルトで1
+                // 対応する入力フィールドの値を取得
+                const inputField = this.closest(".flex.gap-x-4").querySelector(
+                    'input[name="volume"]'
+                );
+                const volume = inputField ? inputField.value : 1; // 値がなければデフォルトで1
 
-            // CSRFトークンの取得
-            const csrfToken = document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content");
+                // CSRFトークンの取得
+                const csrfToken = document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute("content");
 
-            // Ajaxリクエスト
-            fetch("/order/add", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrfToken,
-                },
-                body: JSON.stringify({
-                    item_id: itemId,
-                    site_id: siteId,
-                    volume: volume,
-                }),
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.message) {
-                        // alert(data.message); // 成功メッセージの表示
-                        // ボタンの表示切り替え
-                        this.classList.add("hidden"); // 追加ボタンを非表示
-                        this.nextElementSibling.classList.remove("hidden"); // 削除ボタンを表示
-                        // 削除ボタンのdata-detail-code属性に追加した注文リストの詳細コードを設定
-                        this.nextElementSibling.setAttribute(
-                            "data-detail-code",
-                            data.detail_code
-                        );
-                    } else {
-                        alert("エラーが発生しました。");
-                    }
+                // Ajaxリクエスト
+                fetch("/order/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrfToken,
+                    },
+                    body: JSON.stringify({
+                        item_id: itemId,
+                        site_id: siteId,
+                        volume: volume,
+                    }),
                 })
-                .catch((error) => {
-                    console.error("エラー:", error);
-                    alert("注文リストの追加に失敗しました。");
-                });
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.message) {
+                            // alert(data.message); // 成功メッセージの表示
+                            // ボタンの表示切り替え
+                            this.classList.add("hidden"); // 追加ボタンを非表示
+                            this.nextElementSibling.classList.remove("hidden"); // 削除ボタンを表示
+                            // 削除ボタンのdata-detail-code属性に追加した注文リストの詳細コードを設定
+                            this.nextElementSibling.setAttribute(
+                                "data-detail-code",
+                                data.detail_code
+                            );
+                        } else {
+                            alert("エラーが発生しました。");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("エラー:", error);
+                        alert("注文リストの追加に失敗しました。");
+                    });
+            });
         });
-    });
+    }
 
     // 注文リストから削除ボタンのクリックイベント
     document.querySelectorAll(".del-to-order").forEach((button) => {
@@ -108,4 +114,89 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
         });
     });
+
+    // 注文リストの全削除ボタンのクリックイベント
+    const delAllOrderButton = document.getElementById("del-all-order");
+    if (delAllOrderButton) {
+        delAllOrderButton.addEventListener("click", function () {
+            // CSRFトークンの取得
+            const csrfToken = document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute("content");
+
+            fetch("/order/removeAll", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+                body: JSON.stringify({
+                    // site_id: siteId,
+                }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    // alert(data.message);
+                })
+                .catch((error) => {
+                    console.error("エラー:", error);
+                });
+            // ページをリロードする
+            location.reload();
+        });
+    }
+
+    // 注文確認のモーダルを表示
+    const openOrderModal = document.getElementById("openOrderModal");
+    if (openOrderModal) {
+        openOrderModal.addEventListener("click", function () {
+            try {
+                makeOrderConfirmModal();
+                // #modalを表示
+                document.getElementById("modal").classList.remove("hidden");
+            } catch (error) {
+                console.error("エラー:", error);
+            }
+        });
+    }
+
+    //注文処理実行
+    const execModal = document.getElementById("execModal");
+    if (execModal) {
+        execModal.addEventListener("click", function () {
+            // 注文確認モーダルを非表示にする。
+            document.getElementById("modal").classList.add("hidden");
+
+            // CSRFトークンの取得
+            const csrfToken = document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute("content");
+
+            fetch("/order/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    // alert(data.message);
+                })
+                .catch((error) => {
+                    console.error("エラー:", error);
+                });
+
+            // 注文完了モーダルを表示
+            makeOrderCompleteModal();
+        });
+    }
+
+    // 注文リストに反映ボタンのクリックイベント
+    const addToAllOrder = document.getElementById("add-to-all-order");
+    if (addToAllOrder) {
+        addToAllOrder.addEventListener("click", function () {
+            document.getElementById("add-to-all-order-form").submit();
+        });
+    }
 });

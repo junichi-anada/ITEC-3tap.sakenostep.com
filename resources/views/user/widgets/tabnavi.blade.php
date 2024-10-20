@@ -1,3 +1,4 @@
+{{-- タブナビゲーション --}}
 <!-- Tab Navi Wrapper -->
 <div class="flex flex-col pt-2 px-2 bg-[#F6F6F6]">
     <div class="h-[44px]">

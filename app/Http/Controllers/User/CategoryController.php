@@ -41,6 +41,9 @@ class CategoryController extends Controller
         $auth = Auth::user();
         // var_dump($auth);
 
+        // 該当サイトのカテゴリ一覧を取得
+        $categories = ItemCategory::where('site_id', $auth->site_id)->get();
+
         // カテゴリに所属する商品一覧を取得
         $category = ItemCategory::where('site_id', $auth->site_id)->where('category_code', $code)->first();
         $items = Item::where('site_id', $auth->site_id)->where('category_id', $category->id)->get();
@@ -59,6 +62,6 @@ class CategoryController extends Controller
         })->select('item_id', 'detail_code', 'volume')->get()->toArray();
 
 
-        return view('user.category_item', compact('category', 'items', 'unorderedItems', 'favoriteItems'));
+        return view('user.category_item', compact('category', 'items', 'unorderedItems', 'favoriteItems', 'categories'));
     }
 }

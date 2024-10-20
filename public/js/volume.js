@@ -5,9 +5,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     // すべてのアイテムの＋と－ボタンにイベントリスナーを追加
     document.querySelectorAll(".flex.items-center").forEach(function (item) {
-        const minusButton = item.querySelector("button:first-of-type"); // 「－」ボタン
-        const plusButton = item.querySelector("button:last-of-type"); // 「＋」ボタン
-        const inputField = item.querySelector('input[name="volume"]'); // 数値入力フィールド
+        const minusButton = item.querySelector(".volume-minus"); // 「－」ボタン
+        const plusButton = item.querySelector(".volume-plus"); // 「＋」ボタン
+        const inputField = item.querySelector(".volume-input"); // 数値入力フィールド
 
         // 各ボタンと入力フィールドが存在する場合のみ処理を追加
         if (minusButton && plusButton && inputField) {

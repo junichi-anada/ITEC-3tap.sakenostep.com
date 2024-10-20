@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -155,6 +156,7 @@ class OrderController extends Controller
      * パラメータのdetailCodeに一致する注文詳細を削除する。
      *
      * @param string $detailCode
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Request $request, $detailCode)
     {
@@ -186,4 +188,90 @@ class OrderController extends Controller
         return response()->json(['message' => '注文リストから削除しました']);
     }
 
+    /**
+     * 注文リストに登録されている商品の全削除
+     * 注文リストに登録されている商品を全て削除する。
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroyAll()
+    {
+        $auth = Auth::user();
+
+        // 対象の注文リストを取得
+        $order = Order::where('user_id', $auth->id)
+                      ->where('site_id', $auth->site_id)
+                      ->whereNull('ordered_at')
+                      ->first();
+
+        // 注文リストに登録されている商品を全て削除
+        $order->orderDetails()->delete();
+
+        return response()->json(['message' => '注文リストから全て削除しました']);
+    }
+
+    /**
+     * 注文実行
+     * 注文リストに登録されている商品を発注する。
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function order()
+    {
+        $auth = Auth::user();
+
+        // 注文リストに登録されている商品を発注
+        $order = Order::where('user_id', $auth->id)
+                      ->where('site_id', $auth->site_id)
+                      ->whereNull('ordered_at')
+                      ->first();
+
+        // 注文リストに登録されている商品を発注
+        $order->ordered_at = now();
+        $order->save();
+
+        // 注文番号をjsonで返す
+        return response()->json(['message' => '注文しました', 'order_code' => $order->order_code]);
+    }
+
+    /**
+     * 受け取った商品データ配列の注文リストへの登録（一括処理）
+     * 受け取った商品データ配列を注文リストに登録する。
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addAll(Request $request)
+    {
+        $auth = Auth::user();
+
+        Log::info($request->all());
+
+        // バリデーション
+        // item_id[], volume[]でフォームから届く
+        $request->validate([
+            'item_id' => 'required|array',
+            'volume' => 'required|array',
+        ]);
+
+
+        // 注文リストに登録
+        // item_listの配列をループして、storeメソッドを呼び出す
+        // item_listの形式はJSONでitem_id: volumeの連想配列
+        foreach ($request->item_id as $index => $itemId) {
+            $itemRequest = new Request([
+                'item_id' => $itemId,
+                'volume' => $request->volume[$index],
+                'site_id' => $auth->site_id,
+            ]);
+            $this->store($itemRequest);
+        }
+
+        // デバッグ用 ログ出力
+        Log::info('注文リストに追加しました');
+
+        // 未注文商品リストの一覧表示
+        return redirect()->route('user.order.item.list');
+
+    }
 }

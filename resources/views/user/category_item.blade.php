@@ -74,10 +74,10 @@
                 </button>
             </div>
             <div class="flex items-center ml-auto">
-                <button class="border px-1.5 py-0.5 border-r-0 text-lg">－</button>
+                <div class="border px-1.5 py-0.5 border-r-0 text-lg volume-minus">－</div>
                 <input type="text" name="volume" value="{{ $unOrderItem['volume'] ?? 1 }}"
-                    class="w-10 border border-r-0 text-center py-0.5 text-lg">
-                <button class="border px-1.5 py-0.5 text-lg">＋</button>
+                    class="w-10 border border-r-0 text-center py-0.5 text-lg volume-input">
+                <div class="border px-1.5 py-0.5 text-lg volume-plus">＋</div>
                 <span class="inline-block ml-2 text-sm">本</span>
             </div>
         </div>
@@ -94,10 +94,16 @@
  */
 --}}
 @section('control')
-<a href="{{ route('user.order.item.list') }}" class="bg-red-600 text-white px-7 py-1.5 rounded-xl">
+<a href="{{ route('user.order.item.list') }}" class="bg-red-600 text-white px-4 py-1.5 rounded-xl">
     <div class="flex items-center gap-x-1">
         <span class="material-symbols-outlined text-xl text-white">shopping_cart</span>
         <span>注文リストへ</span>
+    </div>
+</a>
+<a href="{{ route('user.category.list') }}" class="bg-red-600 text-white px-4 py-1.5 rounded-xl">
+    <div class="flex items-center gap-x-1">
+        <span class="material-symbols-outlined text-xl">format_list_bulleted</span>
+        <span>商品一覧へ</span>
     </div>
 </a>
 @endsection
@@ -105,5 +111,5 @@
 @section('js')
 <script src="{{ asset('js/volume.js') }}"></script>
 <script src="{{ asset('js/ajax/favorite.js') }}"></script>
-<script src="{{ asset('js/ajax/order.js') }}"></script>
+<script type="module" src="{{ asset('js/ajax/order.js') }}"></script>
 @endsection

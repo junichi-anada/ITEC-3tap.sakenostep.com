@@ -34,10 +34,10 @@
                 </div>
             </div>
             <div class="flex items-center">
-                <button class="border px-1.5 py-0.5 border-r-0 text-lg">－</button>
+                <div class="border px-1.5 py-0.5 border-r-0 text-lg volume-minus">－</div>
                 <input type="text" name="volume" value="{{ $orderItem->volume }}"
-                    class="w-10 border border-r-0 text-center py-0.5 text-lg">
-                <button class="border px-1.5 py-0.5 text-lg">＋</button>
+                    class="w-10 border border-r-0 text-center py-0.5 text-lg volume-input">
+                <div class="border px-1.5 py-0.5 text-lg volume-plus">＋</div>
                 <span class="inline-block ml-2 text-lg">本</span>
             </div>
         </div>
@@ -55,16 +55,19 @@
  */
 --}}
 @section('control')
-<button class="bg-red-600 text-white px-7 py-1.5 rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed" id="del-all-order" {{ empty($orderItems) || count($orderItems) === 0 ? 'disabled': ''}}>
+
+{{-- クリックしたら/remove/allにリクエスト --}}
+<button type="button" class="bg-red-600 text-white px-6 py-1.5 rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed" id="del-all-order" {{ empty($orderItems) || count($orderItems) === 0 ? 'disabled': ''}}>
     全て削除
 </button>
-<button class="bg-red-600 text-white px-6 py-1.5 rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed" id="openOrderModal" {{ empty($orderItems) || count($orderItems) === 0 ? 'disabled': ''}}>
+
+{{-- クリックしたら/orderにリクエスト --}}
+<button type="button" class="bg-red-600 text-white px-6 py-1.5 rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed" id="openOrderModal" {{ empty($orderItems) || count($orderItems) === 0 ? 'disabled': ''}}>
     注文する
 </button>
 @endsection
 
 @section('js')
-<script src="{{ asset('js/modal/open_order.js') }}"></script>
 <script src="{{ asset('js/volume.js') }}"></script>
-<script src="{{ asset('js/ajax/order.js') }}"></script>
+<script type="module" src="{{ asset('js/ajax/order.js') }}"></script>
 @endsection

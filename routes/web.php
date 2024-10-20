@@ -7,8 +7,9 @@ use App\Http\Controllers\User\RecommendedItemController as UserRecommendedItemCo
 use App\Http\Controllers\User\OrderController as UserOrderController;
 use App\Http\Controllers\User\SearchController as UserSearchController;
 use App\Http\Controllers\User\CategoryController as UserCategoryController;
+use App\Http\Controllers\User\PageController as UserPageController;
+use App\Http\Controllers\User\HistoryController as UserHistoryController;
 use App\Http\Controllers\Auth\LoginController;
-
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -32,6 +33,9 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/', [UserOrderController::class, 'index'])->name('user.order.item.list');
         Route::post('/add', [UserOrderController::class, 'store'])->name('user.order.item.list.add');
         Route::delete('/remove/{detailCode}', [UserOrderController::class, 'destroy'])->name('user.order.item.list.remove');
+        Route::delete('/removeAll', [UserOrderController::class, 'destroyAll'])->name('user.order.item.list.remove.all');
+        Route::post('/send', [UserOrderController::class, 'order'])->name('user.order.item.list.order');
+        Route::post('/addAll', [UserOrderController::class, 'addAll'])->name('user.order.item.list.add.all');
     });
 
     /**
@@ -64,6 +68,22 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::prefix('search')->group(function () {
         Route::post('/', [UserSearchController::class, 'index'])->name('user.search.item.list');
         Route::get('/', [UserSearchController::class, 'index']);
+    });
+
+    /**
+     * 注文履歴のルーティング
+     */
+    Route::prefix('history')->group(function () {
+        Route::get('/', [UserHistoryController::class, 'index'])->name('user.history.list');
+        Route::get('/{order_code}', [UserHistoryController::class, 'detail'])->name('user.history.detail');
+    });
+
+    /**
+     * 固定ページのルーティング
+     */
+    Route::prefix('about')->group(function () {
+        Route::get('/order', [UserPageController::class, 'order'])->name('user.about.order');
+        Route::get('/delivery', [UserPageController::class, 'delivery'])->name('user.about.delivery');
     });
 
 });
