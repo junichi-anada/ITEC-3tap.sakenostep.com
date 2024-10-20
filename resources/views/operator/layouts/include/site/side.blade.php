@@ -1,14 +1,5 @@
 {{-- Sidebar --}}
-<div class="w-full max-w-[200px] h-[calc(100vh-2.25rem)] bg-[#F8F8F8] relative">
-    {{-- hamberger menu --}}
-    {{-- <div class="absolute top-3 right-8" id="menu">
-        <button id="hamburger" type="button" class="fixed z-20">
-            <span id="bars" class="material-symbols-outlined hidden">menu </span>
-            <span id="xmark" class="material-symbols-outlined">close</span>
-        </button>
-    </div> --}}
-    {{-- //hamberger menu --}}
-
+<div class="w-full max-w-[200px] h-[calc(100vh-2.25rem)] bg-[#F8F8F8] relative hidden md:block">
     <div class="flex flex-col justify-center gap-y-5 pt-3">
         <a href="{{ route('user.order.item.list') }}" class="tracking-widest">
             <div class="w-32 mx-auto">

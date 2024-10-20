@@ -11,7 +11,15 @@
     <div class="flex flex-col w-full">
 
         <!-- contents-header -->
-        <div class="flex justify-end items-center bg-[#F4CF41] gap-x-6 px-2">
+        <div class="flex justify-end items-center bg-[#F4CF41] gap-x-6 px-2 relative">
+            {{-- hamberger menu --}}
+            <div class="relative w-[min(3vw, 40px)] aspect-square" id="menu">
+                <button id="hamburger" type="button" class="z-20">
+                    <span id="bars" class="material-symbols-outlined hidden">menu</span>
+                    <span id="xmark" class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            {{-- //hamberger menu --}}
             <p class="text-base">{{ $operator->name }} 様</p>
             <a href="{{ route('logout') }}"><span class="material-symbols-outlined text-3xl">logout</span></a>
         </div>
