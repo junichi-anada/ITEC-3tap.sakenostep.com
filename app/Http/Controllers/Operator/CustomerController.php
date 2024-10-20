@@ -36,7 +36,8 @@ class CustomerController extends Controller
         // ただし、削除されていないデータのみ
         $customers = User::join('authenticates', 'users.id', '=', 'authenticates.entity_id')
             ->where('users.site_id', $auth->site_id)
-            ->select('users.*', 'authenticates.login_code');
+            ->select('users.*', 'authenticates.login_code')
+            ->where('authenticates.entity_type', User::class);
 
         // SQL文を出力
         Log::info($customers->toSql());
@@ -140,8 +141,18 @@ class CustomerController extends Controller
             ->join('authenticates', 'users.id', '=', 'authenticates.entity_id')
             ->select('users.*', 'authenticates.login_code')
             ->whereNull('users.deleted_at')
+            ->where('authenticates.entity_type', User::class)
             ->first();
 
+        if (!$customer) {
+            $error_message = '該当する顧客情報が見つかりませんでした。';
+            return redirect()->route('operator.customer.error')
+                ->with('error_message', $error_message)
+                ->with('operator', $operator);
+        }
+
+        
+        // 初回注文日
         $first_order_date = Order::where('user_id', $customer->id)->orderBy('ordered_at', 'asc')->first();
         $last_order_date = Order::where('user_id', $customer->id)->orderBy('ordered_at', 'desc')->first();
 

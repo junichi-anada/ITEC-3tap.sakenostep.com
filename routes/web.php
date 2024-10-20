@@ -114,4 +114,9 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::delete('/delete', [OperatorCustomerController::class, 'destroy'])->name('operator.customer.delete');
     });
 
+    /**
+     * エラーページ
+     */
+    Route::get('/error', function () { return view('operator.customer.error'); })->name('operator.customer.error');
+
 });

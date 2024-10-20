@@ -28,7 +28,7 @@
             <!-- カスタムページネーションボタン -->
             <div class="pagination flex flex-row gap-x-4 justify-center w-full mt-4 ">
                 @for ($i = 1; $i <= $orders->lastPage(); $i++)
-                    <a href="{{ $orders->url($i) }}" class="block bg-[#F4CF41] px-[1.25vw] py-[0.83vw] rounded-md {{ $i == $orders->currentPage() ? 'border border-[#F4CF41]' : '' }}">
+                    <a href="{{ $orders->url($i) }}" class="block bg-[#F4CF41] px-[min(1.25vw,0.75em)] py-[min(0.83vw,0.5em)] rounded-md {{ $i == $orders->currentPage() ? 'border border-[#F4CF41]' : '' }}">
                         {{ $i }}
                         </a>
                     @endfor

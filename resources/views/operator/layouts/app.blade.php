@@ -22,7 +22,11 @@
             {{-- //hamberger menu --}}
             <div class="flex flex-row items-center gap-x-2 flex-nowrap">
                 <span class="material-symbols-outlined">person</span>
-                <p class="text-base">{{ $operator->name }} 様</p>
+                @if(session('operator'))
+                    <p class="text-base">{{ session('operator')->name }} 様</p>
+                @else 
+                    <p class="text-base">{{ $operator->name }} 様</p>
+                @endif
             </div>
             <a href="{{ route('logout') }}"><span class="material-symbols-outlined text-3xl">logout</span></a>
         </div>
