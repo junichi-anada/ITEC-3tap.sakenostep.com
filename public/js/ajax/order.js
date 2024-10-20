@@ -3,8 +3,11 @@
  * - 注文リストに追加ボタンのクリックイベント
  * - 注文リストから削除ボタンのクリックイベント
  */
-import { makeOrderConfirmModal } from "../modal/order/order_confirm.js";
-import { makeOrderCompleteModal } from "../modal/order/order_complete.js";
+import {
+    makeOrderConfirmModal,
+    makeOrderSuccessModal,
+    makeOrderFailModal,
+} from "../modal/user/order.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     // 注文リストに追加ボタンのクリックイベント
@@ -188,7 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
 
             // 注文完了モーダルを表示
-            makeOrderCompleteModal();
+            makeOrderSuccessModal();
         });
     }
 

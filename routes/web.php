@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
+use App\Http\Controllers\Operator\CustomerController as OperatorCustomerController;
 use App\Http\Controllers\User\FavoriteItemController as UserFavoriteItemController;
 use App\Http\Controllers\User\RecommendedItemController as UserRecommendedItemController;
 use App\Http\Controllers\User\OrderController as UserOrderController;
@@ -100,6 +101,17 @@ Route::middleware(['web', 'auth'])->group(function () {
      */
     Route::prefix('operator')->group(function () {
         Route::get('/dashboard', [OperatorDashboardController::class, 'index'])->name('operator.dashboard');
+    });
+
+    /**
+     * 顧客管理
+     */
+    Route::prefix('customer')->group(function () {
+        Route::get('/list', [OperatorCustomerController::class, 'index'])->name('operator.customer.list');
+        Route::get('/regist', [OperatorCustomerController::class, 'regist'])->name('operator.customer.regist');
+        Route::post('/regist', [OperatorCustomerController::class, 'store'])->name('operator.customer.regist.store');
+        Route::get('/show/{id}', [OperatorCustomerController::class, 'show'])->name('operator.customer.show');
+        Route::delete('/delete', [OperatorCustomerController::class, 'destroy'])->name('operator.customer.delete');
     });
 
 });

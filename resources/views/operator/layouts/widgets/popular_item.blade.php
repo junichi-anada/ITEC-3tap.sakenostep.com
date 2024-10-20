@@ -3,7 +3,7 @@
     <div class="px-4 flex flex-col gap-y-4">
         <div>
             <h2 class="font-bold pb-2 border-b text-xl">人気商品</h2>
-            <p class="mt-2 text-sm text-right">2024年9月1日現在</p>
+            <p class="mt-2 text-sm text-right">{{ \Carbon\Carbon::now()->format('Y年n月j日') }}現在</p>
         </div>
         <div class="flex flex-col gap-y-1">
             <div class="flex items-center justify-between border-b border-b-[#a6a6a6]">
