@@ -29,12 +29,12 @@
                         <input type="text" name="address" id="address" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5" value="{{ $customer->address }}" placeholder="青森県十和田市">
                     </div>
                     <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-[0.83vw] items-center">
-                        <label for="address" class="w-full md:w-[5vw]">初回注文日</label>
-                        <input type="text" name="date" id="address" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5 text-gray-400 bg-gray-100" value="{{ $first_order_date->ordered_at ?? '' }}" readonly>
+                        <label for="address" class="w-full md:w-[5vw]">初回利用日</label>
+                        <input type="text" name="date" id="address" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5 text-gray-400 bg-gray-100" value="{{ $customer->first_login_at ?? '' }}" readonly>
                     </div>
                     <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-[0.83vw] items-center">
-                        <label for="address" class="w-full md:w-[5vw]">最終注文日</label>
-                        <input type="text" name="date" id="address" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5 text-gray-400 bg-gray-100" value="{{ $last_order_date->ordered_at ?? '' }}" readonly>
+                        <label for="address" class="w-full md:w-[5vw]">最終利用日</label>
+                        <input type="text" name="date" id="address" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5 text-gray-400 bg-gray-100" value="{{ $customer->last_login_at ?? '' }}" readonly>
                     </div>
                     @include('operator.layouts.widgets.customer.line_message')
                 </div>

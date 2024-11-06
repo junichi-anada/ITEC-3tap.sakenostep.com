@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const customerExec = document.getElementById("execModal");
     if (customerExec) {
         customerExec.addEventListener("click", function () {
-            console.log(document.getElementById("execMode").textContent);
+            // console.log(document.getElementById("execMode").textContent);
             if (document.getElementById("execMode").textContent == "regist") {
                 registCustomer();
             }
@@ -91,6 +91,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         const data = await response.json();
         if (data.message === "success") {
+            console.log(data.message);
             makeCustomerRegistSuccessModal();
         } else {
             console.log(data.message);

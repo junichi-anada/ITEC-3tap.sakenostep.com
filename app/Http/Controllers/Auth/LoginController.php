@@ -50,6 +50,9 @@ class LoginController extends Controller
             // 認証成功
             Auth::login($auth);
 
+            //updated_atを更新
+            $auth->touch();
+
             $request->session()->regenerate();
 
             // entity_type に応じてリダイレクト先を変更

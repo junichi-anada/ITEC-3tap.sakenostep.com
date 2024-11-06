@@ -112,6 +112,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::post('/regist', [OperatorCustomerController::class, 'store'])->name('operator.customer.regist.store');
         Route::get('/show/{id}', [OperatorCustomerController::class, 'show'])->name('operator.customer.show');
         Route::delete('/delete', [OperatorCustomerController::class, 'destroy'])->name('operator.customer.delete');
+        Route::get('/search', [OperatorCustomerController::class, 'search'])->name('operator.customer.search');
     });
 
     /**

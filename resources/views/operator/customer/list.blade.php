@@ -7,7 +7,7 @@
             @include('operator.layouts.widgets.customer.tool')
         </div>
         <div class="flex flex-col gap-y-4 md:flex-grow">
-            @include('operator.layouts.widgets.customer.list', ['customers' => $customers, 'user_count' => $user_count])
+            <x-operator.customer-list-widget :customers="$customers" />
         </div>
     </div>
 @endsection

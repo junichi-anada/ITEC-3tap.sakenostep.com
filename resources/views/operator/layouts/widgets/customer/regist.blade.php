@@ -1,4 +1,4 @@
-<form action="{{ route('operator.customer.regist') }}" method="post" id="customer_regist_form">
+<form action="{{ route('operator.customer.regist') }}" method="post" id="customer_form">
     @csrf
     <div class="border-t-8 border-[#F4CF41] border-l border-r border-b py-4 w-full h-[calc(100vh-7.5rem)]">
         <div class="px-4 flex flex-col gap-y-4 h-full w-full">

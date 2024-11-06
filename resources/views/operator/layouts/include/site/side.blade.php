@@ -1,7 +1,7 @@
 {{-- Sidebar --}}
 <div class="w-full max-w-[200px] h-[calc(100vh-2.25rem)] bg-[#F8F8F8] relative hidden md:block">
     <div class="flex flex-col justify-center gap-y-5 pt-3">
-        <a href="{{ route('user.order.item.list') }}" class="tracking-widest">
+        <a href="{{ route('operator.dashboard') }}" class="tracking-widest">
             <div class="w-32 mx-auto">
                 <img src="{{ asset('image/step_logo.png') }}" alt="酒のステップ">
             </div>
