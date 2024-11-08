@@ -8,7 +8,7 @@
         </a>
         <ul class="flex flex-col gap-y-1 pb-3 px-2">
             <li class="py-2 px-2">
-                <a href="{{ route('operator.customer.list') }}" class="flex items-center w-full gap-x-4">
+                <a href="{{ route('operator.customer.index') }}" class="flex items-center w-full gap-x-4">
                     <span class="material-symbols-outlined text-3xl">person</span>
                     <span class="text-base">顧客管理</span>
                 </a>

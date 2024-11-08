@@ -17,6 +17,11 @@ import {
     makeCustomerDeleteSuccessModal,
     makeCustomerDeleteFailModal,
 } from "../modal/operator/customer/delete.js";
+import {
+    makeCustomerUploadConfirmModal,
+    makeCustomerUploadSuccessModal,
+    makeCustomerUploadFailModal,
+} from "../modal/operator/customer/upload.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     // 登録ボタンクリック → 登録確認モーダル表示
@@ -43,6 +48,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // 顧客データを読み込むボタンクリック → アップロードモーダル表示
+    const customerUploadButton = document.getElementById("customer_upload");
+    if (customerUploadButton) {
+        customerUploadButton.addEventListener("click", function () {
+            makeCustomerUploadConfirmModal();
+        });
+    }
+
     // 処理ボタンをクリックされた時の処理
     const customerExec = document.getElementById("execModal");
     if (customerExec) {
@@ -52,10 +65,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 registCustomer();
             }
             if (document.getElementById("execMode").textContent == "update") {
-                console.log("更新処理");
+                updateCustomer();
             }
             if (document.getElementById("execMode").textContent == "delete") {
                 deleteCustomer();
+            }
+            if (document.getElementById("execMode").textContent == "upload") {
+                // console.log("upload");
+                uploadCustomer();
             }
         });
     }
@@ -81,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const csrfToken = formData.get("_token");
 
         // ajax送信
-        const response = await fetch("/customer/regist", {
+        const response = await fetch("/operator/customer", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -91,11 +108,10 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         const data = await response.json();
         if (data.message === "success") {
-            console.log(data.message);
-            makeCustomerRegistSuccessModal();
+            makeCustomerRegistSuccessModal(data.login_code, data.password);
         } else {
             console.log(data.message);
-            makeCustomerRegistFailModal();
+            makeCustomerRegistFailModal(data.reason);
         }
         return response;
     }
@@ -123,8 +139,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // formDataの_tokenを取得
         const csrfToken = formData.get("_token");
 
+        const targetURL = "/operator/customer/" + formDataObj["user_code"];
+
         // ajax送信
-        const response = await fetch("/customer/delete", {
+        const response = await fetch(targetURL, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -140,5 +158,84 @@ document.addEventListener("DOMContentLoaded", function () {
             makeCustomerDeleteFailModal();
         }
         return response;
+    }
+
+    /**
+     * updateCustomer
+     * 顧客データを更新
+     * 送信先: /customer/update
+     *
+     * @return JSON
+     */
+    async function updateCustomer() {
+        const customerForm = document.getElementById("customer_form");
+
+        const formData = new FormData(customerForm);
+
+        const formDataObj = {};
+        formData.forEach((value, key) => {
+            formDataObj[key] = value;
+        });
+
+        // formDataの_tokenを取得
+        const csrfToken = formData.get("_token");
+
+        const targetURL = "/operator/customer/" + formDataObj["user_code"];
+
+        // ajax送信
+        const response = await fetch(targetURL, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": csrfToken,
+            },
+            body: JSON.stringify(formDataObj),
+        });
+        const data = await response.json();
+        if (data.message === "success") {
+            makeCustomerUpdateSuccessModal();
+        } else {
+            console.log(data.message);
+            makeCustomerUpdateFailModal();
+        }
+        return response;
+    }
+
+    /**
+     * uploadCustomer
+     * 顧客データをアップロード
+     * 送信先: /customer/upload
+     *
+     * @return JSON
+     */
+    async function uploadCustomer() {
+        const customerUploadForm = document.getElementById("uploadForm");
+
+        const formData = new FormData(customerUploadForm);
+
+        try {
+            const response = await fetch("/operator/customer/upload", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": formData.get("_token"),
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (data.message === "success") {
+                // 成功した場合、処理状況を表示するページにリダイレクト
+                window.location.href =
+                    "/operator/customer/status?file_path=" +
+                    encodeURIComponent(data.file_path);
+            } else {
+                console.log(data.message);
+                makeCustomerUploadFailModal();
+            }
+        } catch (error) {
+            console.error("エラー:", error);
+            makeCustomerUploadFailModal();
+        }
     }
 });

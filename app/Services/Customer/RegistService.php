@@ -12,9 +12,10 @@ use Illuminate\Http\Request;
 
 class RegistService
 {
-  public function registerCustomer(Request $request, $auth)
+  public function registCustomer(Request $request, $auth)
   {
     DB::beginTransaction();
+    $login_code = "";
 
     try {
         $login_code = $this->generateLoginCode();
@@ -48,12 +49,13 @@ class RegistService
         // すべての操作が成功した場合、トランザクションをコミット
         DB::commit();
 
-        return ['message' => 'success'];
+        return ['message' => 'success', 'login_code' => $login_code, 'password' => $phone];
     } catch (\Exception $e) {
         // 例外が発生した場合、トランザクションをロールバック
         DB::rollBack();
         Log::error('Customer registration failed: ' . $e->getMessage());
-        return ['message' => 'fail'];
+
+        return ['message' => 'fail', 'reason' => $e->getMessage()];
     }
   }
 

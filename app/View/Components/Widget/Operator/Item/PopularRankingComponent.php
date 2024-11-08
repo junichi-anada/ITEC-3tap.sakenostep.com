@@ -1,13 +1,13 @@
 <?php
 
-namespace App\View\Components\Operator;
+namespace App\View\Components\Widget\Operator\Item;
 
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use App\Services\Order\PopularItemService;
 
-class PopularItemWidget extends Component
+class PopularRankingComponent extends Component
 {
     public $popularItems;
 
@@ -21,6 +21,6 @@ class PopularItemWidget extends Component
 
     public function render()
     {
-        return view('components.operator.popular-item-widget');
+        return view('components.widget.operator.item.PopularRanking');
     }
 }

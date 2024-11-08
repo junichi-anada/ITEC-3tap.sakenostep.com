@@ -1,3 +1,10 @@
+<?php
+/**
+ * エリア別注文数表示ウィジェット
+ * 
+ * @var array $ordersByArea
+ */
+?>
 <div class="border-t-8 border-[#F4CF41] border-l border-r border-b py-4 w-full">
     <div class="px-4 flex flex-col gap-y-4">
         <div>

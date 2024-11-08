@@ -101,19 +101,24 @@ Route::middleware(['web', 'auth'])->group(function () {
      */
     Route::prefix('operator')->group(function () {
         Route::get('/dashboard', [OperatorDashboardController::class, 'index'])->name('operator.dashboard');
+
+        /**
+         * 顧客管理
+         */
+        Route::prefix('customer')->group(function () {
+            Route::get('/', [OperatorCustomerController::class, 'index'])->name('operator.customer.index'); // 顧客一覧
+            Route::get('/create', [OperatorCustomerController::class, 'create'])->name('operator.customer.create'); // 顧客登録フォーム
+            Route::post('/', [OperatorCustomerController::class, 'store'])->name('operator.customer.store'); // 顧客登録
+            Route::get('/{id}', [OperatorCustomerController::class, 'show'])->name('operator.customer.show'); // 顧客詳細
+            Route::put('/{id}', [OperatorCustomerController::class, 'update'])->name('operator.customer.update'); // 顧客更新
+            Route::delete('/{id}', [OperatorCustomerController::class, 'destroy'])->name('operator.customer.destroy'); // 顧客削除
+            Route::post('/search', [OperatorCustomerController::class, 'search'])->name('operator.customer.search'); // 顧客検索
+            Route::post('/upload', [OperatorCustomerController::class, 'upload'])->name('operator.customer.upload'); // 顧客データアップロード
+            Route::get('/upload/status', [OperatorCustomerController::class, 'status'])->name('operator.customer.status'); // アップロードステータス
+        });
+
     });
 
-    /**
-     * 顧客管理
-     */
-    Route::prefix('customer')->group(function () {
-        Route::get('/list', [OperatorCustomerController::class, 'index'])->name('operator.customer.list');
-        Route::get('/regist', [OperatorCustomerController::class, 'regist'])->name('operator.customer.regist');
-        Route::post('/regist', [OperatorCustomerController::class, 'store'])->name('operator.customer.regist.store');
-        Route::get('/show/{id}', [OperatorCustomerController::class, 'show'])->name('operator.customer.show');
-        Route::delete('/delete', [OperatorCustomerController::class, 'destroy'])->name('operator.customer.delete');
-        Route::get('/search', [OperatorCustomerController::class, 'search'])->name('operator.customer.search');
-    });
 
     /**
      * エラーページ

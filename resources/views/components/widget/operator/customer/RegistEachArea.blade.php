@@ -1,7 +1,12 @@
-{{--
-    ユーザー登録状況ウィジェット
-    components.operator.user-widget
---}}
+<?php
+/**
+ * ユーザー登録状況表示ウィジェット
+ * 
+ * @var int $userCount
+ * @var int $newUserCount
+ * @var int $lineUserCount
+ */
+?>
 <div class="border-t-8 border-[#F4CF41] border-l border-r border-b py-4 w-full">
     <div class="px-4 flex flex-col gap-y-4">
         <div>

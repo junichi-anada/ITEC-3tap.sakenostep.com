@@ -1,11 +1,11 @@
 <?php
 
-namespace App\View\Components\Operator;
+namespace App\View\Components\Widget\Operator\Customer;
 
 use Illuminate\View\Component;
 use App\Services\Customer\CountService;
 
-class CustomerWidget extends Component
+class RegistEachAreaComponent extends Component
 {
     public $userCount;
     public $newUserCount;
@@ -23,6 +23,6 @@ class CustomerWidget extends Component
 
     public function render()
     {
-        return view('components.operator.user-widget');
+        return view('components.widget.operator.customer.RegistEachArea');
     }
 }

@@ -9,12 +9,13 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\Customer\ListService as CustomerListService;
 use App\Services\Customer\RegistService as CustomerRegistService;
+use App\Services\Customer\DeleteService as CustomerDeleteService;
+use App\Services\Customer\UpdateService as CustomerUpdateService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-
 
 class CustomerController extends Controller
 {
@@ -41,7 +42,7 @@ class CustomerController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function regist()
+    public function create()
     {
         $auth = Auth::user();
 
@@ -73,12 +74,12 @@ class CustomerController extends Controller
 
         $auth = Auth::user();
 
-        $result = $customerRegistService->registerCustomer($request, $auth);
+        $result = $customerRegistService->registCustomer($request, $auth);
 
         if ($result['message'] === 'success') {
-            return response()->json(['message' => 'success']);
+            return response()->json(['message' => 'success', 'login_code' => $result['login_code'], 'password' => $result['password']]);
         } else {
-            return response()->json(['message' => $result['message']], 500);
+            return response()->json(['message' => $result['message'], 'reason' => $result['reason']], 500);
         }
     }
 
@@ -111,7 +112,10 @@ class CustomerController extends Controller
         }
 
         // 注文履歴をページネーション
-        $orders = Order::where('user_id', $customer->id)->orderBy('ordered_at', 'desc')->paginate(10);
+        $orders = Order::where('site_id', $auth->site_id)
+            ->where('user_id', $customer->id)
+            ->orderBy('ordered_at', 'desc')
+            ->paginate(10);
 
         return view('operator.customer.description', compact('customer', 'operator', 'orders'));
     }
@@ -122,29 +126,21 @@ class CustomerController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Request $request)
+    public function destroy(Request $request, CustomerDeleteService $customerDeleteService, $id)
     {
-        try {
-            $auth = Auth::user();
-    
-            // バリデーション
-            $request->validate([
-                'user_code' => 'required|string|max:255',
-            ]);
+        $auth = Auth::user();
 
-            // 認証テーブルから該当のログインIDのsite_idとentity_idを取得
-            $auth = Authenticate::where('login_code', $request->user_code)->first();
+        // バリデーション
+        // $request->validate([
+        //     'user_code' => 'required|string|max:255',
+        // ]);
 
-            // 認証情報を削除
-            Authenticate::where('login_code', $request->user_code)->delete();
+        $result = $customerDeleteService->deleteCustomer($id);
 
-            // ユーザーをsite_idとidで削除
-            User::where('site_id', $auth->site_id)->where('id', $auth->entity_id)->delete();
-    
-            // JSONで返す
+        if ($result['message'] === 'success') {
             return response()->json(['message' => 'success']);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+        } else {
+            return response()->json(['message' => $result['reason']], 500);
         }
     }
 
@@ -190,4 +186,79 @@ class CustomerController extends Controller
         return view('operator.customer.list', compact('operator', 'customers'));
     }
 
+    /**
+     * 顧客データ更新
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, CustomerUpdateService $customerUpdateService, $id)
+    {
+        // バリデーション
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'postal_code' => 'required|string|max:255',
+            'phone' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+        ]);
+
+        $data = $request->only(['name', 'postal_code', 'phone', 'address']);
+
+        $result = $customerUpdateService->updateCustomer($id, $data);
+
+        if ($result['message'] === 'success') {
+            return response()->json(['message' => 'success']);
+        } else {
+            return response()->json(['message' => $result['reason']], 500);
+        }
+    }
+
+    /**
+     * 顧客データアップロード
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function upload(Request $request, CustomerRegistService $customerRegistService)
+    {
+        // バリデーション
+        $request->validate([
+            'customerFile' => 'required|file|mimes:csv,txt',
+        ]);
+
+        $auth = Auth::user();
+
+        $file = $request->file('customerFile');
+
+        $file_path = $file->store('csv');
+
+        // ファイルデータの中身をサービスクラスでチェック
+        
+
+
+        // 成功した場合のレスポンス
+        return response()->json(['message' => 'success', 'file_path' => $file_path]);
+
+        // 失敗した場合のレスポンス
+        return response()->json(['message' => 'error', 'reason' => 'Some error message'], 500);
+    }
+
+    /**
+     * アップロードステータス
+     *
+     * @return \Illuminate\View\View
+     */
+    public function status(Request $request)
+    {
+        $auth = Auth::user();
+
+        // auth->entity_idでログインしているオペレーターの名前Operatorから取得
+        $operator = Operator::where('id', $auth->entity_id)->first();
+
+        // ファイルパスから処理をここで行う
+        $result = $customerRegistService->importCustomer($file_path, $auth);
+
+
+        return view('operator.customer.upload_status', compact('operator'));
+    }
 }

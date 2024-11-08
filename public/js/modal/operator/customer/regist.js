@@ -37,12 +37,15 @@ export function makeCustomerRegistConfirmModal() {
  *
  * @return void
  */
-export function makeCustomerRegistSuccessModal() {
+export function makeCustomerRegistSuccessModal(loginCode, password) {
     const customerRegistSuccessModal = document.getElementById("modal");
     if (customerRegistSuccessModal) {
         document.getElementById("modalTitle").textContent = "登録完了";
         document.getElementById("modalContent").innerHTML =
-            "顧客情報を登録しました。";
+            "顧客情報を登録しました。<br>ログインIDとパスワードをお伝えしてください。<br>ログインID：" +
+            loginCode +
+            "<br>パスワード：" +
+            password;
         document.getElementById("execModal").style.display = "none";
         document.getElementById("cancelModal").textContent = "閉じる";
         document.getElementById("modal").classList.remove("hidden");
@@ -54,12 +57,12 @@ export function makeCustomerRegistSuccessModal() {
  *
  * @return void
  */
-export function makeCustomerRegistFailModal() {
+export function makeCustomerRegistFailModal(reason) {
     const CustomerRegistFailModal = document.getElementById("modal");
     if (CustomerRegistFailModal) {
         document.getElementById("modalTitle").textContent = "登録失敗";
         document.getElementById("modalContent").innerHTML =
-            "顧客情報の登録に失敗しました。";
+            "顧客情報の登録に失敗しました。<br>理由：" + reason;
         document.getElementById("execModal").style.display = "none";
         document.getElementById("cancelModal").textContent = "閉じる";
         document.getElementById("modal").classList.remove("hidden");

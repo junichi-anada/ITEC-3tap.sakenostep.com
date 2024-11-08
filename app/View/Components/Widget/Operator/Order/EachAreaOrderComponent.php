@@ -1,13 +1,13 @@
 <?php
 
-namespace App\View\Components\Operator;
+namespace App\View\Components\Widget\Operator\Order;
 
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use App\Services\Order\AreaOrderService;
 
-class AreaOrderWidget extends Component
+class EachAreaOrderComponent extends Component
 {
     public $ordersByArea;
 
@@ -21,6 +21,6 @@ class AreaOrderWidget extends Component
 
     public function render()
     {
-        return view('components.operator.area-order-widget');
+        return view('components.widget.operator.order.EachAreaOrder');
     }
 }
