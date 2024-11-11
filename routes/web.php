@@ -3,16 +3,20 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\Operator\CustomerController as OperatorCustomerController;
-use App\Http\Controllers\User\FavoriteItemController as UserFavoriteItemController;
-use App\Http\Controllers\User\RecommendedItemController as UserRecommendedItemController;
-use App\Http\Controllers\User\OrderController as UserOrderController;
-use App\Http\Controllers\User\SearchController as UserSearchController;
-use App\Http\Controllers\User\CategoryController as UserCategoryController;
-use App\Http\Controllers\User\PageController as UserPageController;
-use App\Http\Controllers\User\HistoryController as UserHistoryController;
-use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Operator\OrderController as OperatorOrderController;
+use App\Http\Controllers\Operator\ItemController as OperatorItemController;
+use App\Http\Controllers\Web\Auth\LoginController;
+use App\Http\Controllers\Web\Customer\OrderController as CustomerOrderWebController;
+use App\Http\Controllers\Ajax\Customer\OrderController as CustomerOrderApiController;
+use App\Http\Controllers\Web\Customer\RecommendedItemController as CustomerRecommendedItemWebController;
+use App\Http\Controllers\Ajax\Customer\FavoriteItemController as CustomerFavoriteItemApiController;
+use App\Http\Controllers\Web\Customer\FavoriteItemController as CustomerFavoriteItemWebController;
+use App\Http\Controllers\Web\Customer\PageController as CustomerPageWebController;
+use App\Http\Controllers\Web\Customer\CategoryController as CustomerCategoryWebController;
+use App\Http\Controllers\Web\Customer\SearchController as CustomerSearchWebController;
+use App\Http\Controllers\Web\Customer\HistoryController as CustomerHistoryWebController;
 
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::get('logout', [LoginController::class, 'logout'])->name('logout');
 
@@ -31,60 +35,60 @@ Route::middleware(['web', 'auth'])->group(function () {
      * 注文リスト
      */
     Route::prefix('order')->group(function () {
-        Route::get('/', [UserOrderController::class, 'index'])->name('user.order.item.list');
-        Route::post('/add', [UserOrderController::class, 'store'])->name('user.order.item.list.add');
-        Route::delete('/remove/{detailCode}', [UserOrderController::class, 'destroy'])->name('user.order.item.list.remove');
-        Route::delete('/removeAll', [UserOrderController::class, 'destroyAll'])->name('user.order.item.list.remove.all');
-        Route::post('/send', [UserOrderController::class, 'order'])->name('user.order.item.list.order');
-        Route::post('/addAll', [UserOrderController::class, 'addAll'])->name('user.order.item.list.add.all');
+        Route::get('/', [CustomerOrderWebController::class, 'index'])->name('user.order.item.list');
+        Route::post('/add', [CustomerOrderApiController::class, 'store'])->name('user.order.item.list.add');
+        Route::delete('/remove/{item_code}', [CustomerOrderApiController::class, 'destroy'])->name('user.order.item.list.remove');
+        Route::delete('/removeAll', [CustomerOrderApiController::class, 'destroyAll'])->name('user.order.item.list.remove.all');
+        Route::post('/send', [CustomerOrderApiController::class, 'order'])->name('user.order.item.list.order');
     });
 
     /**
      * お気に入り商品関連のルーティング
      */
     Route::prefix('favorites')->group(function () {
-        Route::post('/add', [UserFavoriteItemController::class, 'store'])->name('user.favorite.item.add');
-        Route::delete('/remove/{id}', [UserFavoriteItemController::class, 'destroy'])->name('user.favorite.item.remove');
-        Route::get('/', [UserFavoriteItemController::class, 'index'])->name('user.favorite.item.list');
+        Route::post('/add', [CustomerFavoriteItemApiController::class, 'store'])->name('user.favorite.item.add');
+        Route::delete('/remove/{item_code}', [CustomerFavoriteItemApiController::class, 'destroy'])->name('user.favorite.item.remove');
+        Route::get('/', [CustomerFavoriteItemWebController::class, 'index'])->name('user.favorite.item.list');
     });
 
     /**
      * おすすめ商品関連のルーティング
      */
     Route::prefix('recommendations')->group(function () {
-        Route::get('/', [UserRecommendedItemController::class, 'index'])->name('user.recommended.item.list');
+        Route::get('/', [CustomerRecommendedItemWebController::class, 'index'])->name('user.recommended.item.list');
     });
 
     /**
      * 商品一覧関連のルーティング
      */
     Route::prefix('categories')->group(function () {
-        Route::get('/', [UserCategoryController::class, 'index'])->name('user.category.list');
-        Route::get('/{code}', [UserCategoryController::class, 'show'])->name('user.category.item.list');
+        Route::get('/', [CustomerCategoryWebController::class, 'index'])->name('user.category.list');
+        Route::get('/{code}', [CustomerCategoryWebController::class, 'show'])->name('user.category.item.list');
     });
 
     /**
      * 検索関連のルーティング
      */
     Route::prefix('search')->group(function () {
-        Route::post('/', [UserSearchController::class, 'index'])->name('user.search.item.list');
-        Route::get('/', [UserSearchController::class, 'index']);
+        Route::post('/', [CustomerSearchWebController::class, 'index'])->name('user.search.item.list');
+        Route::get('/', [CustomerSearchWebController::class, 'index']);
     });
 
     /**
      * 注文履歴のルーティング
      */
     Route::prefix('history')->group(function () {
-        Route::get('/', [UserHistoryController::class, 'index'])->name('user.history.list');
-        Route::get('/{order_code}', [UserHistoryController::class, 'detail'])->name('user.history.detail');
+        Route::get('/', [CustomerHistoryWebController::class, 'index'])->name('user.history.list');
+        Route::get('/{order_code}', [CustomerHistoryWebController::class, 'detail'])->name('user.history.detail');
+        Route::post('/addAll', [CustomerHistoryWebController::class, 'addAll'])->name('user.order.item.list.add.all');
     });
 
     /**
      * 固定ページのルーティング
      */
     Route::prefix('about')->group(function () {
-        Route::get('/order', [UserPageController::class, 'order'])->name('user.about.order');
-        Route::get('/delivery', [UserPageController::class, 'delivery'])->name('user.about.delivery');
+        Route::get('/order', [CustomerPageWebController::class, 'order'])->name('user.about.order');
+        Route::get('/delivery', [CustomerPageWebController::class, 'delivery'])->name('user.about.delivery');
     });
 
 });
@@ -116,6 +120,37 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::post('/upload', [OperatorCustomerController::class, 'upload'])->name('operator.customer.upload'); // 顧客データアップロード
             Route::get('/upload/status', [OperatorCustomerController::class, 'status'])->name('operator.customer.status'); // アップロードステータス
         });
+
+        /**
+         * 注文管理
+         */
+        Route::prefix('order')->group(function () {
+            Route::get('/', [OperatorOrderController::class, 'index'])->name('operator.order.index'); // 顧客一覧
+            Route::get('/create', [OperatorOrderController::class, 'create'])->name('operator.order.create'); // 顧客登録フォーム
+            Route::post('/', [OperatorOrderController::class, 'store'])->name('operator.order.store'); // 顧客登録
+            Route::get('/{id}', [OperatorOrderController::class, 'show'])->name('operator.order.show'); // 顧客詳細
+            Route::put('/{id}', [OperatorOrderController::class, 'update'])->name('operator.order.update'); // 顧客更新
+            Route::delete('/{id}', [OperatorOrderController::class, 'destroy'])->name('operator.order.destroy'); // 顧客削除
+            Route::post('/search', [OperatorOrderController::class, 'search'])->name('operator.order.search'); // 顧客検索
+            Route::post('/upload', [OperatorOrderController::class, 'upload'])->name('operator.order.upload'); // 顧客データアップロード
+            Route::get('/upload/status', [OperatorOrderController::class, 'status'])->name('operator.order.status'); // アップロードステータス
+        });
+
+        /**
+         * 商品管理
+         */
+        Route::prefix('item')->group(function () {
+            Route::get('/', [OperatorItemController::class, 'index'])->name('operator.item.index'); // 顧客一覧
+            Route::get('/create', [OperatorItemController::class, 'create'])->name('operator.item.create'); // 顧客登録フォーム
+            Route::post('/', [OperatorItemController::class, 'store'])->name('operator.item.store'); // 顧客登録
+            Route::get('/{id}', [OperatorItemController::class, 'show'])->name('operator.item.show'); // 顧客詳細
+            Route::put('/{id}', [OperatorItemController::class, 'update'])->name('operator.item.update'); // 顧客更新
+            Route::delete('/{id}', [OperatorItemController::class, 'destroy'])->name('operator.item.destroy'); // 顧客削除
+            Route::post('/search', [OperatorItemController::class, 'search'])->name('operator.item.search'); // 顧客検索
+            Route::post('/upload', [OperatorItemController::class, 'upload'])->name('operator.item.upload'); // 顧客データアップロード
+            Route::get('/upload/status', [OperatorItemController::class, 'status'])->name('operator.item.status'); // アップロードステータス
+        });
+
 
     });
 

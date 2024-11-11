@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Components\Widget\Operator\Order\inner;
+namespace App\View\Components\Widget\Operator\Order\Inner;
 
 use Closure;
 use Illuminate\Contracts\View\View;

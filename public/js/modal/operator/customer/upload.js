@@ -27,7 +27,10 @@ export function makeCustomerUploadConfirmModal() {
                 </div>
             </form>
             </div>
+            <p class="text-center text-red-600" id="processUpload" style="display: none;">アップロード中です。しばらくお待ちください。</p>
         `;
+        // execModalが非表示の場合は表示する
+        document.getElementById("execModal").style.display = "block";
         document.getElementById("execModal").textContent = "アップロード";
         document.getElementById("cancelModal").textContent = "キャンセル";
         document.getElementById("execMode").textContent = "upload";

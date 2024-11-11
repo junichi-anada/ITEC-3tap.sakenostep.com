@@ -5,7 +5,7 @@ namespace App\View\Components\Widget\Operator\Item;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use App\Services\Order\PopularItemService;
+use App\Services\Order\Operator\PopularItemService;
 
 class PopularRankingComponent extends Component
 {
@@ -21,6 +21,6 @@ class PopularRankingComponent extends Component
 
     public function render()
     {
-        return view('components.widget.operator.item.PopularRanking');
+        return view('components.widget.operator.order.PopularRanking');
     }
 }

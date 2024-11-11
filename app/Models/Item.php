@@ -40,7 +40,7 @@ class Item extends Model
 
     public function unit()
     {
-        return $this->belongsTo(ItemUnit::class);
+        return $this->belongsTo(ItemUnit::class, 'unit_id');
     }
 
     public function orderDetails()

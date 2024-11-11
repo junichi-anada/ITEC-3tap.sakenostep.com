@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Authenticate extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, HasApiTokens;
 
     use SoftDeletes;
 

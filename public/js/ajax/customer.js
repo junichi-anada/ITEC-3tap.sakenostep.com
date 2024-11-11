@@ -71,7 +71,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 deleteCustomer();
             }
             if (document.getElementById("execMode").textContent == "upload") {
-                // console.log("upload");
                 uploadCustomer();
             }
         });
@@ -209,9 +208,19 @@ document.addEventListener("DOMContentLoaded", function () {
      * @return JSON
      */
     async function uploadCustomer() {
+        const inProcessMessage = document.getElementById("processUpload");
         const customerUploadForm = document.getElementById("uploadForm");
-
         const formData = new FormData(customerUploadForm);
+
+        if (
+            !formData.get("customerFile") ||
+            formData.get("customerFile").size === 0
+        ) {
+            alert("ファイルが選択されていません。");
+            return;
+        }
+
+        inProcessMessage.style.display = "block";
 
         try {
             const response = await fetch("/operator/customer/upload", {
@@ -227,14 +236,13 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.message === "success") {
                 // 成功した場合、処理状況を表示するページにリダイレクト
                 window.location.href =
-                    "/operator/customer/status?file_path=" +
-                    encodeURIComponent(data.file_path);
+                    "/operator/customer/upload/status?task_code=" +
+                    encodeURIComponent(data.task_code);
             } else {
                 console.log(data.message);
                 makeCustomerUploadFailModal();
             }
         } catch (error) {
-            console.error("エラー:", error);
             makeCustomerUploadFailModal();
         }
     }

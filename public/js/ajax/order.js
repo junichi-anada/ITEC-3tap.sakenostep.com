@@ -16,8 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
         addToOrderButtons.forEach((button) => {
             button.addEventListener("click", function () {
                 // 必要なデータを取得
-                const itemId = this.getAttribute("data-item-id");
-                const siteId = this.getAttribute("data-site-id");
+                const itemCode = this.getAttribute("data-item-code");
 
                 // 対応する入力フィールドの値を取得
                 const inputField = this.closest(".flex.gap-x-4").querySelector(
@@ -25,10 +24,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
                 const volume = inputField ? inputField.value : 1; // 値がなければデフォルトで1
 
-                // CSRFトークンの取得
-                const csrfToken = document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute("content");
+                //CSRFトークン取得
+                const csrfToken = document.querySelector(
+                    'input[name="_token"]'
+                ).value;
+
+                console.log(itemCode, volume);
 
                 // Ajaxリクエスト
                 fetch("/order/add", {
@@ -38,8 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         "X-CSRF-TOKEN": csrfToken,
                     },
                     body: JSON.stringify({
-                        item_id: itemId,
-                        site_id: siteId,
+                        item_code: itemCode,
                         volume: volume,
                     }),
                 })
@@ -71,15 +71,15 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".del-to-order").forEach((button) => {
         button.addEventListener("click", function () {
             // 必要なデータを取得
-            const detailCode = this.getAttribute("data-detail-code");
+            const itemlCode = this.getAttribute("data-item-code");
 
-            // CSRFトークンの取得
-            const csrfToken = document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content");
+            //CSRFトークン取得
+            const csrfToken = document.querySelector(
+                'input[name="_token"]'
+            ).value;
 
             // Ajaxリクエスト
-            fetch(`/order/remove/${detailCode}`, {
+            fetch(`/order/remove/${itemlCode}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -122,10 +122,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const delAllOrderButton = document.getElementById("del-all-order");
     if (delAllOrderButton) {
         delAllOrderButton.addEventListener("click", function () {
-            // CSRFトークンの取得
-            const csrfToken = document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content");
+            //CSRFトークン取得
+            const csrfToken = document.querySelector(
+                'input[name="_token"]'
+            ).value;
 
             fetch("/order/removeAll", {
                 method: "DELETE",
@@ -170,10 +170,10 @@ document.addEventListener("DOMContentLoaded", function () {
             // 注文確認モーダルを非表示にする。
             document.getElementById("modal").classList.add("hidden");
 
-            // CSRFトークンの取得
-            const csrfToken = document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content");
+            //CSRFトークン取得
+            const csrfToken = document.querySelector(
+                'input[name="_token"]'
+            ).value;
 
             fetch("/order/send", {
                 method: "POST",

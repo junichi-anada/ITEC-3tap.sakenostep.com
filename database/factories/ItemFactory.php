@@ -23,23 +23,24 @@ class ItemFactory extends Factory
      */
     public function definition(): array
     {
-        // 先に ItemCategory と ItemUnit を生成
+        $site = Site::factory()->create();
+
         $category = ItemCategory::factory()->create([
-            'site_id' => Site::where('id', '!=', 1)->inRandomOrder()->first()->id,  // site_id = 1以外のランダムなCategoryのIDを取得
+            'site_id' => $site->id,
         ]);
 
         $unit = ItemUnit::factory()->create([
-            'site_id' => Site::where('id', '!=', 1)->inRandomOrder()->first()->id,  // site_id = 1以外のランダムなUnitのIDを取得
+            'site_id' => $site->id,
         ]);
 
         return [
-            'item_code' => Str::uuid(),  // UUIDで生成
-            'site_id' => $category->site_id,  // ItemCategory と同じ Site を使用
+            'item_code' => Str::uuid(),
+            'site_id' => $site->id,
             'category_id' => $category->id,
             'maker_name' => $this->faker->company,
             'name' => $this->faker->word,
             'description' => $this->faker->paragraph,
-            'unit_price' => $this->faker->randomFloat(2, 100, 10000),  // 100から10000の範囲でランダム
+            'unit_price' => $this->faker->randomFloat(2, 100, 10000),
             'unit_id' => $unit->id,
             'from_source' => $this->faker->randomElement(['MANUAL', 'IMPORT']),
             'is_recommended' => $this->faker->boolean,

@@ -14,13 +14,13 @@
                 </a>
             </li>
             <li class="py-2 px-2">
-                <a href="#" class="flex items-center w-full gap-x-4">
+                <a href="{{ route('operator.order.index') }}" class="flex items-center w-full gap-x-4">
                     <span class="material-symbols-outlined text-3xl">description</span>
                     <span class="text-base">注文管理</span>
                 </a>
             </li>
             <li class="py-2 px-2">
-                <a href="#" class="flex items-center w-full gap-x-4">
+                <a href="{{ route('operator.item.index') }}" class="flex items-center w-full gap-x-4">
                     <span class="material-symbols-outlined text-3xl">liquor</span>
                     <span class="text-base">商品管理</span>
                 </a>

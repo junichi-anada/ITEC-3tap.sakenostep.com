@@ -5,8 +5,8 @@ namespace App\View\Components\Widget\Operator\Customer;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use App\Services\Customer\CountService as CustomerCountService;
-use App\Services\Customer\ListService as CustomerListService;
+use App\Services\Operator\Customer\CountService as CustomerCountService;
+use App\Services\Operator\Customer\ListService as CustomerListService;
 
 class CustomerListComponent extends Component
 {
