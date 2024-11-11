@@ -199,7 +199,40 @@ document.addEventListener("DOMContentLoaded", function () {
     const addToAllOrder = document.getElementById("add-to-all-order");
     if (addToAllOrder) {
         addToAllOrder.addEventListener("click", function () {
-            document.getElementById("add-to-all-order-form").submit();
+            // CSRFトークン取得
+            const csrfToken = document.querySelector(
+                'input[name="_token"]'
+            ).value;
+
+            // order_codeを取得
+            const orderCode = this.getAttribute("data-order-code");
+
+            // Ajaxリクエスト
+            fetch("/history/addAll", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+                body: JSON.stringify({
+                    order_code: orderCode,
+                }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.message) {
+                        // alert(data.message);
+                        if (data.redirect) {
+                            location.href = data.redirect;
+                        }
+                    } else {
+                        alert("エラーが発生しました。");
+                    }
+                })
+                .catch((error) => {
+                    console.error("エラー:", error);
+                    alert("注文履歴のアイテム追加に失敗しました。");
+                });
         });
     }
 });

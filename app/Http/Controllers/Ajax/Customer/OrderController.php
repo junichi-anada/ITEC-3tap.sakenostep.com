@@ -106,8 +106,8 @@ class OrderController extends Controller
         $volume = $request->input('volume', 1);
 
         try {
-            // 注文基本データを持っているか確認
-            $order = $this->orderReadService->getByUserIdAndSiteId($auth->id, $auth->site_id);
+            // 新しいメソッドを使用して未発注の注文基本データを取得
+            $order = $this->orderReadService->getUnorderedByUserIdAndSiteId($auth->id, $auth->site_id);
 
             // 持っていない場合は、注文基本データから一挙に作成
             if (!$order) {
@@ -115,12 +115,7 @@ class OrderController extends Controller
             }
             // 持っている場合は、注文詳細データのみ作成
             else {
-                $orderDetail = $this->orderDetailCreateService->create([
-                    'order_id' => $order->id,
-                    'item_id' => $item->id,
-                    'volume' => $volume,
-                    'item' => $item,
-                ]);
+                $orderDetail = $this->orderDetailCreateService->create($order->id, $item, $volume);
             }
 
             return $this->jsonResponse(self::SUCCESS_MESSAGE, ['detail_code' => $orderDetail->detail_code], 201);

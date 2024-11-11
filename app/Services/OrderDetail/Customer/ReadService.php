@@ -90,4 +90,20 @@ class ReadService
                               ->get();
         }, '未注文の商品リストとアイテム情報の取得に失敗しました');
     }
+
+    /**
+     * 指定された注文IDに基づいて注文詳細を取得
+     *
+     * @param int $orderId
+     * @return \Illuminate\Database\Eloquent\Collection | null
+     */
+    public function getDetailsByOrderId(int $orderId)
+    {
+        try {
+            return OrderDetail::where('order_id', $orderId)->get();
+        } catch (\Exception $e) {
+            Log::error('注文詳細の取得に失敗しました: ' . $e->getMessage());
+            return collect(); // 空のコレクションを返す
+        }
+    }
 }

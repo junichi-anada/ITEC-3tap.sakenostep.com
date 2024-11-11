@@ -8,6 +8,7 @@ use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
 use App\Services\ItemCategory\Customer\ReadService as ItemCategoryReadService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class HistoryController extends Controller
 {
@@ -34,7 +35,7 @@ class HistoryController extends Controller
     {
         try {
             $auth = Auth::user();
-            $orders = $this->orderReadService->getOrdersByUserId($auth->id);
+            $orders = $this->orderReadService->getOrderedByUserIdAndSiteId($auth->id, $auth->site_id);
             $categories = $this->itemCategoryReadService->getListBySiteId($auth->site_id);
 
             return view('customer.history', compact('orders', 'categories'));
@@ -45,17 +46,23 @@ class HistoryController extends Controller
     }
 
     /**
-     * 注文履歴の詳細表示
+     * 注文���歴の詳細表示
      *
-     * @param int $orderId
+     * @param string $orderCode
      * @return \Illuminate\View\View
      */
-    public function show($orderId)
+    public function show($orderCode)
     {
         try {
             $auth = Auth::user();
-            $order = $this->orderReadService->getOrderByIdAndUserId($orderId, $auth->id);
-            $orderDetails = $this->orderDetailReadService->getDetailsByOrderId($orderId);
+            // order_codeを使用して注文を取得
+            $order = $this->orderReadService->getByOrderCode($orderCode);
+
+            if (!$order || $order->user_id !== $auth->id) {
+                return view('customer.history_detail', ['error' => __('注文が見つかりません。')]);
+            }
+
+            $orderDetails = $this->orderDetailReadService->getDetailsByOrderId($order->id);
             $categories = $this->itemCategoryReadService->getListBySiteId($auth->site_id);
 
             return view('customer.history_detail', compact('order', 'orderDetails', 'categories'));

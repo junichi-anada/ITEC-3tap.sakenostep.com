@@ -7,9 +7,17 @@ namespace App\Services\Order\Customer;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\OrderDetail\Customer\CreateService as OrderDetailCreateService;
 
 class CreateService
 {
+    protected $orderDetailCreateService;
+
+    public function __construct(OrderDetailCreateService $orderDetailCreateService)
+    {
+        $this->orderDetailCreateService = $orderDetailCreateService;
+    }
+
     /**
      * 新しい注文を作成する
      *
@@ -21,7 +29,7 @@ class CreateService
         return DB::transaction(function () use ($data) {
             $order = $this->createBaseOrder($data['site_id'], $data['user_id']);
 
-            $orderDetail = $this->createOrderDetail($order->id, $data['item'], $data['volume']);
+            $orderDetail = $this->orderDetailCreateService->createl($order->id, $data['item'], $data['volume']);
 
             return $orderDetail;
         });

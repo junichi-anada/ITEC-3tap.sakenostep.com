@@ -1,11 +1,12 @@
 <?php
 /**
- * 注文情報取得サービス
+ * 注文基本データ取得サービス
  */
 namespace App\Services\Order\Customer;
 
 use App\Models\Order;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Collection;
 
 class ReadService
 {
@@ -27,7 +28,7 @@ class ReadService
     }
 
     /**
-     * 注文コードに基づいて注文情報を取得する
+     * 注文コードに基づいて注文基本データを取得する
      *
      * @param string $orderCode
      * @return Order|null
@@ -40,7 +41,7 @@ class ReadService
     }
 
     /**
-     * ユーザーIDに基づいて注文リストを取得する
+     * ユーザーIDに���づいて注文基本データを取得する
      *
      * @param int $userId
      * @return \Illuminate\Database\Eloquent\Collection | null
@@ -53,7 +54,7 @@ class ReadService
     }
 
     /**
-     * ユーザーIDに基づいて注文リストを取得します。
+     * ユーザーIDに基づいて注文基本データを取得します。
      *
      * @param int $userId
      * @return \Illuminate\Database\Eloquent\Collection
@@ -69,7 +70,7 @@ class ReadService
     }
 
     /**
-     * ユーザーIDとサイトIDに基づいて注文情報を取得する
+     * ユーザーIDとサイトIDに基づいて注文基本データを取得する
      *
      * @param int $userId
      * @param int $siteId
@@ -80,6 +81,60 @@ class ReadService
         return $this->tryCatchWrapper(function () use ($userId, $siteId) {
             return Order::where('user_id', $userId)->where('site_id', $siteId)->first();
         }, '注文情報の取得に失敗しました');
+    }
+
+    /**
+     * 指定されたユーザーIDと注文IDに基づいて注文基本データを取得
+     *
+     * @param int $orderId
+     * @param int $userId
+     * @return Order|null
+     */
+    public function getOrderByIdAndUserId(int $orderId, int $userId): ?Order
+    {
+        return Order::where('id', $orderId)
+                    ->where('user_id', $userId)
+                    ->first();
+    }
+
+    /**
+     * ユーザーIDとサイトIDに基づいて未発注の注文基本データを取得
+     *
+     * @param int $userId
+     * @param int $siteId
+     * @return Order|null
+     */
+    public function getUnorderedByUserIdAndSiteId(int $userId, int $siteId): ?Order
+    {
+        try {
+            return Order::where('user_id', $userId)
+                        ->where('site_id', $siteId)
+                        ->whereNull('ordered_at')
+                        ->first();
+        } catch (\Exception $e) {
+            Log::error('未発注の注文の取得に失敗しました: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * ユーザーIDとサイトIDに基づいて発注済みの注文基本データを取得
+     *
+     * @param int $userId
+     * @param int $siteId
+     * @return Collection
+     */
+    public function getOrderedByUserIdAndSiteId(int $userId, int $siteId): Collection
+    {
+        try {
+            return Order::where('user_id', $userId)
+                        ->where('site_id', $siteId)
+                        ->whereNotNull('ordered_at')
+                        ->get();
+        } catch (\Exception $e) {
+            Log::error('発注済みの注文の取得に失敗しました: ' . $e->getMessage());
+            return collect(); // 空のコレクションを返す
+        }
     }
 }
 

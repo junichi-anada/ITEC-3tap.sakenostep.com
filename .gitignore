@@ -20,3 +20,4 @@ yarn-error.log
 /.vscode
 /.document
 .vscode/sftp.json
+.cursorignore

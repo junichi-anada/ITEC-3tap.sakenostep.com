@@ -7,14 +7,15 @@ use App\Http\Controllers\Operator\OrderController as OperatorOrderController;
 use App\Http\Controllers\Operator\ItemController as OperatorItemController;
 use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Customer\OrderController as CustomerOrderWebController;
-use App\Http\Controllers\Ajax\Customer\OrderController as CustomerOrderApiController;
+use App\Http\Controllers\Ajax\Customer\OrderController as CustomerOrderAjaxController;
 use App\Http\Controllers\Web\Customer\RecommendedItemController as CustomerRecommendedItemWebController;
-use App\Http\Controllers\Ajax\Customer\FavoriteItemController as CustomerFavoriteItemApiController;
+use App\Http\Controllers\Ajax\Customer\FavoriteItemController as CustomerFavoriteItemAjaxController;
 use App\Http\Controllers\Web\Customer\FavoriteItemController as CustomerFavoriteItemWebController;
 use App\Http\Controllers\Web\Customer\PageController as CustomerPageWebController;
 use App\Http\Controllers\Web\Customer\CategoryController as CustomerCategoryWebController;
 use App\Http\Controllers\Web\Customer\SearchController as CustomerSearchWebController;
-use App\Http\Controllers\Web\Customer\HistoryController as CustomerHistoryWebController;
+use App\Http\Controllers\Web\Customer\HistoryController;
+use App\Http\Controllers\Ajax\Customer\HistoryController as HistoryAjaxController;
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -36,18 +37,18 @@ Route::middleware(['web', 'auth'])->group(function () {
      */
     Route::prefix('order')->group(function () {
         Route::get('/', [CustomerOrderWebController::class, 'index'])->name('user.order.item.list');
-        Route::post('/add', [CustomerOrderApiController::class, 'store'])->name('user.order.item.list.add');
-        Route::delete('/remove/{item_code}', [CustomerOrderApiController::class, 'destroy'])->name('user.order.item.list.remove');
-        Route::delete('/removeAll', [CustomerOrderApiController::class, 'destroyAll'])->name('user.order.item.list.remove.all');
-        Route::post('/send', [CustomerOrderApiController::class, 'order'])->name('user.order.item.list.order');
+        Route::post('/add', [CustomerOrderAjaxController::class, 'store'])->name('user.order.item.list.add');
+        Route::delete('/remove/{item_code}', [CustomerOrderAjaxController::class, 'destroy'])->name('user.order.item.list.remove');
+        Route::delete('/removeAll', [CustomerOrderAjaxController::class, 'destroyAll'])->name('user.order.item.list.remove.all');
+        Route::post('/send', [CustomerOrderAjaxController::class, 'order'])->name('user.order.item.list.order');
     });
 
     /**
      * お気に入り商品関連のルーティング
      */
     Route::prefix('favorites')->group(function () {
-        Route::post('/add', [CustomerFavoriteItemApiController::class, 'store'])->name('user.favorite.item.add');
-        Route::delete('/remove/{item_code}', [CustomerFavoriteItemApiController::class, 'destroy'])->name('user.favorite.item.remove');
+        Route::post('/add', [CustomerFavoriteItemAjaxController::class, 'store'])->name('user.favorite.item.add');
+        Route::delete('/remove/{item_code}', [CustomerFavoriteItemAjaxController::class, 'destroy'])->name('user.favorite.item.remove');
         Route::get('/', [CustomerFavoriteItemWebController::class, 'index'])->name('user.favorite.item.list');
     });
 
@@ -78,9 +79,9 @@ Route::middleware(['web', 'auth'])->group(function () {
      * 注文履歴のルーティング
      */
     Route::prefix('history')->group(function () {
-        Route::get('/', [CustomerHistoryWebController::class, 'index'])->name('user.history.list');
-        Route::get('/{order_code}', [CustomerHistoryWebController::class, 'detail'])->name('user.history.detail');
-        Route::post('/addAll', [CustomerHistoryWebController::class, 'addAll'])->name('user.order.item.list.add.all');
+        Route::get('/', [HistoryController::class, 'index'])->name('user.history.list');
+        Route::get('/{order_code}', [HistoryController::class, 'show'])->name('user.history.detail');
+        Route::post('/addAll', [HistoryAjaxController::class, 'addAll'])->name('user.order.item.list.add.all');
     });
 
     /**
@@ -90,7 +91,6 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/order', [CustomerPageWebController::class, 'order'])->name('user.about.order');
         Route::get('/delivery', [CustomerPageWebController::class, 'delivery'])->name('user.about.delivery');
     });
-
 });
 
 /* 管理者用のルーティング */
@@ -161,3 +161,5 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/error', function () { return view('operator.customer.error'); })->name('operator.customer.error');
 
 });
+
+Route::get('/customer/history/detail', [HistoryController::class, 'detail']);
