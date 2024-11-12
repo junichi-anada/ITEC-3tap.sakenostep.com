@@ -18,6 +18,7 @@ class SiteSeeder extends Seeder
         // 実データのSiteを挿入
         Site::create([
             'site_code' => 'SITE-UUID-1234-5678',
+            'name_code' => 'sakeno_step',
             'company_id' => 1, // company_id = 1 固定
             'url' => 'https://3tap.sakenostep.itec.local',
             'name' => '酒のステップ-3TAPシステム',

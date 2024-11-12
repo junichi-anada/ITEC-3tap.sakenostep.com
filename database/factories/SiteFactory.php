@@ -26,6 +26,7 @@ class SiteFactory extends Factory
 
         return [
             'site_code' => Str::uuid(),  // UUIDで生成
+            'name_code' => Str::random(10),
             'company_id' => Company::where('id', '!=', 1)->inRandomOrder()->first()->id,  // 1以外のランダムなCompanyのIDを取得
             'url' => $this->faker->url,
             'name' => $this->faker->company,
