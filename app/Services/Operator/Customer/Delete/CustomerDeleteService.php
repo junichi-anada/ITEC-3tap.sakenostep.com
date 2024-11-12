@@ -3,8 +3,8 @@
 namespace App\Services\Operator\Customer\Delete;
 
 use App\Models\Authenticate;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 
 /**
  * 顧客削除サービスクラス
@@ -15,13 +15,19 @@ class CustomerDeleteService
 {
     private $userDeleteService;
     private $authenticationDeleteService;
+    private $logService;
+    private $transactionService;
 
     public function __construct(
         UserDeleteService $userDeleteService,
-        AuthenticationDeleteService $authenticationDeleteService
+        AuthenticationDeleteService $authenticationDeleteService,
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
     ) {
         $this->userDeleteService = $userDeleteService;
         $this->authenticationDeleteService = $authenticationDeleteService;
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
     }
 
     /**
@@ -32,18 +38,17 @@ class CustomerDeleteService
      */
     public function deleteCustomer(string $userCode): array
     {
-        DB::beginTransaction();
         try {
-            $auth = $this->getAuthenticateByUserCode($userCode);
+            return $this->transactionService->execute(function () use ($userCode) {
+                $auth = $this->getAuthenticateByUserCode($userCode);
 
-            $this->userDeleteService->deleteUser($auth->entity_id);
-            $this->authenticationDeleteService->deleteAuthenticate($auth->id);
+                $this->userDeleteService->deleteUser($auth->entity_id);
+                $this->authenticationDeleteService->deleteAuthenticate($auth->id);
 
-            DB::commit();
-            return ['message' => 'success'];
+                return ['message' => 'success'];
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Customer deletion failed: ' . $e->getMessage());
+            $this->logService->logError('Customer deletion failed: ' . $e->getMessage());
             return ['message' => 'fail', 'reason' => $e->getMessage()];
         }
     }

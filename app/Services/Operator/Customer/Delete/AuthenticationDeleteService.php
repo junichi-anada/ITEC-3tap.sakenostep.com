@@ -3,8 +3,8 @@
 namespace App\Services\Operator\Customer\Delete;
 
 use App\Models\Authenticate;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 
 /**
  * 認証情報削除サービスクラス
@@ -13,6 +13,17 @@ use Illuminate\Support\Facades\Log;
  */
 final class AuthenticationDeleteService
 {
+    private CustomerLogService $logService;
+    private CustomerTransactionService $transactionService;
+
+    public function __construct(
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
+    ) {
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * 認証情報を削除する
      *
@@ -22,14 +33,13 @@ final class AuthenticationDeleteService
      */
     public function deleteAuthenticate(int $authId): void
     {
-        DB::beginTransaction();
         try {
-            $auth = Authenticate::findOrFail($authId);
-            $auth->delete();
-            DB::commit();
+            $this->transactionService->execute(function () use ($authId) {
+                $auth = Authenticate::findOrFail($authId);
+                $auth->delete();
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to delete authentication: ' . $e->getMessage());
+            $this->logService->logError('Failed to delete authentication: ' . $e->getMessage());
             throw new \Exception('認証情報の削除に失敗しました。');
         }
     }

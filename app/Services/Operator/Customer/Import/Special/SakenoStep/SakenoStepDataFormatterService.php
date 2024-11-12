@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Operator\Import\Special\SakenoStep;
+namespace App\Services\Operator\Customer\Import\Special\SakenoStep;
 
 /**
  * SakenoStepデータ整形サービスクラス

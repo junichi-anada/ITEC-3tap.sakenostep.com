@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Services\Operator\Import;
+namespace App\Services\Operator\Customer\Import;
 
-use Illuminate\Support\Facades\Log;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 
 /**
  * 一般インポートサービスクラス
@@ -11,6 +12,17 @@ use Illuminate\Support\Facades\Log;
  */
 class GeneralImportService
 {
+    private CustomerLogService $logService;
+    private CustomerTransactionService $transactionService;
+
+    public function __construct(
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
+    ) {
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * データをインポートする
      *
@@ -20,10 +32,12 @@ class GeneralImportService
     public function import(string $filePath): array
     {
         try {
-            // 共通のデータ読み込みと処理
-            return $this->processData($filePath);
+            return $this->transactionService->execute(function () use ($filePath) {
+                // 共通のデータ読み込みと処理
+                return $this->processData($filePath);
+            });
         } catch (\Exception $e) {
-            Log::error('General import failed: ' . $e->getMessage());
+            $this->logService->logError('General import failed: ' . $e->getMessage());
             return ['message' => 'fail', 'reason' => $e->getMessage()];
         }
     }

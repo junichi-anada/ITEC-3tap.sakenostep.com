@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Operator\Import;
+namespace App\Services\Operator\Customer\Import;
 
 /**
  * 一般データ整形サービスクラス

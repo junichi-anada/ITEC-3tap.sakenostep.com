@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services\Operator\Import;
+namespace App\Services\Operator\Customer\Import;
 
-use App\Services\Operator\Import\GeneralImportService;
-use App\Services\Operator\Import\Special\SakenoStep\SakenoStepImportService;
+use App\Services\Operator\Customer\Import\GeneralImportService;
+use App\Services\Operator\Customer\Import\Special\SakenoStep\SakenoStepImportService;
 use Illuminate\Support\Facades\Log;
 
 /**

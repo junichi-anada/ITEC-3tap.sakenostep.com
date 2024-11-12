@@ -3,8 +3,8 @@
 namespace App\Services\Operator\Customer\Delete;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 
 /**
  * ユーザー削除サービスクラス
@@ -13,6 +13,17 @@ use Illuminate\Support\Facades\Log;
  */
 final class UserDeleteService
 {
+    private CustomerLogService $logService;
+    private CustomerTransactionService $transactionService;
+
+    public function __construct(
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
+    ) {
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * ユーザーを削除する
      *
@@ -22,14 +33,13 @@ final class UserDeleteService
      */
     public function deleteUser(int $userId): void
     {
-        DB::beginTransaction();
         try {
-            $user = User::findOrFail($userId);
-            $user->delete();
-            DB::commit();
+            $this->transactionService->execute(function () use ($userId) {
+                $user = User::findOrFail($userId);
+                $user->delete();
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to delete user: ' . $e->getMessage());
+            $this->logService->logError('Failed to delete user: ' . $e->getMessage());
             throw new \Exception('ユーザーの削除に失敗しました。');
         }
     }

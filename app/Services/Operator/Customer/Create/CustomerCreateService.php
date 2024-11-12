@@ -3,33 +3,36 @@
 namespace App\Services\Operator\Customer\Create;
 
 use App\Models\User;
-use App\Models\Authenticate;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 /**
  * 顧客登録サービスクラス
  *
  * このクラスは新しい顧客を登録するためのサービスを提供します。
- * 顧客情報と認証情報をデータベースに保存します。
  */
 final class CustomerCreateService
 {
     private $userCreationService;
     private $authenticationCreationService;
     private $phoneNumberFormatter;
+    private $logService;
+    private $transactionService;
 
     public function __construct(
         UserCreationService $userCreationService,
         AuthenticationCreationService $authenticationCreationService,
-        PhoneNumberFormatter $phoneNumberFormatter
+        PhoneNumberFormatter $phoneNumberFormatter,
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
     ) {
         $this->userCreationService = $userCreationService;
         $this->authenticationCreationService = $authenticationCreationService;
         $this->phoneNumberFormatter = $phoneNumberFormatter;
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
     }
 
     /**
@@ -41,31 +44,19 @@ final class CustomerCreateService
      */
     public function registCustomer(Request $request, $auth): array
     {
-        DB::beginTransaction();
-        $loginCode = "";
-
         try {
-            $loginCode = $this->generateLoginCode();
+            return $this->transactionService->execute(function () use ($request, $auth) {
+                $loginCode = $this->generateLoginCode();
+                $phone = $this->phoneNumberFormatter->formatPhoneNumber($request->phone);
+                $password = Hash::make($phone);
 
-            // パスワードは電話番号を設定
-            $phone = $this->phoneNumberFormatter->formatPhoneNumber($request->phone);
-            $password = Hash::make($phone);
+                $user = $this->userCreationService->createUser($request, $auth->site_id);
+                $this->authenticationCreationService->createAuthenticate($auth->site_id, $user->id, $loginCode, $password);
 
-            // Userモデルにデータを挿入
-            $user = $this->userCreationService->createUser($request, $auth->site_id);
-
-            // 認証情報を挿入
-            $this->authenticationCreationService->createAuthenticate($auth->site_id, $user->id, $loginCode, $password);
-
-            // すべての操作が成功した場合、トランザクションをコミット
-            DB::commit();
-
-            return ['message' => 'success', 'login_code' => $loginCode, 'password' => $phone];
+                return ['message' => 'success', 'login_code' => $loginCode, 'password' => $phone];
+            });
         } catch (\Exception $e) {
-            // 例外が発生した場合、トランザクションをロールバック
-            DB::rollBack();
-            Log::error('Customer registration failed: ' . $e->getMessage());
-
+            $this->logService->logError('Customer registration failed: ' . $e->getMessage());
             return ['message' => 'fail', 'reason' => $e->getMessage()];
         }
     }

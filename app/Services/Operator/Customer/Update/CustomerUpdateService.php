@@ -3,8 +3,8 @@
 namespace App\Services\Operator\Customer\Update;
 
 use App\Models\Authenticate;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 
 /**
  * 顧客情報更新サービスクラス
@@ -15,13 +15,19 @@ class CustomerUpdateService
 {
     private $userUpdateService;
     private $authenticationUpdateService;
+    private $logService;
+    private $transactionService;
 
     public function __construct(
         UserUpdateService $userUpdateService,
-        AuthenticationUpdateService $authenticationUpdateService
+        AuthenticationUpdateService $authenticationUpdateService,
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
     ) {
         $this->userUpdateService = $userUpdateService;
         $this->authenticationUpdateService = $authenticationUpdateService;
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
     }
 
     /**
@@ -33,18 +39,17 @@ class CustomerUpdateService
      */
     public function updateCustomer(string $userCode, array $data): array
     {
-        DB::beginTransaction();
         try {
-            $auth = $this->getAuthenticateByUserCode($userCode);
+            return $this->transactionService->execute(function () use ($userCode, $data) {
+                $auth = $this->getAuthenticateByUserCode($userCode);
 
-            $this->userUpdateService->updateUser($auth->entity_id, $data);
-            $this->authenticationUpdateService->updateAuthenticate($auth->id, $data);
+                $this->userUpdateService->updateUser($auth->entity_id, $data);
+                $this->authenticationUpdateService->updateAuthenticate($auth->id, $data);
 
-            DB::commit();
-            return ['message' => 'success'];
+                return ['message' => 'success'];
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Customer update failed: ' . $e->getMessage());
+            $this->logService->logError('Customer update failed: ' . $e->getMessage());
             return ['message' => 'fail', 'reason' => $e->getMessage()];
         }
     }

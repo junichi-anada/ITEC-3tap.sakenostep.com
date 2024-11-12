@@ -3,8 +3,8 @@
 namespace App\Services\Operator\Customer\Update;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 
 /**
  * ユーザー情報更新サービスクラス
@@ -13,6 +13,17 @@ use Illuminate\Support\Facades\Log;
  */
 final class UserUpdateService
 {
+    private CustomerLogService $logService;
+    private CustomerTransactionService $transactionService;
+
+    public function __construct(
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
+    ) {
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * ユーザー情報を更新する
      *
@@ -23,14 +34,13 @@ final class UserUpdateService
      */
     public function updateUser(int $userId, array $data): void
     {
-        DB::beginTransaction();
         try {
-            $user = User::findOrFail($userId);
-            $user->update($data);
-            DB::commit();
+            $this->transactionService->execute(function () use ($userId, $data) {
+                $user = User::findOrFail($userId);
+                $user->update($data);
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to update user: ' . $e->getMessage());
+            $this->logService->logError('Failed to update user: ' . $e->getMessage());
             throw new \Exception('ユーザー情報の更新に失敗しました。');
         }
     }

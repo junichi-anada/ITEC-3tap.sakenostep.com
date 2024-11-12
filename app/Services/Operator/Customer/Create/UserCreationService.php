@@ -3,9 +3,9 @@
 namespace App\Services\Operator\Customer\Create;
 
 use App\Models\User;
+use App\Services\Operator\Customer\Log\CustomerLogService;
+use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * ユーザー作成サービスクラス
@@ -14,6 +14,17 @@ use Illuminate\Support\Facades\Log;
  */
 final class UserCreationService
 {
+    private CustomerLogService $logService;
+    private CustomerTransactionService $transactionService;
+
+    public function __construct(
+        CustomerLogService $logService,
+        CustomerTransactionService $transactionService
+    ) {
+        $this->logService = $logService;
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * ユーザーを作成する
      *
@@ -24,21 +35,19 @@ final class UserCreationService
      */
     public function createUser(Request $request, int $siteId): User
     {
-        DB::beginTransaction();
         try {
-            $user = User::create([
-                'user_code' => $request->user_code,
-                'site_id' => $siteId,
-                'name' => $request->name,
-                'postal_code' => $request->postal_code,
-                'phone' => $request->phone,
-                'address' => $request->address,
-            ]);
-            DB::commit();
-            return $user;
+            return $this->transactionService->execute(function () use ($request, $siteId) {
+                return User::create([
+                    'user_code' => $request->user_code,
+                    'site_id' => $siteId,
+                    'name' => $request->name,
+                    'postal_code' => $request->postal_code,
+                    'phone' => $request->phone,
+                    'address' => $request->address,
+                ]);
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to create user: ' . $e->getMessage());
+            $this->logService->logError('Failed to create user: ' . $e->getMessage());
             throw new \Exception('ユーザーの作成に失敗しました。');
         }
     }
