@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('postal_code', 10)->nullable();
             $table->string('address', 128)->nullable();
             $table->string('phone', 24)->nullable();
+            $table->string('phone2', 24)->nullable();
+            $table->string('fax', 24)->nullable();
             $table->timestamps();
             $table->softDeletes();
 

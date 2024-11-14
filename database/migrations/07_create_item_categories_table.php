@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('item_units', function (Blueprint $table) {
+        Schema::create('item_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('unit_code', 64)->unique();
+            $table->string('category_code', 64)->unique();
             $table->foreignId('site_id')->constrained('sites')->onDelete('cascade');
             $table->string('name', 64);
             $table->integer('priority')->default(1);
@@ -21,9 +21,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique('unit_code', 'idx_uq_item_units_unit_code');
-            $table->index('site_id', 'idx_fk_item_units_site_id');
-            $table->index('name', 'idx_uq_item_units_name');
+            $table->unique('category_code', 'idx_uq_item_categories_category_code');
+            $table->index('site_id', 'idx_fk_item_categories_site_id');
+            $table->index('name', 'idx_uq_item_categories_name');
         });
     }
 
@@ -32,6 +32,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('item_units');
+        if (Schema::hasColumn('items', 'item_categories') && Schema::hasIndex('items', 'items_category_id_foreign')) {
+            Schema::table('items', function (Blueprint $table) {
+                $table->dropIndex(['item_categories'], 'items_category_id_foreign');
+            });
+        }
+        Schema::dropIfExists('item_categories');
     }
 };

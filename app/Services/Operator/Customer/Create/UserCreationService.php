@@ -28,22 +28,24 @@ final class UserCreationService
     /**
      * ユーザーを作成する
      *
-     * @param Request $request リクエストオブジェクト
+     * @param array $userData ユーザーデータの配列
      * @param int $siteId サイトID
      * @return User 作成されたユーザー
      * @throws \Exception 作成に失敗した場合
      */
-    public function createUser(Request $request, int $siteId): User
+    public function createUser(array $userData, int $siteId): User
     {
         try {
-            return $this->transactionService->execute(function () use ($request, $siteId) {
+            return $this->transactionService->execute(function () use ($userData, $siteId) {
                 return User::create([
-                    'user_code' => $request->user_code,
+                    'user_code' => $userData['user_code'],
+                    'name' => $userData['name'],
                     'site_id' => $siteId,
-                    'name' => $request->name,
-                    'postal_code' => $request->postal_code,
-                    'phone' => $request->phone,
-                    'address' => $request->address,
+                    'phone' => $userData['phone'],
+                    'phone2' => $userData['phone2'] ?? null,
+                    'fax' => $userData['fax'] ?? null,
+                    'postal_code' => $userData['postal_code'],
+                    'address' => $userData['address'],
                 ]);
             });
         } catch (\Exception $e) {

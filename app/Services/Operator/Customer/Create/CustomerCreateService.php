@@ -3,10 +3,17 @@
 namespace App\Services\Operator\Customer\Create;
 
 use App\Models\User;
+use App\Models\Authenticate;
+use App\Services\Operator\Customer\Create\UserCreationService;
+use App\Services\Operator\Customer\Create\AuthenticationCreationService;
+use App\Services\Operator\Customer\Create\PhoneNumberFormatter;
 use App\Services\Operator\Customer\Log\CustomerLogService;
 use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use App\Rules\PhoneNumber;
 
 /**
  * 顧客登録サービスクラス
@@ -40,40 +47,71 @@ final class CustomerCreateService
      *
      * @param Request $request リクエストオブジェクト
      * @param object $auth 認証情報
-     * @return array 登録結果
+     * @return JsonResponse 登録結果
      */
-    public function registCustomer(Request $request, $auth): array
+    public function registCustomer(Request $request, $auth): JsonResponse
     {
+        $validator = \Validator::make($request->all(), [
+            'user_code' => 'required|string',
+            'name' => 'required|string',
+            'postal_code' => 'required|string',
+            'phone' => ['required', 'string', new PhoneNumber()],
+            'phone2' => ['nullable', 'string', new PhoneNumber()],
+            'fax' => ['nullable', 'string', new PhoneNumber()],
+            'login_code' => 'required|string',
+            'password' => 'required|string',
+        ], [
+            'user_code.required' => 'The user_code field is required.',
+            'name.required' => 'The name field is required.',
+            'postal_code.required' => 'The postal_code field is required.',
+            'phone.required' => 'The phone field is required.',
+            'login_code.required' => 'The login_code field is required.',
+            'password.required' => 'The password field is required.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'fail',
+                'reason' => $validator->errors()->first()
+            ], 400);
+        }
+
         try {
-            return $this->transactionService->execute(function () use ($request, $auth) {
-                $loginCode = $this->generateLoginCode();
+            $result = $this->transactionService->execute(function () use ($request, $auth) {
                 $phone = $this->phoneNumberFormatter->formatPhoneNumber($request->phone);
-                $password = Hash::make($phone);
+                $phone2 = $this->phoneNumberFormatter->formatPhoneNumber($request->phone2 ?? '');
+                $fax = $this->phoneNumberFormatter->formatPhoneNumber($request->fax ?? '');
+                $password = Hash::make($request->password);
 
-                $user = $this->userCreationService->createUser($request, $auth->site_id);
-                $this->authenticationCreationService->createAuthenticate($auth->site_id, $user->id, $loginCode, $password);
+                $userData = [
+                    'user_code' => $request->user_code,
+                    'site_id' => $auth->site_id,
+                    'name' => $request->name,
+                    'postal_code' => $request->postal_code,
+                    'phone' => $phone,
+                    'phone2' => $phone2,
+                    'fax' => $fax,
+                    'address' => $request->address,
+                ];
 
-                return ['message' => 'success', 'login_code' => $loginCode, 'password' => $phone];
+                $user = $this->userCreationService->createUser($userData, $auth->site_id);
+
+                $authData = [
+                    'site_id' => $auth->site_id,
+                    'entity_id' => $user->id,
+                    'login_code' => $request->login_code,
+                    'password' => $password,
+                ];
+
+                $this->authenticationCreationService->createAuthenticate($authData);
+
+                return ['message' => 'success', 'login_code' => $request->login_code];
             });
+
+            return response()->json($result);
         } catch (\Exception $e) {
             $this->logService->logError('Customer registration failed: ' . $e->getMessage());
-            return ['message' => 'fail', 'reason' => $e->getMessage()];
+            return response()->json(['message' => 'fail', 'reason' => $e->getMessage()], 500);
         }
-    }
-
-    /**
-     * ログインコードを生成（重複チェック付）
-     *
-     * @return string 生成されたログインコード
-     */
-    private function generateLoginCode(): string
-    {
-        $loginCode = '';
-        do {
-            $randomNumber = rand(10000, 99999);
-            $loginCode = "st" . $randomNumber;
-        } while (Authenticate::where('login_code', $loginCode)->exists());
-
-        return $loginCode;
     }
 }

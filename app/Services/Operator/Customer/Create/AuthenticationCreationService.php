@@ -5,8 +5,6 @@ namespace App\Services\Operator\Customer\Create;
 use App\Models\Authenticate;
 use App\Services\Operator\Customer\Log\CustomerLogService;
 use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 /**
  * 認証情報作成サービスクラス
@@ -29,24 +27,21 @@ final class AuthenticationCreationService
     /**
      * 認証情報を作成する
      *
-     * @param int $siteId サイトID
-     * @param int $userId ユーザーID
-     * @param string $loginCode ログインコード
-     * @param string $password パスワード
+     * @param array $authData 認証データの配列
      * @return void
      * @throws \Exception 作成に失敗した場合
      */
-    public function createAuthenticate(int $siteId, int $userId, string $loginCode, string $password): void
+    public function createAuthenticate(array $authData): void
     {
         try {
-            $this->transactionService->execute(function () use ($siteId, $userId, $loginCode, $password) {
+            $this->transactionService->execute(function () use ($authData) {
                 Authenticate::create([
-                    'auth_code' => Str::uuid(),
-                    'site_id' => $siteId,
+                    'auth_code' => \Str::uuid(),
+                    'site_id' => $authData['site_id'],
                     'entity_type' => User::class,
-                    'entity_id' => $userId,
-                    'login_code' => $loginCode,
-                    'password' => $password,
+                    'entity_id' => $authData['entity_id'],
+                    'login_code' => $authData['login_code'],
+                    'password' => $authData['password'],
                     'expires_at' => now()->addDays(365),
                 ]);
             });

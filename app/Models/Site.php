@@ -14,7 +14,6 @@ class Site extends Model
 
     protected $fillable = [
         'site_code',
-        'name_code',
         'company_id',
         'url',
         'name',

@@ -44,6 +44,8 @@ return new class extends Migration
             $table->string('postal_code', 10)->nullable();
             $table->string('address', 128)->nullable();
             $table->string('phone', 24)->nullable();
+            $table->string('phone2', 24)->nullable();
+            $table->string('fax', 24)->nullable();
             $table->timestamps();
             $table->softDeletes();
 
@@ -63,7 +65,7 @@ return new class extends Migration
             // 追加したカラムを削除
             $table->dropUnique('idx_uq_users_user_code');
             $table->dropForeign(['site_id']);
-            $table->dropColumn(['user_code', 'site_id', 'name', 'postal_code', 'address', 'phone']);
+            $table->dropColumn(['user_code', 'site_id', 'name', 'postal_code', 'address', 'phone', 'phone2', 'fax']);
             $table->dropSoftDeletes();
 
             // 必要に応じて元のカラムを復元

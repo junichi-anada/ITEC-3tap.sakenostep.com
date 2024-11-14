@@ -44,10 +44,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('items', function (Blueprint $table) {
-            // 部分インデックスの削除
-            $table->dropIndex(['description(255)'], 'idx_uq_items_description');
+            if (Schema::hasColumn('items', 'description') && Schema::hasIndex('items', 'items_description(255)_index')) {
+                Schema::table('items', function (Blueprint $table) {
+                    $table->dropIndex(['description(255)'], 'idx_uq_items_description');
+                });
+            }
         });
-
         Schema::dropIfExists('items');
     }
 };
