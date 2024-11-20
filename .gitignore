@@ -21,4 +21,4 @@ yarn-error.log
 /.document
 .vscode/sftp.json
 .cursorrules
-# /.specification
+/.specification

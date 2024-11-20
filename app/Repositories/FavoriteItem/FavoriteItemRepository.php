@@ -9,6 +9,7 @@ use App\Services\Transaction\TransactionService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * お気に入り商品のリポジトリクラス
@@ -17,10 +18,12 @@ use Illuminate\Database\Eloquent\Builder;
  * - お気に入り商品のCRUD操作を管理
  * - トランザクション制御による整合性の保証
  * - 柔軟な検索条件とページネーション機能の提供
+ * - 効率的なクエリビルダーによる検索処理の最適化
  *
  * 制限事項:
  * - トランザクション制御はTransactionServiceに依存
  * - 削除済みデータの取り扱いは明示的な指定が必要
+ * - 大量データの一括処理時はメモリ使用量に注意
  */
 final class FavoriteItemRepository
 {
@@ -65,13 +68,30 @@ final class FavoriteItemRepository
     }
 
     /**
+     * お気に入り商品を取得する（存在しない場合は例外をスロー）
+     *
+     * @param int $id お気に入り商品ID
+     * @return FavoriteItem お気に入り商品
+     * @throws ModelNotFoundException モデルが見つからない場合
+     */
+    public function findOrFail(int $id): FavoriteItem
+    {
+        return FavoriteItem::findOrFail($id);
+    }
+
+    /**
      * すべてのお気に入り商品を取得する
      *
+     * @param array<string, string> $with イーガーロードするリレーション
      * @return Collection お気に入り商品のコレクション
      */
-    public function getAll(): Collection
+    public function getAll(array $with = []): Collection
     {
-        return FavoriteItem::all();
+        $query = FavoriteItem::query();
+        if (!empty($with)) {
+            $query->with($with);
+        }
+        return $query->get();
     }
 
     /**
@@ -80,13 +100,14 @@ final class FavoriteItemRepository
      * @param int $id お気に入り商品ID
      * @param array<string, mixed> $data 更新データ
      * @return bool 更新が成功したかどうか
+     * @throws ModelNotFoundException モデルが見つからない場合
      * @throws \Exception データベース操作に失敗した場合
      */
     public function update(int $id, array $data): bool
     {
         return $this->transactionService->executeInTransaction(function () use ($id, $data) {
-            $favoriteItem = $this->find($id);
-            return $favoriteItem ? $favoriteItem->update($data) : false;
+            $favoriteItem = $this->findOrFail($id);
+            return $favoriteItem->update($data);
         });
     }
 
@@ -95,15 +116,11 @@ final class FavoriteItemRepository
      *
      * @param int $id お気に入り商品ID
      * @return bool 削除が成功したかどうか
-     * @throws \Exception データベース操作に失敗した場合
+     * @throws ModelNotFoundException モデルが見つからない場合
      */
     public function delete(int $id): bool
     {
-        $model = FavoriteItem::find($id);
-        if (!$model) {
-            return false;
-        }
-
+        $model = $this->findOrFail($id);
         return $model->delete();
     }
 
@@ -140,8 +157,7 @@ final class FavoriteItemRepository
         array $orderBy = [],
         bool $containTrash = false
     ): Collection {
-        $query = $this->buildQuery($conditions, $with, $orderBy, $containTrash);
-        return $query->get();
+        return $this->buildQuery($conditions, $with, $orderBy, $containTrash)->get();
     }
 
     /**
@@ -159,8 +175,7 @@ final class FavoriteItemRepository
         array $with = [],
         array $orderBy = []
     ): LengthAwarePaginator {
-        $query = $this->buildQuery($conditions, $with, $orderBy);
-        return $query->paginate($perPage);
+        return $this->buildQuery($conditions, $with, $orderBy)->paginate($perPage);
     }
 
     /**
@@ -184,17 +199,12 @@ final class FavoriteItemRepository
             $query->with($with);
         }
 
-        foreach ($conditions as $field => $value) {
-            $this->applyCondition($query, $field, $value);
-        }
-
-        foreach ($orderBy as $column => $direction) {
-            $query->orderBy($column, $direction);
-        }
-
         if ($containTrash) {
             $query->withTrashed();
         }
+
+        $this->applyConditions($query, $conditions);
+        $this->applyOrderBy($query, $orderBy);
 
         return $query;
     }
@@ -203,15 +213,27 @@ final class FavoriteItemRepository
      * 検索条件を適用する
      *
      * @param Builder $query クエリビルダー
-     * @param string $field フィールド名
-     * @param mixed $value 検索値
+     * @param array<string, mixed> $conditions 検索条件
      */
-    private function applyCondition(Builder $query, string $field, mixed $value): void
+    private function applyConditions(Builder $query, array $conditions): void
     {
-        if (str_contains($field, '.')) {
-            $this->applyRelationCondition($query, $field, $value);
-        } else {
-            $this->applyDirectCondition($query, $field, $value);
+        foreach ($conditions as $field => $value) {
+            str_contains($field, '.')
+                ? $this->applyRelationCondition($query, $field, $value)
+                : $this->applyDirectCondition($query, $field, $value);
+        }
+    }
+
+    /**
+     * ソート条件を適用する
+     *
+     * @param Builder $query クエリビルダー
+     * @param array<string, string> $orderBy ソート条件
+     */
+    private function applyOrderBy(Builder $query, array $orderBy): void
+    {
+        foreach ($orderBy as $column => $direction) {
+            $query->orderBy($column, $direction);
         }
     }
 

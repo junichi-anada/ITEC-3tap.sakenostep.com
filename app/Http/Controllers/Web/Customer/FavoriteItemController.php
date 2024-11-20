@@ -50,9 +50,12 @@ class FavoriteItemController extends Controller
 
             // お気に入り商品一覧
             $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+
             // 未発注伝票に紐づく注文詳細一覧
             $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-            $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id)->toArray();
+            if ($unorderedOrder) {
+                $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id)->toArray();
+            }
 
             $favoriteItems = $this->calculateScores($favoriteItems, $unorderedItems);
 

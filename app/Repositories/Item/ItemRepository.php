@@ -9,6 +9,7 @@ use App\Services\Transaction\TransactionService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * 商品のリポジトリクラス
@@ -18,10 +19,12 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
  * - トランザクション制御による整合性の保証
  * - 柔軟な検索条件とページネーション機能の提供
  * - キーワード横断検索機能
+ * - イーガーローディングによる効率的なデータ取得
  *
  * 制限事項:
  * - トランザクション制御はTransactionServiceに依存
  * - 削除済みデータの取り扱いは明示的な指定が必要
+ * - 大量データの一括処理時はメモリ使用量に注意
  */
 final class ItemRepository
 {
@@ -66,13 +69,30 @@ final class ItemRepository
     }
 
     /**
+     * 商品を取得する（存在しない場合は例外をスロー）
+     *
+     * @param int $id 商品ID
+     * @return Item 商品
+     * @throws ModelNotFoundException 商品が存在しない場合
+     */
+    public function findOrFail(int $id): Item
+    {
+        return Item::findOrFail($id);
+    }
+
+    /**
      * すべての商品を取得する
      *
+     * @param array<string, string> $with イーガーロード設定
      * @return Collection 商品のコレクション
      */
-    public function getAll(): Collection
+    public function getAll(array $with = []): Collection
     {
-        return Item::all();
+        $query = Item::query();
+        if (!empty($with)) {
+            $query->with($with);
+        }
+        return $query->get();
     }
 
     /**
@@ -81,13 +101,14 @@ final class ItemRepository
      * @param int $id 商品ID
      * @param array<string, mixed> $data 更新データ
      * @return bool 更新が成功したかどうか
+     * @throws ModelNotFoundException 商品が存在しない場合
      * @throws \Exception データベース操作に失敗した場合
      */
     public function update(int $id, array $data): bool
     {
         return $this->transactionService->executeInTransaction(function () use ($id, $data) {
-            $item = $this->find($id);
-            return $item ? $item->update($data) : false;
+            $item = $this->findOrFail($id);
+            return $item->update($data);
         });
     }
 
@@ -96,13 +117,14 @@ final class ItemRepository
      *
      * @param int $id 商品ID
      * @return bool 削除が成功したかどうか
+     * @throws ModelNotFoundException 商品が存在しない場合
      * @throws \Exception データベース操作に失敗した場合
      */
     public function delete(int $id): bool
     {
         return $this->transactionService->executeInTransaction(function () use ($id) {
-            $item = $this->find($id);
-            return $item ? $item->delete() : false;
+            $item = $this->findOrFail($id);
+            return $item->delete();
         });
     }
 
@@ -127,12 +149,12 @@ final class ItemRepository
             $query->with($with);
         }
 
-        $this->applyConditions($query, $conditions);
-        $this->applyOrderBy($query, $orderBy);
-
         if ($containTrash) {
             $query->withTrashed();
         }
+
+        $this->applyConditions($query, $conditions);
+        $this->applyOrderBy($query, $orderBy);
 
         return $query;
     }
@@ -147,11 +169,9 @@ final class ItemRepository
     private function applyConditions(Builder $query, array $conditions): void
     {
         foreach ($conditions as $field => $value) {
-            if (strpos($field, '.') !== false) {
-                $this->applyRelationCondition($query, $field, $value);
-            } else {
-                $this->applyDirectCondition($query, $field, $value);
-            }
+            str_contains($field, '.')
+                ? $this->applyRelationCondition($query, $field, $value)
+                : $this->applyDirectCondition($query, $field, $value);
         }
     }
 
@@ -181,11 +201,9 @@ final class ItemRepository
      */
     private function applyDirectCondition(Builder $query, string $field, mixed $value): void
     {
-        if (is_array($value)) {
-            $query->whereIn($field, $value);
-        } else {
-            $query->where($field, $value);
-        }
+        is_array($value)
+            ? $query->whereIn($field, $value)
+            : $query->where($field, $value);
     }
 
     /**
@@ -259,11 +277,9 @@ final class ItemRepository
 
         $query->where(function ($query) use ($searchFields, $keyword) {
             foreach ($searchFields as $field) {
-                if (strpos($field, '.') !== false) {
-                    $this->applyKeywordRelationSearch($query, $field, $keyword);
-                } else {
-                    $query->orWhere($field, 'LIKE', "%{$keyword}%");
-                }
+                str_contains($field, '.')
+                    ? $this->applyKeywordRelationSearch($query, $field, $keyword)
+                    : $query->orWhere($field, 'LIKE', "%{$keyword}%");
             }
         });
 
