@@ -1,7 +1,15 @@
 <?php
 /**
- * Webコントローラ
- * 顧客向け商品カテゴリ機能
+ * 顧客向け商品カテゴリ機能のWebコントローラ
+ *
+ * 主な仕様:
+ * - カテゴリ一覧の表示
+ * - カテゴリに属する商品一覧の表示
+ * - 商品のスコア計算機能
+ *
+ * 制限事項:
+ * - 認証済みユーザーのみアクセス可能
+ * - 各サイトごとのカテゴリ・商品のみ表示
  *
  * @author J.AnadA <anada@re-buysell.jp>
  * @version 1.0.0
@@ -10,93 +18,111 @@
 namespace App\Http\Controllers\Web\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Services\Item\Customer\ReadService as ItemReadService;
-use App\Services\ItemCategory\Customer\ReadService as ItemCategoryReadService;
-use App\Services\FavoriteItem\Customer\ReadService as FavoriteItemReadService;
-use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
+use App\Services\ItemCategory\ItemCategoryService;
+use App\Services\Item\ItemService;
+use App\Services\FavoriteItem\FavoriteItemService;
+use App\Services\Order\OrderService;
+use App\Services\OrderDetail\OrderDetailService;
 use Illuminate\Support\Facades\Auth;
-
-class CategoryController extends Controller
+use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
+final class CategoryController extends Controller
 {
-    protected $itemReadService;
-    protected $itemCategoryReadService;
-    protected $favoriteItemReadService;
-    protected $orderDetailReadService;
-
     /**
      * コンストラクタ
      *
-     * @param ItemReadService $itemReadService
-     * @param ItemCategoryReadService $itemCategoryReadService
-     * @param FavoriteItemReadService $favoriteItemReadService
-     * @param OrderDetailReadService $orderDetailReadService
+     * @param ItemCategoryService $itemCategoryService カテゴリ一覧サービス
+     * @param ItemService $itemService 商品読み取りサービス
+     * @param FavoriteItemService $favoriteItemService お気に入り商品読み取りサービス
+     * @param OrderService $orderService 注文読み取りサービス
+     * @param OrderDetailService $orderDetailService 注文詳細読み取りサービス
      */
     public function __construct(
-        ItemReadService $itemReadService,
-        ItemCategoryReadService $itemCategoryReadService,
-        FavoriteItemReadService $favoriteItemReadService,
-        OrderDetailReadService $orderDetailReadService
-    ) {
-        $this->itemReadService = $itemReadService;
-        $this->itemCategoryReadService = $itemCategoryReadService;
-        $this->favoriteItemReadService = $favoriteItemReadService;
-        $this->orderDetailReadService = $orderDetailReadService;
-    }
-
+        private readonly ItemCategoryService $itemCategoryService,
+        private readonly ItemService $itemService,
+        private readonly FavoriteItemService $favoriteItemService,
+        private readonly OrderService $orderService,
+        private readonly OrderDetailService $orderDetailService
+    ) {}
 
     /**
-     * index
-     * カテゴリ一覧表示
+     * カテゴリ一覧を表示
      *
-     * @return void
+     * @return View
      */
-    public function index()
+    public function index(): View
     {
         $auth = Auth::user();
 
-        // 該当サイトのカテゴリ一覧を取得
-        $categories = $this->itemCategoryReadService->getListBySiteId($auth->site_id);
+        // カテゴリ一覧
+        $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
 
         if ($categories->isEmpty()) {
-            $error = __('カテゴリが存在しません。');
-            return view('customer.category', compact('error'));
+            return view('customer.category', [
+                'error' => __('カテゴリが存在しません。')
+            ]);
         }
 
         return view('customer.category', compact('categories'));
     }
 
     /**
-     * show
-     * カテゴリに属する商品一覧表示
-     * 1. カテゴリに所属する商品一覧を取得
-     * 2. ログインしているサイトでのユーザーのお気に入り商品を取得
-     * 3. ログインしているサイトでのユーザーのオーダーリストの商品を取得
+     * カテゴリに属する商品一覧を表示
      *
-     * @param  $code
-     * @return void
+     * @param string $categoryCode カテゴリコード
+     * @return View
      */
-    public function show($code)
+    public function show(string $categoryCode): View
     {
         $auth = Auth::user();
 
-        $categories = $this->itemCategoryReadService->getListBySiteId($auth->site_id);
-        $category = $this->itemCategoryReadService->getByCategoryCode($auth->site_id, $code);
+        // カテゴリ一覧
+        $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
 
-        $items = $this->itemReadService->getListBySiteIdAndCategoryId($auth->site_id, $category->id)->toArray();
-        $favoriteItems = $this->favoriteItemReadService->getItemIdListByUserAndSiteId($auth->id, $auth->site_id);
-        $unorderedItems = $this->orderDetailReadService->getUnorderedListByUserIdAndSiteId($auth->id, $auth->site_id)->toArray();
+        // サイトIDとカテゴリIDを基に商品一覧を取得
+        $category = $this->itemCategoryService->getByCode($categoryCode);
+        if (!$category) {
+            return view('customer.category_item', [
+                'error' => __('カテゴリが存在しません。')
+            ]);
+        }
+        $items = $this->itemService->getListBySiteIdAndCategoryId($auth->site_id, $category->id)->toArray();
+
+        // 顧客のお気に入り商品ID一覧を取得
+        $favoriteItems = $this->favoriteItemService->getUserFavorites( $auth->id, $auth->site_id )->toArray();
+        if (!$favoriteItems) {
+            $favoriteItems = [];
+        }
+
+        $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+        if (!$unorderedOrder) {
+            $unorderedItems = [];
+        } else {
+            $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId( $unorderedOrder->id )->toArray();
+        }
 
         $items = $this->calculateItemScores($items, $favoriteItems, $unorderedItems);
 
-        return view('customer.category_item', compact('items', 'category'));
+        return view('customer.category_item', [
+            'items' => $items,
+            'category' => $category
+        ]);
     }
 
-    private function calculateItemScores($items, $favoriteItems, $unorderedItems)
+    /**
+     * 商品のスコアを計算
+     *
+     * @param array $items 商品一覧
+     * @param array $favoriteItems お気に入り商品ID一覧
+     * @param array $unorderedItems 未注文商品一覧
+     * @return array スコア計算済み商品一覧
+     */
+    private function calculateItemScores(array $items, array $favoriteItems, array $unorderedItems): array
     {
         foreach ($items as $key => $item) {
-            $items[$key]['score1'] = in_array($item['id'], $unorderedItems) ? 1 : 0;
-            $items[$key]['score2'] = in_array($item['id'], $favoriteItems) ? 1 : 0;
-            $items[$key]['unorderedVolume'] = in_array($item['id'], $unorderedItems) ? $unorderedItems['volume'] : 1;
+            $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
+            $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
+            $items[$key]['unorderedVolume'] = 1;
         }
         return $items;
     }

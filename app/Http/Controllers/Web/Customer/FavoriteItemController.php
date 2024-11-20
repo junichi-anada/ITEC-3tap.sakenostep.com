@@ -10,26 +10,30 @@
 namespace App\Http\Controllers\Web\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Services\FavoriteItem\Customer\ReadService as FavoriteItemReadService;
-use App\Services\ItemCategory\Customer\ReadService as ItemCategoryReadService;
-use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
+use App\Services\FavoriteItem\FavoriteItemService as FavoriteItemService;
+use App\Services\ItemCategory\ItemCategoryService as ItemCategoryService;
+use App\Services\Order\OrderService as OrderService;
+use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class FavoriteItemController extends Controller
 {
-    protected $favoriteItemReadService;
-    protected $itemCategoryReadService;
-    protected $orderDetailReadService;
+    protected $favoriteItemService;
+    protected $itemCategoryService;
+    protected $orderService;
+    protected $orderDetailService;
 
     public function __construct(
-        FavoriteItemReadService $favoriteItemReadService,
-        ItemCategoryReadService $itemCategoryReadService,
-        OrderDetailReadService $orderDetailReadService
+        FavoriteItemService $favoriteItemService,
+        ItemCategoryService $itemCategoryService,
+        OrderService $orderService,
+        OrderDetailService $orderDetailService
     ) {
-        $this->favoriteItemReadService = $favoriteItemReadService;
-        $this->itemCategoryReadService = $itemCategoryReadService;
-        $this->orderDetailReadService = $orderDetailReadService;
+        $this->favoriteItemService = $favoriteItemService;
+        $this->itemCategoryService = $itemCategoryService;
+        $this->orderService = $orderService;
+        $this->orderDetailService = $orderDetailService;
     }
 
     /**
@@ -41,9 +45,14 @@ class FavoriteItemController extends Controller
         try {
             $auth = Auth::user();
 
-            $categories = $this->getCategories($auth->site_id);
-            $favoriteItems = $this->getFavoriteItems($auth->id, $auth->site_id);
-            $unorderedItems = $this->getUnorderedItems($auth->id, $auth->site_id);
+            // カテゴリ一覧
+            $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+
+            // お気に入り商品一覧
+            $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+            // 未発注伝票に紐づく注文詳細一覧
+            $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id)->toArray();
 
             $favoriteItems = $this->calculateScores($favoriteItems, $unorderedItems);
 
@@ -52,21 +61,6 @@ class FavoriteItemController extends Controller
             Log::error('Error fetching favorite items: ' . $e->getMessage());
             return view('customer.favorite', ['error' => __('お気に入り商品の取得に失敗しました。')]);
         }
-    }
-
-    private function getCategories($siteId)
-    {
-        return $this->itemCategoryReadService->getListBySiteId($siteId);
-    }
-
-    private function getFavoriteItems($userId, $siteId)
-    {
-        return $this->favoriteItemReadService->getListWithItemDetailsByUserAndSiteId($userId, $siteId);
-    }
-
-    private function getUnorderedItems($userId, $siteId)
-    {
-        return $this->orderDetailReadService->getUnorderedListByUserIdAndSiteId($userId, $siteId)->toArray();
     }
 
     private function calculateScores($favoriteItems, $unorderedItems)

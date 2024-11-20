@@ -6,28 +6,32 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Services\Item\Customer\ReadService as ItemReadService;
-use App\Services\FavoriteItem\Customer\ReadService as FavoriteItemReadService;
-use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
-use App\Services\ItemCategory\Customer\ReadService as ItemCategoryReadService;
+use App\Services\Item\ItemService as ItemService;
+use App\Services\FavoriteItem\FavoriteItemService as FavoriteItemService;
+use App\Services\Order\OrderService as OrderService;
+use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
+use App\Services\ItemCategory\ItemCategoryService as ItemCategoryService;
 
 class SearchController extends Controller
 {
-    protected $itemReadService;
-    protected $favoriteItemReadService;
-    protected $orderDetailReadService;
-    protected $itemCategoryReadService;
+    protected $itemService;
+    protected $favoriteItemService;
+    protected $orderService;
+    protected $orderDetailService;
+    protected $itemCategoryService;
 
     public function __construct(
-        ItemReadService $itemReadService,
-        FavoriteItemReadService $favoriteItemReadService,
-        OrderDetailReadService $orderDetailReadService,
-        ItemCategoryReadService $itemCategoryReadService
+        ItemService $itemService,
+        FavoriteItemService $favoriteItemService,
+        OrderService $orderService,
+        OrderDetailService $orderDetailService,
+        ItemCategoryService $itemCategoryService
     ) {
-        $this->itemReadService = $itemReadService;
-        $this->favoriteItemReadService = $favoriteItemReadService;
-        $this->orderDetailReadService = $orderDetailReadService;
-        $this->itemCategoryReadService = $itemCategoryReadService;
+        $this->itemService = $itemService;
+        $this->favoriteItemService = $favoriteItemService;
+        $this->orderService = $orderService;
+        $this->orderDetailService = $orderDetailService;
+        $this->itemCategoryService = $itemCategoryService;
     }
 
     /**
@@ -40,12 +44,35 @@ class SearchController extends Controller
     {
         try {
             $keyword = $this->validateKeyword($request);
+            if (empty($keyword)) {
+                $keyword ="";
+            }
             $auth = Auth::user();
 
-            $categories = $this->getCategories($auth->site_id);
-            $items = $this->getItems($auth->site_id, $keyword);
-            $favoriteItems = $this->getFavoriteItems($auth->id, $auth->site_id);
-            $unorderedItems = $this->getUnorderedItems($auth->id, $auth->site_id);
+            // カテゴリ一覧
+            $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+           // 商品一覧
+            $items = $this->itemService->searchByKeyword($keyword, $auth->site_id);
+            if ($items) {
+                $items = $items->toArray();
+            } else {
+                $items = [];
+            }
+            // お気に入り商品一覧
+            $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+            if ($favoriteItems) {
+                $favoriteItems = $favoriteItems->toArray();
+            } else {
+                $favoriteItems = [];
+            }
+            // 未発注伝票に紐づく注文詳細一覧
+            $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
+            if ($unorderedItems) {
+                $unorderedItems = $unorderedItems->toArray();
+            } else {
+                $unorderedItems = [];
+            }
 
             $items = $this->calculateScores($items, $favoriteItems, $unorderedItems);
 
@@ -63,39 +90,21 @@ class SearchController extends Controller
         ])['keyword'];
     }
 
-    private function getCategories($siteId)
+    /**
+     * 商品のスコアを計算
+     *
+     * @param array $items 商品一覧
+     * @param array $favoriteItems お気に入り商品ID一覧
+     * @param array $unorderedItems 未注文商品一覧
+     * @return array スコア計算済み商品一覧
+     */
+    private function calculateItemScores(array $items, array $favoriteItems, array $unorderedItems): array
     {
-        return $this->itemCategoryReadService->getListBySiteId($siteId);
-    }
-
-    private function getItems($siteId, $keyword)
-    {
-        if (!empty($keyword)) {
-            return $this->itemReadService->searchByKeyword($siteId, $keyword);
-        }
-        return $this->itemReadService->getListBySiteId($siteId);
-    }
-
-    private function getFavoriteItems($userId, $siteId)
-    {
-        return $this->favoriteItemReadService->getItemIdListByUserAndSiteId($userId, $siteId);
-    }
-
-    private function getUnorderedItems($userId, $siteId)
-    {
-        return $this->orderDetailReadService->getUnorderedListByUserIdAndSiteId($userId, $siteId)->toArray();
-    }
-
-    private function calculateScores($items, $favoriteItems, $unorderedItems)
-    {
-        $unorderedItemIds = array_column($unorderedItems, 'item_id');
-
         foreach ($items as $key => $item) {
-            $items[$key]['score1'] = in_array($item['id'], $unorderedItemIds) ? 1 : 0;
-            $items[$key]['score2'] = in_array($item['id'], $favoriteItems) ? 1 : 0;
-            $items[$key]['unorderedVolume'] = in_array($item['id'], $unorderedItems) ? $unorderedItems['volume'] : 1;
+            $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
+            $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
+            $items[$key]['unorderedVolume'] = 1;
         }
-
         return $items;
     }
 }

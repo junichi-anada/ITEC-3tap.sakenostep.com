@@ -5,14 +5,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const csrfToken = document.querySelector('input[name="_token"]').value;
 
     function handleResponse(response) {
-        return response.json().then((data) => {
-            if (!response.ok) {
+        if (!response.ok) {
+            return response.json().then((data) => {
                 throw new Error(data.message || "エラーが発生しました。");
-            }
+            });
+        }
+        return response.json().then((data) => {
             return data;
         });
     }
 
+    /**
+     * ボタンの表示/非表示を切り替える
+     */
     function toggleButtonVisibility(button, showAddButton) {
         if (showAddButton) {
             button.classList.add("hidden");
@@ -23,6 +28,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    /**
+     * リクエストを送信する
+     */
     function sendRequest(url, method, body) {
         return fetch(url, {
             method: method,
@@ -35,6 +43,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }).then(handleResponse);
     }
 
+    /**
+     * お気に入りに追加する
+     */
     document.querySelectorAll(".add-to-favorites").forEach((button) => {
         button.addEventListener("click", function () {
             const itemCode = this.getAttribute("data-item-code");
@@ -48,12 +59,17 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 })
                 .catch((error) => {
-                    console.error("エラー:", error);
-                    alert("お気に入りの追加に失敗しました。");
+                    // console.error("エラー:", error);
+                    alert(
+                        "お気に入りの追加に失敗しました。\nサイト管理者までご連絡ください。"
+                    );
                 });
         });
     });
 
+    /**
+     * お気に入りから削除する
+     */
     document.querySelectorAll(".del-to-favorites").forEach((button) => {
         button.addEventListener("click", function () {
             const itemCode = this.getAttribute("data-item-code");
@@ -71,12 +87,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                         this.classList.add("hidden");
                     } else {
-                        alert(data.message);
+                        console.log(data.message);
                     }
                 })
                 .catch((error) => {
-                    console.error("エラー:", error);
-                    alert("お気に入りの削除に失敗しました。");
+                    // console.error("エラー:", error);
+                    alert(
+                        "お気に入りの削除に失敗しました。\nサイト管理者までご連絡ください"
+                    );
                 });
         });
     });

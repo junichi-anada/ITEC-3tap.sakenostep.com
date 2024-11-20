@@ -5,148 +5,143 @@ declare(strict_types=1);
 namespace App\Services\FavoriteItem;
 
 use App\Models\FavoriteItem;
-use App\Models\Item;
+use App\Repositories\FavoriteItem\FavoriteItemRepository;
+use App\Repositories\Item\ItemRepository;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
-/**
- * お気に入り商品管理サービスクラス
- */
-final class FavoriteItemService
+class FavoriteItemService
 {
+    protected $favoriteItemRepository;
+    protected $itemRepository;
+
+    public function __construct(FavoriteItemRepository $favoriteItemRepository, ItemRepository $itemRepository)
+    {
+        $this->favoriteItemRepository = $favoriteItemRepository;
+        $this->itemRepository = $itemRepository;
+    }
+
     /**
-     * お気に入り商品を登録する
+     * 例外処理を共通化するためのラッパーメソッドです。
      *
-     * @param string $itemCode 商品コード
-     * @param int $userId ユーザーID
-     * @param int $siteId サイトID
-     * @return array
-     * @throws ValidationException
+     * @param \Closure $callback
+     * @param string $errorMessage
+     * @return mixed
      */
-    public function addToFavorites(string $itemCode, int $userId, int $siteId): array
+    private function tryCatchWrapper($callback, $errorMessage)
     {
         try {
-            DB::beginTransaction();
+            return $callback();
+        } catch (\Exception $e) {
+            Log::error($errorMessage . ': ' . $e->getMessage());
+            return null;
+        }
+    }
 
-            // 商品の存在確認
-            $item = Item::where('item_code', $itemCode)
-                       ->where('site_id', $siteId)
-                       ->first();
+    /**
+     * お気に入り商品追加
+     *
+     * @param int $userId
+     * @param int $itemId
+     * @param int $siteId
+     * @return FavoriteItem|null
+     */
+    public function add(int $userId, int $itemId, int $siteId): ?FavoriteItem
+    {
+        return $this->tryCatchWrapper(
+            function () use ($userId, $itemId, $siteId) {
+                // お気に入り商品を削除済みも含めて検索
+                $conditions = [
+                    'user_id' => $userId,
+                    'item_id' => $itemId,
+                    'site_id' => $siteId,
+                ];
 
-            if (!$item) {
-                throw ValidationException::withMessages([
-                    'item_code' => '指定された商品が見つかりません。'
-                ]);
-            }
+                $favoriteItem = $this->favoriteItemRepository->findBy(
+                    conditions: $conditions,
+                    containTrash: true
+                )->first();
 
-            // 既存のお���に入り確認（ソフトデリート含む）
-            $existingFavorite = FavoriteItem::withTrashed()
-                ->where('user_id', $userId)
-                ->where('item_id', $item->id)
-                ->where('site_id', $siteId)
-                ->first();
-
-            if ($existingFavorite) {
-                if ($existingFavorite->trashed()) {
-                    $existingFavorite->restore();
-                    DB::commit();
-                    return ['message' => 'お気に入りに追加しました', 'data' => ['item_code' => $itemCode]];
+                // お気に入り商品が存在しない場合は、新規登録
+                if (!$favoriteItem) {
+                    return $this->favoriteItemRepository->create([
+                        'user_id' => $userId,
+                        'item_id' => $itemId,
+                        'site_id' => $siteId,
+                    ]);
                 }
-                throw ValidationException::withMessages([
-                    'item_code' => '既にお気に入りに登録されています。'
-                ]);
-            }
 
-            // 新規登録
-            FavoriteItem::create([
-                'user_id' => $userId,
-                'item_id' => $item->id,
-                'site_id' => $siteId
-            ]);
+                // 削除済みの場合は復元する
+                if ($favoriteItem->trashed()) {
+                    $restoredItem = $this->favoriteItemRepository->restore($favoriteItem->id);
+                    if (!$restoredItem) {
+                        throw new \Exception('お気に入り商品の復元に失敗しました');
+                    }
+                    return $restoredItem;
+                }
 
-            DB::commit();
-            return ['message' => 'お気に入りに追加しました', 'data' => ['item_code' => $itemCode]];
-
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            Log::warning('Favorite item validation error', [
-                'item_code' => $itemCode,
-                'user_id' => $userId,
-                'site_id' => $siteId,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Favorite item registration error', [
-                'item_code' => $itemCode,
-                'user_id' => $userId,
-                'site_id' => $siteId,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
+                return $favoriteItem;
+            },
+            'お気に入り商品の登録に失敗しました'
+        );
     }
 
     /**
-     * お気に入り商品を削除する
+     * お気に入り商品を削除します
      *
-     * @param string $itemCode 商品コード
+     * @param int $userId ユーザーID
+     * @param int $itemId 商品ID
+     * @param int $siteId サイトID
+     * @return bool
+     */
+    public function remove(int $userId, int $itemId, int $siteId): bool
+    {
+        return $this->tryCatchWrapper(
+            function () use ($userId, $itemId, $siteId) {
+                $favoriteItem = $this->favoriteItemRepository->findBy([
+                    'user_id' => $userId,
+                    'item_id' => $itemId,
+                    'site_id' => $siteId,
+                ])->first();
+
+                if (!$favoriteItem) {
+                    return false;
+                }
+
+                // 削除済みの場合は既に削除されているとみなす
+                if ($favoriteItem->trashed()) {
+                    return true;
+                }
+
+                return $this->favoriteItemRepository->delete($favoriteItem->id);
+            },
+            'お気に入り商品の削除に失敗しました'
+        );
+    }
+
+    /**
+     * ユーザーのお気に入り商品一覧を取得
+     *
      * @param int $userId ユーザーID
      * @param int $siteId サイトID
-     * @return array
-     * @throws ValidationException
+     * @param array<string, string> $orderBy ソート条件 ['column' => 'asc|desc']
+     * @param array<string, string> $with イーガーロードするリレーション
+     * @return \Illuminate\Database\Eloquent\Collection|null
      */
-    public function removeFromFavorites(string $itemCode, int $userId, int $siteId): array
+    public function getUserFavorites(int $userId, int $siteId, array $orderBy = ['created_at' => 'desc'], array $with = ['item', 'site']): ?\Illuminate\Database\Eloquent\Collection
     {
-        try {
-            DB::beginTransaction();
+        return $this->tryCatchWrapper(
+            function () use ($userId, $siteId, $orderBy, $with) {
+                $conditions = [
+                    'user_id' => $userId,
+                    'site_id' => $siteId,
+                ];
 
-            $item = Item::where('item_code', $itemCode)
-                       ->where('site_id', $siteId)
-                       ->first();
-
-            if (!$item) {
-                throw ValidationException::withMessages([
-                    'item_code' => '指定された商品が見つかりません。'
-                ]);
-            }
-
-            $favorite = FavoriteItem::where('user_id', $userId)
-                                  ->where('item_id', $item->id)
-                                  ->where('site_id', $siteId)
-                                  ->first();
-
-            if (!$favorite) {
-                throw ValidationException::withMessages([
-                    'item_code' => 'お気に入りに登録されていません。'
-                ]);
-            }
-
-            $favorite->delete();
-
-            DB::commit();
-            return ['message' => 'お気に入りから削除しました', 'data' => ['item_code' => $itemCode]];
-
-        } catch (ValidationException $e) {
-            DB::rollBack();
-            Log::warning('Favorite item removal validation error', [
-                'item_code' => $itemCode,
-                'user_id' => $userId,
-                'site_id' => $siteId,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Favorite item removal error', [
-                'item_code' => $itemCode,
-                'user_id' => $userId,
-                'site_id' => $siteId,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
+                return $this->favoriteItemRepository->findBy(conditions: $conditions, with: $with, orderBy: $orderBy);
+            },
+            'ユーザーのお気に入り商品一覧の取得に失敗しました'
+        );
     }
+
+
 }
+

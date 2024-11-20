@@ -1,19 +1,29 @@
 <?php
+/**
+ * 認証サービス
+ *
+ * @category サービス
+ * @package App\Services\Auth
+ * @version 1.0
+ */
 
 namespace App\Services\Auth;
 
 use App\Models\Authenticate;
-use App\Services\Site\Customer\ReadService as SiteReadService;
+use App\Services\Site\SiteReadService as SiteReadService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use App\Services\Transaction\TransactionService;
 
 class AuthService
 {
     protected $siteReadService;
+    protected TransactionService $transactionService;
 
-    public function __construct(SiteReadService $siteReadService)
+    public function __construct(SiteReadService $siteReadService, TransactionService $transactionService)
     {
         $this->siteReadService = $siteReadService;
+        $this->transactionService = $transactionService;
     }
 
     public function validateSite($siteCode)
@@ -41,4 +51,5 @@ class AuthService
             'login_code' => __('電話番号またはお客様番号に誤りがあります。'),
         ]);
     }
+
 }

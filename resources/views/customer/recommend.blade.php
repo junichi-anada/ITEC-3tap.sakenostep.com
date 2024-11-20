@@ -18,8 +18,8 @@
     <!-- Item -->
     <div class="flex flex-col gap-y-4 border-b pb-3">
         <p class="font-bold leading-5">
-            {{ $recommendedItem->name }}<br>
-            <span class="text-xs font-normal">{{ $recommendedItem->maker_name }}</span>
+            {{ $recommendedItem['name'] }}<br>
+            <span class="text-xs font-normal">{{ $recommendedItem['maker_name'] }}</span>
         </p>
         <div class="flex gap-x-4">
             <div>

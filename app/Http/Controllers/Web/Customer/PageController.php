@@ -6,16 +6,16 @@ namespace App\Http\Controllers\Web\Customer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Services\ItemCategory\Customer\ReadService as ItemCategoryReadService;
+use App\Services\ItemCategory\ItemCategoryService as ItemCategoryService;
 use Illuminate\Support\Facades\Log;
 
 class PageController extends Controller
 {
-    protected $itemCategoryReadService;
+    protected $itemCategoryService;
 
-    public function __construct(ItemCategoryReadService $itemCategoryReadService)
+    public function __construct(ItemCategoryService $itemCategoryService)
     {
-        $this->itemCategoryReadService = $itemCategoryReadService;
+        $this->itemCategoryService = $itemCategoryService;
     }
 
     /**
@@ -48,7 +48,7 @@ class PageController extends Controller
     {
         try {
             $auth = Auth::user();
-            $categories = $this->itemCategoryReadService->getListBySiteId($auth->site_id);
+            $categories = $this->itemCategoryService->getBySiteId($auth->site_id);
 
             return view($viewName, compact('categories'));
         } catch (\Exception $e) {

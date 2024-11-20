@@ -7,27 +7,31 @@ namespace App\Http\Controllers\Web\Customer;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Services\Item\Customer\ReadService as ItemReadService;
-use App\Services\ItemCategory\Customer\ReadService as ItemCategoryReadService;
-use App\Services\FavoriteItem\Customer\ReadService as FavoriteItemReadService;
-use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
+use App\Services\Item\ItemService as ItemService;
+use App\Services\ItemCategory\ItemCategoryService as ItemCategoryService;
+use App\Services\FavoriteItem\FavoriteItemService as FavoriteItemService;
+use App\Services\Order\OrderService as OrderService;
+use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
 
 class RecommendedItemController extends Controller
 {
-    protected $itemReadService;
-    protected $favoriteItemReadService;
-    protected $orderDetailReadService;
+    protected $itemService;
+    protected $favoriteItemService;
+    protected $orderService;
+    protected $orderDetailService;
     protected $itemCategoryService;
 
     public function __construct(
-        ItemReadService $itemReadService,
-        FavoriteItemReadService $favoriteItemReadService,
-        OrderDetailReadService $orderDetailReadService,
-        ItemCategoryReadService $itemCategoryService
+        ItemService $itemService,
+        FavoriteItemService $favoriteItemService,
+        OrderService $orderService,
+        OrderDetailService $orderDetailService,
+        ItemCategoryService $itemCategoryService
     ) {
-        $this->itemReadService = $itemReadService;
-        $this->favoriteItemReadService = $favoriteItemReadService;
-        $this->orderDetailReadService = $orderDetailReadService;
+        $this->itemService = $itemService;
+        $this->favoriteItemService = $favoriteItemService;
+        $this->orderService = $orderService;
+        $this->orderDetailService = $orderDetailService;
         $this->itemCategoryService = $itemCategoryService;
     }
 
@@ -41,12 +45,33 @@ class RecommendedItemController extends Controller
         try {
             $auth = Auth::user();
 
-            $categories = $this->getCategories($auth->site_id);
-            $recommendedItems = $this->getRecommendedItems($auth->site_id);
-            $favoriteItems = $this->getFavoriteItems($auth->id, $auth->site_id);
-            $unorderedItems = $this->getUnorderedItems($auth->id, $auth->site_id);
+            // カテゴリ一覧
+            $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+            // おすすめ商品一覧
+            $recommendedItems = $this->itemService->getRecommendedItems($auth->site_id);
+            if ($recommendedItems) {
+                $recommendedItems = $recommendedItems->toArray();
+            } else {
+                $recommendedItems = [];
+            }
 
-            $recommendedItems = $this->calculateScores($recommendedItems, $favoriteItems, $unorderedItems);
+            // お気に入り商品一覧
+            $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+            if ($favoriteItems) {
+                $favoriteItems = $favoriteItems->toArray();
+            } else {
+                $favoriteItems = [];
+            }
+            // 未発注伝票に紐づく注文詳細一覧
+            $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
+            if ($unorderedItems) {
+                $unorderedItems = $unorderedItems->toArray();
+            } else {
+                $unorderedItems = [];
+            }
+
+            $recommendedItems = $this->calculateItemScores($recommendedItems, $favoriteItems, $unorderedItems);
 
             return view('customer.recommend', compact('recommendedItems', 'categories'));
         } catch (\Exception $e) {
@@ -55,37 +80,21 @@ class RecommendedItemController extends Controller
         }
     }
 
-    private function getCategories($siteId)
+    /**
+     * 商品のスコアを計算
+     *
+     * @param array $items 商品一覧
+     * @param array $favoriteItems お気に入り商品ID一覧
+     * @param array $unorderedItems 未注文商品一覧
+     * @return array スコア計算済み商品一覧
+     */
+    private function calculateItemScores(array $items, array $favoriteItems, array $unorderedItems): array
     {
-        return $this->itemCategoryService->getListBySiteId($siteId);
-    }
-
-    private function getRecommendedItems($siteId)
-    {
-        return $this->itemReadService->getRecommendedItems($siteId);
-    }
-
-    private function getFavoriteItems($userId, $siteId)
-    {
-        return $this->favoriteItemReadService->getItemIdListByUserAndSiteId($userId, $siteId);
-    }
-
-    private function getUnorderedItems($userId, $siteId)
-    {
-        $unorderedItems = $this->orderDetailReadService->getUnorderedListByUserIdAndSiteId($userId, $siteId);
-        return $unorderedItems ? $unorderedItems->toArray() : [];
-    }
-
-    private function calculateScores($recommendedItems, $favoriteItems, $unorderedItems)
-    {
-        $unorderedItemIds = array_column($unorderedItems, 'item_id');
-
-        foreach ($recommendedItems as $key => $item) {
-            $recommendedItems[$key]['score1'] = in_array($item['id'], $unorderedItemIds) ? 1 : 0;
-            $recommendedItems[$key]['score2'] = in_array($item['id'], $favoriteItems) ? 1 : 0;
-            $recommendedItems[$key]['unorderedVolume'] = in_array($item['id'], $unorderedItems) ? $unorderedItems['volume'] : 1;
+        foreach ($items as $key => $item) {
+            $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
+            $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
+            $items[$key]['unorderedVolume'] = 1;
         }
-
-        return $recommendedItems;
+        return $items;
     }
 }

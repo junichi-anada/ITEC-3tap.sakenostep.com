@@ -1,4 +1,11 @@
 <?php
+/**
+ * お気に入り商品モデル
+ *
+ * @category モデル
+ * @package App\Models
+ * @version 1.0
+ */
 
 namespace App\Models;
 

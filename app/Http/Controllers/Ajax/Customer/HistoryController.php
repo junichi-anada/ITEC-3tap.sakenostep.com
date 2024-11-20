@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Ajax\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Services\Order\Customer\ReadService as OrderReadService;
-use App\Services\Order\Customer\CreateService as OrderCreateService;
-use App\Services\OrderDetail\Customer\CreateService as OrderDetailCreateService;
-use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
+use App\Services\Order\OrderReadService as OrderReadService;
+use App\Services\Order\OrderCreateService as OrderCreateService;
+use App\Services\OrderDetail\OrderDetailCreateService as OrderDetailCreateService;
+use App\Services\OrderDetail\OrderDetailReadService as OrderDetailReadService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;

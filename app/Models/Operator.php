@@ -1,4 +1,11 @@
 <?php
+/**
+ * オペレーターモデル
+ *
+ * @category モデル
+ * @package App\Models
+ * @version 1.0
+ */
 
 namespace App\Models;
 

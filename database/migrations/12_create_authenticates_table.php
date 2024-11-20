@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('entity_id');
             $table->string('login_code', 50);
             $table->string('password', 255);
-            $table->dateTime('expires_at');
+            $table->dateTime('expires_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

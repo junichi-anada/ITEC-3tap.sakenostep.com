@@ -1,5 +1,11 @@
 <?php
-
+/**
+ * 外部システム連携コードモデル
+ *
+ * @category モデル
+ * @package App\Models
+ * @version 1.0
+ */
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

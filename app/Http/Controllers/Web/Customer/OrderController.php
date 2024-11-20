@@ -5,23 +5,27 @@
  */
 namespace App\Http\Controllers\Web\Customer;
 
-use App\Services\ItemCategory\Customer\ReadService as ItemCategoryReadService;
-use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
+use App\Services\ItemCategory\ItemCategoryService as ItemCategoryService;
+use App\Services\Order\OrderService as OrderService;
+use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    protected $orderDetailReadService;
-    protected $itemCategoryReadService;
+    protected $orderDetailService;
+    protected $itemCategoryService;
+    protected $orderService;
 
     public function __construct(
-        OrderDetailReadService $orderDetailReadService,
-        ItemCategoryReadService $itemCategoryReadService
+        OrderDetailService $orderDetailService,
+        ItemCategoryService $itemCategoryService,
+        OrderService $orderService
     ) {
-        $this->orderDetailReadService = $orderDetailReadService;
-        $this->itemCategoryReadService = $itemCategoryReadService;
+        $this->orderDetailService = $orderDetailService;
+        $this->itemCategoryService = $itemCategoryService;
+        $this->orderService = $orderService;
     }
 
     /**
@@ -35,23 +39,22 @@ class OrderController extends Controller
         try {
             $auth = Auth::user();
 
-            $categories = $this->getCategories($auth->site_id);
-            $orderItems = $this->getUnorderedItems($auth->id, $auth->site_id);
+            // カテゴリ一覧の取得
+            $categories = $this->itemCategoryService->getBySiteId($auth->site_id);
+
+            // 最新の未発注伝票を確認
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+
+            if ($order) {
+                $orderItems = $this->orderDetailService->getOrderDetailsByOrderId($order->id);
+            } else {
+                $orderItems = [];
+            }
 
             return view('customer.order', compact('orderItems', 'categories'));
         } catch (\Exception $e) {
             Log::error('Error fetching unordered items: ' . $e->getMessage());
             return view('customer.order', ['error' => __('未発注の注文データの取得に失敗しました。')]);
         }
-    }
-
-    private function getCategories($siteId)
-    {
-        return $this->itemCategoryReadService->getListBySiteId($siteId);
-    }
-
-    private function getUnorderedItems($userId, $siteId)
-    {
-        return $this->orderDetailReadService->getUnorderedListWithItemsByUserIdAndSiteId($userId, $siteId);
     }
 }

@@ -17,13 +17,13 @@
     @foreach($items as $item)
     @php
         // $unorderedItems の中で、現在の $recommendedItem の item_id に一致する detail_code を探す
-        $unOrderItem = collect($unorderedItems)->firstWhere('item_id', $item->id);
+        $unOrderItem = collect($unorderedItems)->firstWhere('item_id', $item['id']);
     @endphp
     <!-- Item -->
     <div class="flex flex-col gap-y-4 border-b pb-3">
         <p class="font-bold leading-5">
-            {{ $item->name }}<br>
-            <span class="text-xs font-normal">{{ $item->maker_name }}</span>
+            {{ $item['name'] }}<br>
+            <span class="text-xs font-normal">{{ $item['maker_name'] }}</span>
         </p>
         <div class="flex gap-x-4">
             <div>
@@ -49,7 +49,7 @@
             <div>
                 {{-- 初期表示で登録状況に応じてボタンを切り替え --}}
                 <button class="border-2 border-[#008CD4] px-1.5 add-to-favorites
-                    {{ in_array($item->id, $favoriteItems) ? 'hidden' : '' }}"
+                    {{ in_array($item['id'], $favoriteItems) ? 'hidden' : '' }}"
                     data-item-code="{{ $item['item_code'] }}">
                     <div class="flex items-center gap-x-1 py-0.5">
                         <span class="material-symbols-outlined text-[#008CD4] text-3xl">heart_plus</span>
@@ -57,7 +57,7 @@
                     </div>
                 </button>
                 <button class="border-2 border-[#008CD4] bg-[#008CD4] px-1.5 del-to-favorites
-                        {{ in_array($item->id, $favoriteItems) ? '' : 'hidden' }}"
+                        {{ in_array($item['id'], $favoriteItems) ? '' : 'hidden' }}"
                         data-item-code="{{ $item['item_code'] }}">
                     <div class="flex items-center gap-x-1 py-0.5">
                         <span class="material-symbols-outlined text-white text-3xl">heart_minus</span>

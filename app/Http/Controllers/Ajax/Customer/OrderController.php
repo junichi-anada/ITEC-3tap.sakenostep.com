@@ -9,23 +9,16 @@
 namespace App\Http\Controllers\Ajax\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\OrderDetail;
+use App\Http\Controllers\Ajax\BaseAjaxController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-
-use App\Services\Order\Customer\ReadService as OrderReadService;
-use App\Services\Order\Customer\CreateService as OrderCreateService;
-use App\Services\Order\Customer\UpdateService as OrderUpdateService;
-use App\Services\Item\Customer\ReadService as ItemReadService;
-use App\Services\OrderDetail\Customer\ReadService as OrderDetailReadService;
-use App\Services\OrderDetail\Customer\CreateService as OrderDetailCreateService;
-use App\Services\OrderDetail\Customer\DeleteService as OrderDetailDeleteService;
-
-class OrderController extends Controller
+use App\Services\Order\OrderService as OrderService;
+use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
+use App\Services\Item\ItemService as ItemService;
+class OrderController extends BaseAjaxController
 {
     const SUCCESS_MESSAGE = '注文リストに追加しました';
     const DELETE_SUCCESS_MESSAGE = '注文リストから削除しました';
@@ -36,55 +29,18 @@ class OrderController extends Controller
     const INVALID_DETAIL_CODE_MESSAGE = '無効な注文詳細コードです';
     const NOT_FOUND_MESSAGE = '注文詳細データが見つかりません';
 
-    protected $orderReadService;
-    protected $orderCreateService;
-    protected $orderUpdateService;
-    protected $itemReadService;
-    protected $orderDetailReadService;
-    protected $orderDetailCreateService;
-    protected $orderDetailDeleteService;
+    private OrderDetailService $orderDetailService;
+    private OrderService $orderService;
+    private ItemService $itemService;
 
     public function __construct(
-        OrderReadService $orderReadService,
-        OrderCreateService $orderCreateService,
-        OrderUpdateService $orderUpdateService,
-        ItemReadService $itemReadService,
-        OrderDetailReadService $orderDetailReadService,
-        OrderDetailCreateService $orderDetailCreateService,
-        OrderDetailDeleteService $orderDetailDeleteService
+        OrderDetailService $orderDetailService,
+        OrderService $orderService,
+        ItemService $itemService,
     ) {
-        $this->orderReadService = $orderReadService;
-        $this->orderCreateService = $orderCreateService;
-        $this->orderUpdateService = $orderUpdateService;
-        $this->itemReadService = $itemReadService;
-        $this->orderDetailReadService = $orderDetailReadService;
-        $this->orderDetailCreateService = $orderDetailCreateService;
-        $this->orderDetailDeleteService = $orderDetailDeleteService;
-    }
-
-    private function jsonResponse($message, $data = [], $status = 200)
-    {
-        return response()->json(array_merge(['message' => $message], $data), $status);
-    }
-
-    private function getAuthenticatedUser()
-    {
-        return Auth::user();
-    }
-
-    private function beginTransaction()
-    {
-        DB::beginTransaction();
-    }
-
-    private function commitTransaction()
-    {
-        DB::commit();
-    }
-
-    private function rollbackTransaction()
-    {
-        DB::rollBack();
+        $this->orderDetailService = $orderDetailService;
+        $this->orderService = $orderService;
+        $this->itemService = $itemService;
     }
 
     /**
@@ -98,25 +54,32 @@ class OrderController extends Controller
     {
         $request->validate([
             'item_code' => 'required|exists:items,item_code',
-            'volume' => 'nullable|integer|min:1',
+            'volume' => 'required|integer|min:1',
         ]);
 
         $auth = $this->getAuthenticatedUser();
-        $item = $this->itemReadService->getByItemCode($request->input('item_code'));
         $volume = $request->input('volume', 1);
+        $itemCode = $request->input('item_code');
 
         try {
-            // 新しいメソッドを使用して未発注の注文基本データを取得
-            $order = $this->orderReadService->getUnorderedByUserIdAndSiteId($auth->id, $auth->site_id);
+            // 登録対象の商品情報を取得
+            $item = $this->itemService->getByCodeOne($itemCode, $auth->site_id);
 
-            // 持っていない場合は、注文基本データから一挙に作成
-            if (!$order) {
-                $orderDetail = $this->orderDetailCreateService->createOrderWithDetails($auth->site_id, $auth->id, $item, $volume);
-            }
-            // 持っている場合は、注文詳細データのみ作成
-            else {
-                $orderDetail = $this->orderDetailCreateService->create($order->id, $item, $volume);
-            }
+            // 未発注の伝票データを取得
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+
+            $data = [
+                'detail_code' => Str::uuid(),
+                'order_id' => $order->id,
+                'item_id' => $item->id,
+                'volume' => $volume,
+                'unit_price' => $item->unit_price ?? 0,
+                'unit_name' => $item->unit_name ?? "1",
+                'price' => $item->price ?? 0,
+                'tax' => $item->tax ?? 0,
+            ];
+
+            $orderDetail = $this->orderDetailService->createOrderDetail($data);
 
             return $this->jsonResponse(self::SUCCESS_MESSAGE, ['detail_code' => $orderDetail->detail_code], 201);
         } catch (\Exception $e) {
@@ -135,14 +98,20 @@ class OrderController extends Controller
     public function destroy(Request $request, $item_code)
     {
         $auth = $this->getAuthenticatedUser();
-        $item = $this->itemReadService->getByItemCode($item_code);
 
+        // 削除対象の商品情報を取得
+        $item = $this->itemService->getByCodeOne($item_code, $auth->site_id);
         if (!$item) {
             return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
         }
+        $itemId = $item->id;
 
-        $process = $this->orderDetailDeleteService->softDeleteItemFromUnorderedDetails($auth->id, $auth->site_id, $item->id);
+        $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+        if (!$order) {
+            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+        }
 
+        $process = $this->orderDetailService->deleteItemFromOrder($order->id, $itemId);
         if (!$process || is_null($process)) {
             return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
         }
@@ -160,18 +129,14 @@ class OrderController extends Controller
     {
         $auth = $this->getAuthenticatedUser();
 
-        $order = Order::where('user_id', $auth->id)
-                      ->where('site_id', $auth->site_id)
-                      ->whereNull('ordered_at')
-                      ->first();
+        $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+        if (!$order) {
+            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+        }
+        $orderId = $order->id;
 
-        if ($order) {
-            DB::transaction(function () use ($order) {
-                $order->orderDetails()->each(function ($orderDetail) {
-                    $orderDetail->delete();
-                });
-            });
-
+        $process = $this->orderDetailService->deleteAllOrderDetails($orderId);
+        if ($process) {
             return $this->jsonResponse(self::DELETE_ALL_SUCCESS_MESSAGE);
         }
 
@@ -188,7 +153,16 @@ class OrderController extends Controller
     {
         $auth = $this->getAuthenticatedUser();
 
-        $order = $this->orderUpdateService->updateOrderDate($auth->id, $auth->site_id);
+        $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+        if (!$order) {
+            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+        }
+        $orderId = $order->id;
+
+        $order = $this->orderService->updateOrderDate($orderId);
+        if (!$order) {
+            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+        }
 
         return $this->jsonResponse(self::ORDER_SUCCESS_MESSAGE, ['order_code' => $order->order_code]);
     }

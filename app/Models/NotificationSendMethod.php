@@ -1,4 +1,11 @@
 <?php
+/**
+ * お知らせ送信方法モデル
+ *
+ * @category モデル
+ * @package App\Models
+ * @version 1.0
+ */
 
 namespace App\Models;
 
