@@ -76,6 +76,10 @@ final class CategoryController extends Controller
     {
         $auth = Auth::user();
 
+        $recommendedItems = [];
+        $favoriteItems = [];
+        $unorderedItems = [];
+
         // カテゴリ一覧
         $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
 
@@ -119,11 +123,27 @@ final class CategoryController extends Controller
      */
     private function calculateItemScores(array $items, array $favoriteItems, array $unorderedItems): array
     {
+        // お気に入り商品が空の場合は、スコア2を0にする
+        if (empty($favoriteItems)) {
+            foreach ($items as $key => $item) {
+                $items[$key]['score2'] = 0;
+            }
+        }
+        // 未注文商品が空の場合は、スコア1を0で返却
+        if (empty($unorderedItems)) {
+            foreach ($items as $key => $item) {
+                $items[$key]['score1'] = 0;
+                $items[$key]['unorderedVolume'] = 1;
+            }
+            return $items;
+        }
+
         foreach ($items as $key => $item) {
             $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
             $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
             $items[$key]['unorderedVolume'] = 1;
         }
+
         return $items;
     }
 }

@@ -49,17 +49,22 @@ class FavoriteItemController extends BaseAjaxController
                 'item_code' => 'required|exists:items,item_code',
             ]);
 
+            Log::info('お気に入りに追加する商品コード: ' . json_encode($request->input('item_code')));
+
             $auth = $this->getAuthenticatedUser();
 
             $item = $this->itemService->getByCodeOne(
                 itemCode: $request->input('item_code'),
                 siteId: $auth->site_id
             );
+            Log::info('お気に入りに追加する商品ID: ' . json_encode($item->id));
             if (!$item->id) {
                 throw new \Exception('商品IDが取得できませんでした');
             }
 
             $favoriteItem = $this->favoriteItemService->add($auth->id, $item->id, $auth->site_id);
+
+            Log::info('お気に入り商品一覧: ' . json_encode($favoriteItem));
 
             return $this->jsonResponse(self::SUCCESS_MESSAGE, [
                 'favorite_item' => $favoriteItem
@@ -85,6 +90,8 @@ class FavoriteItemController extends BaseAjaxController
         try {
             $auth = $this->getAuthenticatedUser();
 
+            Log::info('お気に入りから消す商品コード: ' . json_encode($item_code));
+
             $item = $this->itemService->getByCodeOne(
                 itemCode: $item_code,
                 siteId: $auth->site_id
@@ -92,6 +99,7 @@ class FavoriteItemController extends BaseAjaxController
             if (!$item->id) {
                 throw new \Exception('商品IDが取得できませんでした');
             }
+            Log::info('お気に入りから消す商品ID: ' . json_encode($item->id));
 
             $result = $this->favoriteItemService->remove($auth->id, $item->id, $auth->site_id);
 

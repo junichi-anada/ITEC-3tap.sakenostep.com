@@ -45,30 +45,34 @@ class RecommendedItemController extends Controller
         try {
             $auth = Auth::user();
 
+            $recommendedItems = [];
+            $favoriteItems = [];
+            $unorderedItems = [];
+
             // カテゴリ一覧
             $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+
             // おすすめ商品一覧
             $recommendedItems = $this->itemService->getRecommendedItems($auth->site_id);
-            if ($recommendedItems) {
+            if (!is_null($recommendedItems)) {
                 $recommendedItems = $recommendedItems->toArray();
-            } else {
-                $recommendedItems = [];
             }
 
             // お気に入り商品一覧
             $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
-            if ($favoriteItems) {
+            if (!is_null($favoriteItems)) {
                 $favoriteItems = $favoriteItems->toArray();
-            } else {
-                $favoriteItems = [];
             }
+            Log::info('お気に入り商品一覧の件数: ' . count($favoriteItems));
+            Log::info('お気に入り商品一覧: ' . json_encode($favoriteItems));
+
             // 未発注伝票に紐づく注文詳細一覧
             $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-            $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
-            if ($unorderedItems) {
-                $unorderedItems = $unorderedItems->toArray();
-            } else {
-                $unorderedItems = [];
+            if (!is_null($unorderedOrder)) {
+                $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
+                if (count($unorderedItems) > 0) {
+                    $unorderedItems = $unorderedItems->toArray();
+                }
             }
 
             $recommendedItems = $this->calculateItemScores($recommendedItems, $favoriteItems, $unorderedItems);
@@ -90,11 +94,41 @@ class RecommendedItemController extends Controller
      */
     private function calculateItemScores(array $items, array $favoriteItems, array $unorderedItems): array
     {
-        foreach ($items as $key => $item) {
-            $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
-            $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
-            $items[$key]['unorderedVolume'] = 1;
+        // お気に入り商品が空の場合は、スコア2を0にする
+        if (empty($favoriteItems)) {
+            foreach ($items as $key => $item) {
+                $items[$key]['score2'] = 0;
+            }
+        }else {
+            foreach ($items as $key => $item) {
+                $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
+                Log::info('key: ' . json_encode($key));
+                Log::info('item_id: ' . json_encode($item['id']));
+                Log::info('お気に入り商品があるの場合のスコア2: ' . json_encode($items[$key]['score2']));
+                Log::info('お気に入り商品一覧: ' . json_encode($favoriteItems));
+            }
         }
+
+        // 未注文商品が空の場合は、スコア1を0で返却
+        if (empty($unorderedItems)) {
+            foreach ($items as $key => $item) {
+                $items[$key]['score1'] = 0;
+                $items[$key]['unorderedVolume'] = 1;
+            }
+            return $items;
+        } else {
+            foreach ($items as $key => $item) {
+                $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
+                $items[$key]['unorderedVolume'] = 1;
+            }
+        }
+
+        // foreach ($items as $key => $item) {
+        //     $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
+        //     $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
+        //     $items[$key]['unorderedVolume'] = 1;
+        // }
+
         return $items;
     }
 }

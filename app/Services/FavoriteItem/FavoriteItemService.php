@@ -84,6 +84,7 @@ final class FavoriteItemService
                 $favoriteItem = $this->findFavoriteItemWithTrashed($conditions);
 
                 if (!$favoriteItem) {
+                    Log::info('お気に入り商品が存在しないため作成します。');
                     return $this->createFavoriteItem($conditions);
                 }
 
@@ -135,7 +136,8 @@ final class FavoriteItemService
         int $userId,
         int $siteId,
         array $orderBy = ['created_at' => 'desc'],
-        array $with = ['item', 'site']
+        // array $with = ['item', 'site']
+        array $with = []
     ): ?Collection {
         return $this->tryCatchWrapper(
             function () use ($userId, $siteId, $orderBy, $with) {

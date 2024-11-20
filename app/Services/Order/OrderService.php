@@ -44,9 +44,14 @@ final class OrderService
      * @return Order 作成された伝票
      * @throws \Exception データ作成に失敗した場合
      */
-    public function createOrder(array $data): Order
+    public function createOrder(int $siteId, int $userId): Order
     {
         try {
+            $data = [
+                'site_id' => $siteId,
+                'user_id' => $userId,
+            ];
+
             return $this->orderRepository->create($data);
         } catch (\Exception $e) {
             throw new \Exception("伝票の作成に失敗しました。詳細: " . $e->getMessage());

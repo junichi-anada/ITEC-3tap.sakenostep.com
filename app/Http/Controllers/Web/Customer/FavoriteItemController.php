@@ -55,9 +55,12 @@ class FavoriteItemController extends Controller
             $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
             if ($unorderedOrder) {
                 $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id)->toArray();
+            } else {
+                $unorderedItems = [];
             }
 
             $favoriteItems = $this->calculateScores($favoriteItems, $unorderedItems);
+            Log::info('お気に入り商品一覧: ' . json_encode($favoriteItems));
 
             return view('customer.favorite', compact('favoriteItems', 'categories'));
         } catch (\Exception $e) {

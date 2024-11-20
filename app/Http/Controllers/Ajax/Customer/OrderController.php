@@ -68,6 +68,11 @@ class OrderController extends BaseAjaxController
             // 未発注の伝票データを取得
             $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
 
+            // 未発注の伝票が存在しない場合は新規に作成
+            if (is_null($order)) {
+                $order = $this->orderService->createOrder($auth->site_id, $auth->id);
+            }
+
             $data = [
                 'detail_code' => Str::uuid(),
                 'order_id' => $order->id,
