@@ -8,7 +8,7 @@ use App\Models\ImportTask;
 use App\Models\Operator;
 use App\Models\Order;
 use App\Models\User;
-use App\Services\Operator\Order\ListService as OrderListService;
+use App\Services\Operator\Order\Read\Component\List\OrderListService as OrderListService;
 use App\Services\Operator\Order\RegistService as OrderRegistService;
 use App\Services\Operator\Order\DeleteService as OrderDeleteService;
 use App\Services\Operator\Order\UpdateService as OrderUpdateService;
@@ -38,7 +38,7 @@ class OrderController extends Controller
         $operator = Operator::where('id', $auth->entity_id)->first();
 
         // 検索条件なしで注文一覧を取得
-        $orders = $orderListService->getList();
+        $orders = $orderListService->getOrderList();
 
         return view('operator.order.list', compact('operator', 'orders'));
     }

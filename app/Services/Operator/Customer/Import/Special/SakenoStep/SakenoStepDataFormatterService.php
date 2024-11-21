@@ -25,6 +25,7 @@ class SakenoStepDataFormatterService
                 'postal_code' => $row['郵便番号'] ?? null,
                 'address' => $this->formatAddress($row),
                 'phone' => $row['電話番号1_1'] ?? null,
+                'phone2' => $row['電話番号2_1'] ?? null,
                 'fax' => $row['FAX番号1_1'] ?? null,
                 // 特別仕様の追加フィールド
                 'custom_field' => $row['カスタムフィールド'] ?? null,

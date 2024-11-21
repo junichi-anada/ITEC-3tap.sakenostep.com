@@ -2,6 +2,8 @@
 
 namespace App\Services\Operator\Customer\Import\Special\SakenoStep;
 
+use Illuminate\Support\Facades\Validator;
+
 /**
  * SakenoStepバリデーションサービスクラス
  *
@@ -57,4 +59,31 @@ class SakenoStepValidationService
             '_4' => 'nullable|string|max:255',
         ];
     }
+
+    /**
+     * ファイル内容をバリデーションする
+     *
+     * @param array $rows 検証対象のデータ行
+     * @return array バリデーションエラーの配列
+     */
+    public function validateFileContent(array $rows): array
+    {
+        // バリデーションエラーを格納する配列を初期化
+        $validationErrors = [];
+
+        // 各行をバリデート
+        foreach ($rows as $index => $row) {
+            // バリデータインスタンスを作成
+            $validator = \Validator::make($row, $this->getValidationRules());
+
+            // バリデーション失敗時にエラーを収集
+            if ($validator->fails()) {
+                $validationErrors[$index] = $validator->errors()->all();
+            }
+        }
+
+        // バリデーションエラー配列を返す
+        return $validationErrors;
+    }
+
 }

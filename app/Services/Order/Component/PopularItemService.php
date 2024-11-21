@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Order\Operator;
+namespace App\Services\Order\Component;
 
 use App\Models\OrderDetail;
 use App\Models\Item;

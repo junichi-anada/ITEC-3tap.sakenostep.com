@@ -1,22 +1,22 @@
 <?php
 
-namespace App\Services\Operator\Customer\Component\List;
+namespace App\Services\Operator\Customer\Read\Component\List;
 
 use App\Models\Authenticate;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * ユーザー一覧取得サービスクラス
+ * 顧客一覧取得サービスクラス
  *
- * このクラスはユーザー一覧を取得するためのサービスを提供します。
+ * このクラスは顧客一覧を取得するためのサービスを提供します。
  */
-final class UserListService
+final class CustomerListService
 {
     /**
      * ユーザー一覧を取得
      *
-     * @return \Illuminate\Database\Eloquent\Collection ユーザーのコレクション
+     * @return \Illuminate\Database\Eloquent\Collection 顧客のコレクション
      */
     public function getList()
     {
@@ -28,7 +28,7 @@ final class UserListService
      * サイトIDに基づいてユーザーを取得
      *
      * @param int $siteId サイトID
-     * @return \Illuminate\Database\Eloquent\Collection ユーザーのコレクション
+     * @return \Illuminate\Database\Eloquent\Collection 顧客のコレクション
      */
     private function getUsersBySiteId(int $siteId)
     {

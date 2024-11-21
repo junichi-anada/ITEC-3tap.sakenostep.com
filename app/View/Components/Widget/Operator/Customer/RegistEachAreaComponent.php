@@ -3,7 +3,7 @@
 namespace App\View\Components\Widget\Operator\Customer;
 
 use Illuminate\View\Component;
-use App\Services\Operator\Customer\CountService;
+use App\Services\Operator\Item\CountService;
 
 class RegistEachAreaComponent extends Component
 {

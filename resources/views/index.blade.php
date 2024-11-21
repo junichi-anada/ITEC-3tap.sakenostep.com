@@ -61,6 +61,11 @@
                     @enderror
                     <input type="hidden" name="site_code" value="SITE-UUID-1234-5678">
                     <button class="bg-[#F4CF41] text-black rounded-lg p-2 mt-4 font-bold">ログイン</button>
+
+                    <a href="{{ route('line.login') }}">
+                        <img src="https://developers.line.biz/media/line-login-button.png" alt="LINEでログイン">
+                    </a>
+
                 </div>
             </form>
         </div>

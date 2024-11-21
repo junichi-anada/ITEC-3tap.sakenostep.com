@@ -5,27 +5,28 @@ namespace App\View\Components\Widget\Operator\Customer;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use App\Services\Operator\Customer\CountService as CustomerCountService;
-use App\Services\Operator\Customer\ListService as CustomerListService;
+use App\Services\Operator\Customer\Read\Component\Count\CountService as CountService;
+use App\Services\Operator\Customer\Read\Component\List\CustomerListService as CustomerListService;
 
 class CustomerListComponent extends Component
 {
     public $users;
 
     protected $customerListService;
-    protected $customerCountService;
+    protected $UserCountService;
     public $customer_count;
     public $new_customer_count;
     public $line_customer_count;
 
-    public function __construct(CustomerListService $customerListService, CustomerCountService $customerCountService, $customers = null)
+    public function __construct(CustomerListService $customerListService, CountService $countService, $customers = null)
     {
         $this->customerListService = $customerListService;
         $this->customers = $customers ?? $this->customerListService->getList();
 
-        $this->customerCountService = $customerCountService;
-        $this->customer_count = $this->customerCountService->getUserCount();
-        $this->new_customer_count = $this->customerCountService->getNewUserCount();
+        $this->countService = $countService;
+        $this->customer_count = $this->countService->getUserCount();
+        $this->new_customer_count = $this->countService->getNewUserCount();
+        $this->line_customer_count = $this->countService->getLineUserCount();
     }
 
     public function render()

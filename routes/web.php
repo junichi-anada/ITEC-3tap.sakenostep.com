@@ -163,3 +163,21 @@ Route::middleware(['web', 'auth'])->group(function () {
 });
 
 Route::get('/customer/history/detail', [HistoryController::class, 'detail']);
+
+
+
+/**
+ * LINEログイン
+ */
+use App\Http\Controllers\LineAuthController;
+Route::get('/line/login', [LineAuthController::class, 'redirectToLine'])->name('line.login');
+Route::get('/line/callback', [LineAuthController::class, 'handleLineCallback'])->name('line.callback');
+
+/**
+ * LINE Webhook
+ */
+use App\Http\Controllers\LineWebhookController;
+Route::post('/line/webhook', [LineWebhookController::class, 'handle']);
+use App\Http\Controllers\LineMessageController;
+Route::get('/line/send-message', [LineMessageController::class, 'send']);
+

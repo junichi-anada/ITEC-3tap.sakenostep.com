@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             AuthenticateSeeder::class,
             ItemSeeder::class,
+            LineAuthProviderSeeder::class,
         ]);
     }
 }

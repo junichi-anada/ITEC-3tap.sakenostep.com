@@ -5,7 +5,7 @@ namespace App\View\Components\Widget\Operator\Item;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use App\Services\Order\Operator\PopularItemService;
+use App\Services\Order\Component\PopularItemService;
 
 class PopularRankingComponent extends Component
 {

@@ -6,7 +6,8 @@ use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use App\Services\Operator\Item\CountService as ItemCountService;
-use App\Services\Operator\Item\ListService as ItemListService;
+use App\Services\Operator\Order\Read\Component\List\OrderListService as OrderListService;
+use App\Services\Operator\Order\Read\Component\Count\OrderCountService as OrderCountService;
 
 class OrderListComponent extends Component
 {
@@ -18,14 +19,14 @@ class OrderListComponent extends Component
     public $new_item_count;
     public $line_item_count;
 
-    public function __construct(OrderListService $orderListService, ItemCountService $orderCountService, $items = null)
+    public function __construct(OrderListService $orderListService, OrderCountService $orderCountService, $items = null)
     {
         $this->orderListService = $orderListService;
-        $this->items = $items ?? $this->itemListService->getList();
+        $this->orders = $orders ?? $this->orderListService->getOrderList();
 
-        $this->itemCountService = $itemCountService;
-        $this->item_count = $this->itemCountService->getUserCount();
-        $this->new_item_count = $this->itemCountService->getNewUserCount();
+        $this->orderCountService = $orderCountService;
+        $this->order_count = $this->orderCountService->getOrderCount();
+        $this->new_order_count = $this->orderCountService->getNewOrderCount();
     }
 
     public function render()

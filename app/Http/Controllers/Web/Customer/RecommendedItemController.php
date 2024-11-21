@@ -45,9 +45,9 @@ class RecommendedItemController extends Controller
         try {
             $auth = Auth::user();
 
-            $recommendedItems = [];
-            $favoriteItems = [];
-            $unorderedItems = [];
+            $recommendedItems = "";
+            $favoriteItems = "";
+            $unorderedItems = "";
 
             // カテゴリ一覧
             $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
@@ -63,16 +63,26 @@ class RecommendedItemController extends Controller
             if (!is_null($favoriteItems)) {
                 $favoriteItems = $favoriteItems->toArray();
             }
-            Log::info('お気に入り商品一覧の件数: ' . count($favoriteItems));
-            Log::info('お気に入り商品一覧: ' . json_encode($favoriteItems));
 
             // 未発注伝票に紐づく注文詳細一覧
             $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
             if (!is_null($unorderedOrder)) {
                 $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
-                if (count($unorderedItems) > 0) {
+                if (!is_null($unorderedItems)) {
                     $unorderedItems = $unorderedItems->toArray();
                 }
+            }
+
+            if (!is_array($recommendedItems)) {
+                $recommendedItems = [];
+            }
+
+            if (!is_array($favoriteItems)) {
+                $favoriteItems = [];
+            }
+
+            if (!is_array($unorderedItems)) {
+                $unorderedItems = [];
             }
 
             $recommendedItems = $this->calculateItemScores($recommendedItems, $favoriteItems, $unorderedItems);

@@ -9,5 +9,5 @@
 @endsection
 
 @section('js')
-    <script type="module" src="{{ asset('js/ajax/customer.js') }}"></script>
+    <script type="module" src="{{ asset('js/ajax/operator/customer.js') }}"></script>
 @endsection
