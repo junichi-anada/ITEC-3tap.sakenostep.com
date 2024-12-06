@@ -3,7 +3,7 @@
 namespace App\View\Components\Widget\Operator\Customer;
 
 use Illuminate\View\Component;
-use App\Services\Operator\Item\CountService;
+use App\Services\Operator\Customer\Read\Component\Count\CountService;
 
 class RegistEachAreaComponent extends Component
 {
@@ -13,7 +13,7 @@ class RegistEachAreaComponent extends Component
 
     protected $countService;
 
-    public function __construct(countService $countService)
+    public function __construct(CountService $countService)
     {
         $this->countService = $countService;
         $this->userCount = $this->countService->getUserCount();

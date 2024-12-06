@@ -5,171 +5,104 @@ declare(strict_types=1);
 namespace App\Services\OrderDetail;
 
 use App\Models\OrderDetail;
+use App\Services\OrderDetail\Actions\AddOrderDetailAction;
+use App\Services\OrderDetail\Actions\RemoveOrderDetailAction;
+use App\Services\OrderDetail\Actions\RemoveAllOrderDetailsAction;
+use App\Services\OrderDetail\DTOs\OrderDetailData;
+use App\Services\OrderDetail\Traits\OrderDetailServiceTrait;
 use App\Repositories\OrderDetail\OrderDetailRepository;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
  * 注文詳細サービスクラス
  *
- * 主な仕様:
- * - 注文詳細の取得、作成、更新、削除などの操作を提供
- * - OrderDetailRepositoryを使用してデータアクセスを行う
- * - ビジネスロジックの実装を担当
- *
- * 制限事項:
- * - データベースアクセスは全てOrderDetailRepositoryを経由
- * - トランザクション制御はRepositoryに委譲
+ * このクラスは注文詳細に関する操作を提供します。
+ * Actionsパターンを採用し、複雑な操作は個別のActionクラスに委譲します。
  */
 final class OrderDetailService
 {
-    /**
-     * @var OrderDetailRepository
-     */
-    private OrderDetailRepository $orderDetailRepository;
+    use OrderDetailServiceTrait;
+
+    public function __construct(
+        private OrderDetailRepository $orderDetailRepository,
+        private AddOrderDetailAction $addOrderDetailAction,
+        private RemoveOrderDetailAction $removeOrderDetailAction,
+        private RemoveAllOrderDetailsAction $removeAllOrderDetailsAction
+    ) {}
 
     /**
-     * コンストラクタ
+     * 注文詳細を追加する
      *
-     * @param OrderDetailRepository $orderDetailRepository 注文詳細リポジトリ
+     * @param OrderDetailData $data
+     * @return OrderDetail|null
      */
-    public function __construct(OrderDetailRepository $orderDetailRepository)
+    public function addOrderDetail(OrderDetailData $data): ?OrderDetail
     {
-        $this->orderDetailRepository = $orderDetailRepository;
-    }
-
-    /**
-     * 注文詳細を作成する
-     *
-     * @param array<string, mixed> $data 注文詳細データ
-     * @return OrderDetail 作成された注文詳細
-     * @throws \Exception データ作成に失敗した場合
-     */
-    public function createOrderDetail(array $data): OrderDetail
-    {
-        try {
-            return $this->orderDetailRepository->create($data);
-        } catch (\Exception $e) {
-            throw new \Exception("注文詳細の作成に失敗しました。詳細: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * 注文詳細を取得する
-     *
-     * @param int $id 注文詳細ID
-     * @return OrderDetail|null 注文詳細
-     * @throws \Exception データ取得に失敗した場合
-     */
-    public function getOrderDetail(int $id): ?OrderDetail
-    {
-        try {
-            return $this->orderDetailRepository->find($id);
-        } catch (\Exception $e) {
-            throw new \Exception("注文詳細の取得に失敗しました。ID: {$id}, 詳細: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * すべての注文詳細を取得する
-     *
-     * @return Collection 注文詳細のコレクション
-     * @throws \Exception データ取得に失敗した場合
-     */
-    public function getAllOrderDetails(): Collection
-    {
-        try {
-            return $this->orderDetailRepository->getAll();
-        } catch (\Exception $e) {
-            throw new \Exception("注文詳細一覧の取得に失敗しました。詳細: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * 注文詳細を更新する
-     *
-     * @param int $id 注文詳細ID
-     * @param array<string, mixed> $data 更新データ
-     * @return bool 更新が成功したかどうか
-     * @throws \Exception データ更新に失敗した場合
-     */
-    public function updateOrderDetail(int $id, array $data): bool
-    {
-        try {
-            return $this->orderDetailRepository->update($id, $data);
-        } catch (\Exception $e) {
-            throw new \Exception("注文詳細の更新に失敗しました。ID: {$id}, 詳細: " . $e->getMessage());
-        }
+        return $this->addOrderDetailAction->execute($data);
     }
 
     /**
      * 注文詳細を削除する
      *
-     * @param int $id 注文詳細ID
-     * @return bool 削除が成功したかどうか
-     * @throws \Exception データ削除に失敗した場合
+     * @param OrderDetailData $data
+     * @return bool
      */
-    public function deleteOrderDetail(int $id): bool
+    public function removeOrderDetail(OrderDetailData $data): bool
     {
-        try {
-            return $this->orderDetailRepository->delete($id);
-        } catch (\Exception $e) {
-            throw new \Exception("注文詳細の削除に失敗しました。ID: {$id}, 詳細: " . $e->getMessage());
-        }
+        return $this->removeOrderDetailAction->execute($data);
     }
 
     /**
-     * 伝票番号に紐づく注文詳細リストを取得する
+     * 注文の全ての注文詳細を削除する
      *
-     * @param int $orderId 伝票番号
-     * @return Collection 注文詳細のコレクション
-     * @throws \Exception データ取得に失敗した場合
+     * @param OrderDetailData $data
+     * @return bool
+     */
+    public function removeAllOrderDetails(OrderDetailData $data): bool
+    {
+        return $this->removeAllOrderDetailsAction->execute($data);
+    }
+
+    /**
+     * 注文詳細を取得する
+     *
+     * @param int $id
+     * @return OrderDetail|null
+     */
+    public function getOrderDetail(int $id): ?OrderDetail
+    {
+        return $this->executeWithErrorHandling(
+            fn () => $this->orderDetailRepository->find($id),
+            "注文詳細の取得に失敗しました。ID: {$id}"
+        );
+    }
+
+    /**
+     * 注文IDに紐づく注文詳細リストを取得する
+     *
+     * @param int $orderId
+     * @return Collection
      */
     public function getOrderDetailsByOrderId(int $orderId): Collection
     {
-        try {
-            $conditions = [
-                'order_id' => $orderId,
-                'deleted_at' => null
-            ];
-            return $this->orderDetailRepository->findBy($conditions);
-        } catch (\Exception $e) {
-            throw new \Exception("伝票番号に紐づく注文詳細の取得に失敗しました。伝票番号: {$orderId}, 詳細: " . $e->getMessage());
-        }
+        return $this->executeWithErrorHandling(
+            fn () => $this->orderDetailRepository->findBy(['order_id' => $orderId]),
+            "注文IDに紐づく注文詳細の取得に失敗しました。注文ID: {$orderId}"
+        );
     }
 
     /**
-     * 伝票から商品を削除する
+     * 注文詳細を更新する
      *
-     * 指定された伝票番号と商品IDに紐づく商品を削除します。
-     * 削除に成功した場合は削除された商品モデルを、失敗した場合はnullを返します。
-     *
-     * @param int $orderId 伝票番号
-     * @param int $itemId 商品ID
-     * @return bool 削除が成功したかどうか
-     * @throws \Exception 商品の削除に失敗した場合
+     * @param int $id
+     * @param array $data
+     * @return bool
      */
-    public function deleteItemFromOrder(int $orderId, int $itemId): bool
+    public function updateOrderDetail(int $id, array $data): bool
     {
-        return $this->orderDetailRepository->deleteItemFromOrder($orderId, $itemId);
+        return $this->executeWithErrorHandling(
+            fn () => $this->orderDetailRepository->update($id, $data),
+            "注文詳細の更新に失敗しました。ID: {$id}"
+        );
     }
-
-    /**
-     * 伝票番号に紐づく注文詳細を全て削除する
-     *
-     * 指定された伝票番号に紐づく全ての注文詳細を削除します。
-     * 削除に成功した場合はtrue、失敗した場合は例外をスローします。
-     *
-     * @param int $orderId 伝票番号
-     * @return bool 削除が成功したかどうか
-     * @throws \Exception 注文詳細の削除に失敗した場合
-     */
-    public function deleteAllOrderDetails(int $orderId): bool
-    {
-        try {
-            return $this->orderDetailRepository->deleteAllByOrderId($orderId);
-        } catch (\Exception $e) {
-            throw new \Exception("注文詳細の一括削除に失敗しました。注文ID: {$orderId}, 詳細: " . $e->getMessage());
-        }
-    }
-
 }

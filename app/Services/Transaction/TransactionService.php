@@ -1,99 +1,94 @@
 <?php
+
 declare(strict_types=1);
+
+namespace App\Services\Transaction;
+
+use App\Services\Transaction\Actions\ExecuteTransactionAction;
+use App\Services\Transaction\Exceptions\TransactionException;
+use App\Services\Transaction\Traits\TransactionHandlerTrait;
 
 /**
  * トランザクションサービス
  *
- * トランザクション処理を一元管理し、例外処理を統一的に扱います。
- *
- * @category サービス
- * @package App\Services\Transaction
- * @version 1.0
+ * このクラスはトランザクション処理のファサードとして機能し、
+ * 具体的な処理をExecuteTransactionActionに委譲します。
  */
-
-namespace App\Services\Transaction;
-
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Throwable;
-
 final class TransactionService
 {
+    use TransactionHandlerTrait;
+
+    public function __construct(
+        private ExecuteTransactionAction $executeTransactionAction
+    ) {}
+
     /**
-     * トランザクション内でコールバックを実行します。
+     * トランザクション内でコールバックを実行する
      *
      * @param callable $callback 実行するコールバック関数
+     * @param string $operation 操作の説明（ログ用）
+     * @param array $context コンテキスト情報（ログ用）
      * @return mixed コールバックの戻り値
-     * @throws \Exception 処理中に発生した例外
+     * @throws TransactionException
      */
-    public function executeInTransaction(callable $callback)
+    public function executeInTransaction(callable $callback, string $operation = 'unknown', array $context = []): mixed
     {
-        try {
-            DB::beginTransaction();
-            $result = $callback();
-            DB::commit();
-            return $result;
-        } catch (Throwable $e) {
-            DB::rollBack();
-            Log::error('トランザクション処理でエラーが発生しました。', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw new \Exception('データベース処理中にエラーが発生しました: ' . $e->getMessage(), 0, $e);
-        }
+        return $this->executeTransactionAction->execute($callback, $operation, $context);
     }
 
     /**
-     * トランザクションを開始します。
+     * 複数のコールバックをトランザクション内で順次実行する
      *
-     * @return void
-     * @throws \Exception トランザクション開始に失敗した場合
+     * @param array $callbacks 実行するコールバック関数の配列
+     * @param string $operation 操作の説明（ログ用）
+     * @param array $context コンテキスト情報（ログ用）
+     * @return array 各コールバックの戻り値の配列
+     * @throws TransactionException
+     */
+    public function executeMultiple(array $callbacks, string $operation = 'multiple', array $context = []): array
+    {
+        return $this->executeTransactionAction->executeMultiple($callbacks, $operation, $context);
+    }
+
+    /**
+     * トランザクションを手動制御するためのコンテキストを作成
+     *
+     * @param callable $callback
+     * @return mixed
+     * @throws TransactionException
+     */
+    public function withManualControl(callable $callback): mixed
+    {
+        return $this->executeTransactionAction->withManualControl($callback);
+    }
+
+    /**
+     * トランザクションを開始する
+     *
+     * @throws TransactionException
      */
     public function beginTransaction(): void
     {
-        try {
-            DB::beginTransaction();
-        } catch (Throwable $e) {
-            Log::error('トランザクション開始に失敗しました。', [
-                'error' => $e->getMessage()
-            ]);
-            throw new \Exception('トランザクション開始に失敗しました: ' . $e->getMessage(), 0, $e);
-        }
+        $this->beginTransaction();
     }
 
     /**
-     * トランザクションをコミットします。
+     * トランザクションをコミットする
      *
-     * @return void
-     * @throws \Exception コミットに失敗した場合
+     * @throws TransactionException
      */
     public function commit(): void
     {
-        try {
-            DB::commit();
-        } catch (Throwable $e) {
-            Log::error('トランザクションのコミットに失敗しました。', [
-                'error' => $e->getMessage()
-            ]);
-            throw new \Exception('トランザクションのコミットに失敗しました: ' . $e->getMessage(), 0, $e);
-        }
+        $this->commit();
     }
 
     /**
-     * トランザクションをロールバックします。
+     * トランザクションをロールバックする
      *
-     * @return void
-     * @throws \Exception ロールバックに失敗した場合
+     * @throws TransactionException
      */
     public function rollBack(): void
     {
-        try {
-            DB::rollBack();
-        } catch (Throwable $e) {
-            Log::error('トランザクションのロールバックに失敗しました。', [
-                'error' => $e->getMessage()
-            ]);
-            throw new \Exception('トランザクションのロールバックに失敗しました: ' . $e->getMessage(), 0, $e);
-        }
+        $this->rollBack();
     }
 }

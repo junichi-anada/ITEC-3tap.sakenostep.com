@@ -40,10 +40,10 @@ class OrderController extends Controller
             $auth = Auth::user();
 
             // カテゴリ一覧の取得
-            $categories = $this->itemCategoryService->getBySiteId($auth->site_id);
+            $categories = $this->itemCategoryService->getAllCategories($auth->site_id);
 
             // 最新の未発注伝票を確認
-            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $order = $this->orderService->findUnorderedByUserAndSite($auth->id, $auth->site_id);
 
             if ($order) {
                 $orderItems = $this->orderDetailService->getOrderDetailsByOrderId($order->id);
@@ -51,10 +51,10 @@ class OrderController extends Controller
                 $orderItems = [];
             }
 
-            return view('customer.order', compact('orderItems', 'categories'));
+            return view('customer.pages.order', compact('orderItems', 'categories'));
         } catch (\Exception $e) {
             Log::error('Error fetching unordered items: ' . $e->getMessage());
-            return view('customer.order', ['error' => __('未発注の注文データの取得に失敗しました。')]);
+            return view('customer.pages.order', ['error' => __('未発注の注文データの取得に失敗しました。')]);
         }
     }
 }
