@@ -5,7 +5,7 @@ namespace App\View\Components\Widget\Operator\Order;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use App\Services\Order\Component\AreaOrderService;
+use App\Services\Operator\Order\Read\Component\Area\AreaOrderService;
 
 class EachAreaOrderComponent extends Component
 {

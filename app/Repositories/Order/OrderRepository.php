@@ -266,4 +266,20 @@ final class OrderRepository
             return $order->fresh();
         });
     }
+
+    /**
+     * 未発注の注文を検索する
+     *
+     * @param int $userId ユーザーID
+     * @param int $siteId サイトID
+     * @return Order|null 未発注の注文、存在しない場合はnull
+     */
+    public function findUnorderedOrder(int $userId, int $siteId): ?Order
+    {
+        return Order::where('user_id', $userId)
+            ->where('site_id', $siteId)
+            ->where('status', 'draft')
+            ->whereNull('ordered_at')
+            ->first();
+    }
 }
