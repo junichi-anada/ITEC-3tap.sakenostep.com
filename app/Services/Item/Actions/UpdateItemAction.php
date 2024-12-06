@@ -29,9 +29,9 @@ class UpdateItemAction
     {
         return $this->tryCatchWrapper(
             function () use ($itemCode, $data) {
-                Log::info("Updating item with code: $itemCode");
-                
-                $item = $this->repository->findByCode($itemCode);
+                Log::info("Updating item with code: $itemCode, site ID: {$data->siteId}");
+
+                $item = $this->repository->findByCode($itemCode, $data->siteId);
                 if (!$item) {
                     throw ItemException::notFound($itemCode);
                 }

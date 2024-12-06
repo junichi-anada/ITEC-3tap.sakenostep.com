@@ -103,6 +103,17 @@ final class ItemCategoryService
     }
 
     /**
+     * サイトIDに基づいてカテゴリを取得
+     *
+     * @param int $siteId
+     * @return Collection
+     */
+    public function getBySiteId(int $siteId): Collection
+    {
+        return $this->getAllCategories($siteId);
+    }
+
+    /**
      * 公開状態のカテゴリのみを取得
      *
      * @param int $siteId

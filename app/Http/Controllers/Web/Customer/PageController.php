@@ -25,7 +25,7 @@ class PageController extends Controller
      */
     public function order()
     {
-        return $this->renderPage('customer.about_order');
+        return $this->renderPage('customer.pages.about_order');
     }
 
     /**
@@ -35,7 +35,7 @@ class PageController extends Controller
      */
     public function delivery()
     {
-        return $this->renderPage('customer.about_delivery');
+        return $this->renderPage('customer.pages.about_delivery');
     }
 
     /**
@@ -48,12 +48,15 @@ class PageController extends Controller
     {
         try {
             $auth = Auth::user();
+            $message = null;
             $categories = $this->itemCategoryService->getBySiteId($auth->site_id);
 
-            return view($viewName, compact('categories'));
+            return view($viewName, compact('categories', 'message'));
         } catch (\Exception $e) {
             Log::error('Error fetching categories: ' . $e->getMessage());
-            return view($viewName, ['error' => __('ページの表示に失敗しました。')]);
+            $message = __('ページの表示に失敗しました。');
+            $categories = collect([]);
+            return view($viewName, compact('message', 'categories'));
         }
     }
 }

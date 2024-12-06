@@ -13,6 +13,7 @@ trait ServiceErrorHandler
      * @param string $errorMessage
      * @param array $context
      * @return mixed
+     * @throws \Exception
      */
     private function tryCatchWrapper($callback, string $errorMessage, array $context = [])
     {
@@ -20,7 +21,7 @@ trait ServiceErrorHandler
             return $callback();
         } catch (\Exception $e) {
             Log::error($errorMessage . ': ' . $e->getMessage(), $context);
-            return null;
+            throw $e;
         }
     }
 }

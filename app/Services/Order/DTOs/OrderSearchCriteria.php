@@ -55,7 +55,19 @@ final class OrderSearchCriteria
         }
 
         if ($this->isOrdered !== null) {
-            $conditions['ordered_at'] = $this->isOrdered ? ['not_null' => true] : null;
+            if ($this->isOrdered) {
+                $conditions['ordered_at'] = ['not_null' => true];
+            } else {
+                $conditions['ordered_at'] = null;
+            }
+        }
+
+        if ($this->orderedFrom !== null) {
+            $conditions['ordered_at_from'] = $this->orderedFrom;
+        }
+
+        if ($this->orderedTo !== null) {
+            $conditions['ordered_at_to'] = $this->orderedTo;
         }
 
         return $conditions;

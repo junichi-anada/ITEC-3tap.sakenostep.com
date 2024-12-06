@@ -102,6 +102,24 @@ final class ItemService
     }
 
     /**
+     * サイトIDとカテゴリIDに基づいて商品一覧を取得する
+     *
+     * @param int $siteId サイトID
+     * @param int $categoryId カテゴリID
+     * @return Collection 商品コレクション
+     */
+    public function getListBySiteIdAndCategoryId(int $siteId, int $categoryId): Collection
+    {
+        $criteria = new ItemSearchCriteria(
+            siteId: $siteId,
+            categoryId: $categoryId,
+            isPublished: true,
+            orderBy: ['created_at' => 'desc']
+        );
+        return $this->searchByCategory($criteria);
+    }
+
+    /**
      * キーワードによる商品検索を実行
      *
      * @param string $keyword
@@ -122,12 +140,12 @@ final class ItemService
     /**
      * カテゴリによる商品検索を実行
      *
-     * @param array $criteria
+     * @param ItemSearchCriteria $criteria
      * @return Collection
      */
-    public function searchByCategory(array $criteria): Collection
+    public function searchByCategory(ItemSearchCriteria $criteria): Collection
     {
-        return $this->searchItemsByCategoryQuery->execute(ItemSearchCriteria::fromArray($criteria));
+        return $this->searchItemsByCategoryQuery->execute($criteria);
     }
 
     /**

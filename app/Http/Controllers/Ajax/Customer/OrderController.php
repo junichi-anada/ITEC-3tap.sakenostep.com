@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 use App\Services\Order\OrderService as OrderService;
 use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
 use App\Services\Item\ItemService as ItemService;
+use App\Services\OrderDetail\DTOs\OrderDetailData;
+
 class OrderController extends BaseAjaxController
 {
     const SUCCESS_MESSAGE = '注文リストに追加しました';
@@ -62,29 +64,14 @@ class OrderController extends BaseAjaxController
         $itemCode = $request->input('item_code');
 
         try {
-            // 登録対象の商品情報を取得
-            $item = $this->itemService->getByCodeOne($itemCode, $auth->site_id);
+            $orderDetailData = new OrderDetailData(
+                userId: $auth->id,
+                siteId: $auth->site_id,
+                itemCode: $itemCode,
+                volume: $volume
+            );
 
-            // 未発注の伝票データを取得
-            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-
-            // 未発注の伝票が存在しない場合は新規に作成
-            if (is_null($order)) {
-                $order = $this->orderService->createOrder($auth->site_id, $auth->id);
-            }
-
-            $data = [
-                'detail_code' => Str::uuid(),
-                'order_id' => $order->id,
-                'item_id' => $item->id,
-                'volume' => $volume,
-                'unit_price' => $item->unit_price ?? 0,
-                'unit_name' => $item->unit_name ?? "1",
-                'price' => $item->price ?? 0,
-                'tax' => $item->tax ?? 0,
-            ];
-
-            $orderDetail = $this->orderDetailService->createOrderDetail($data);
+            $orderDetail = $this->orderDetailService->addOrderDetail($orderDetailData);
 
             return $this->jsonResponse(self::SUCCESS_MESSAGE, ['detail_code' => $orderDetail->detail_code], 201);
         } catch (\Exception $e) {
@@ -104,24 +91,35 @@ class OrderController extends BaseAjaxController
     {
         $auth = $this->getAuthenticatedUser();
 
-        // 削除対象の商品情報を取得
-        $item = $this->itemService->getByCodeOne($item_code, $auth->site_id);
-        if (!$item) {
-            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
-        }
-        $itemId = $item->id;
+        try {
+            // 削除対象の商品情報を取得
+            $item = $this->itemService->getByCode($item_code, $auth->site_id);
+            if (!$item) {
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            }
 
-        $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-        if (!$order) {
-            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
-        }
+            // 未発注の注文を検索
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            if (!$order) {
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            }
 
-        $process = $this->orderDetailService->deleteItemFromOrder($order->id, $itemId);
-        if (!$process || is_null($process)) {
-            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
-        }
+            $orderDetailData = new OrderDetailData(
+                userId: $auth->id,
+                siteId: $auth->site_id,
+                orderId: $order->id,
+                itemId: $item->id
+            );
 
-        return $this->jsonResponse(self::DELETE_SUCCESS_MESSAGE);
+            if (!$this->orderDetailService->removeOrderDetail($orderDetailData)) {
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            }
+
+            return $this->jsonResponse(self::DELETE_SUCCESS_MESSAGE);
+        } catch (\Exception $e) {
+            Log::error('Unexpected error: ' . $e->getMessage(), ['exception' => $e]);
+            return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['error' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -134,18 +132,27 @@ class OrderController extends BaseAjaxController
     {
         $auth = $this->getAuthenticatedUser();
 
-        $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-        if (!$order) {
-            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
-        }
-        $orderId = $order->id;
+        try {
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            if (!$order) {
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            }
 
-        $process = $this->orderDetailService->deleteAllOrderDetails($orderId);
-        if ($process) {
+            $orderDetailData = new OrderDetailData(
+                userId: $auth->id,
+                siteId: $auth->site_id,
+                orderId: $order->id
+            );
+
+            if (!$this->orderDetailService->removeAllOrderDetails($orderDetailData)) {
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            }
+
             return $this->jsonResponse(self::DELETE_ALL_SUCCESS_MESSAGE);
+        } catch (\Exception $e) {
+            Log::error('Unexpected error: ' . $e->getMessage(), ['exception' => $e]);
+            return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['error' => $e->getMessage()], 500);
         }
-
-        return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
     }
 
     /**
@@ -158,18 +165,21 @@ class OrderController extends BaseAjaxController
     {
         $auth = $this->getAuthenticatedUser();
 
-        $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-        if (!$order) {
-            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
-        }
-        $orderId = $order->id;
+        try {
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            if (!$order) {
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            }
 
-        $order = $this->orderService->updateOrderDate($orderId);
-        if (!$order) {
-            return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
-        }
+            $updatedOrder = $this->orderService->updateOrderDate($order->id);
+            if (!$updatedOrder) {
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            }
 
-        return $this->jsonResponse(self::ORDER_SUCCESS_MESSAGE, ['order_code' => $order->order_code]);
+            return $this->jsonResponse(self::ORDER_SUCCESS_MESSAGE, ['order_code' => $updatedOrder->order_code]);
+        } catch (\Exception $e) {
+            Log::error('Unexpected error: ' . $e->getMessage(), ['exception' => $e]);
+            return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['error' => $e->getMessage()], 500);
+        }
     }
-
 }

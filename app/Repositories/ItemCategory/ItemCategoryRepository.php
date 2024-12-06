@@ -76,6 +76,20 @@ final class ItemCategoryRepository
     }
 
     /**
+     * カテゴリコードとサイトIDでカテゴリを検索する
+     *
+     * @param string $categoryCode カテゴリコード
+     * @param int $siteId サイトID
+     * @return ItemCategory|null 商品カテゴリ
+     */
+    public function findByCategoryCode(string $categoryCode, int $siteId): ?ItemCategory
+    {
+        return ItemCategory::where('category_code', $categoryCode)
+            ->where('site_id', $siteId)
+            ->first();
+    }
+
+    /**
      * 商品カテゴリを更新する
      *
      * @param int $id 商品カテゴリID

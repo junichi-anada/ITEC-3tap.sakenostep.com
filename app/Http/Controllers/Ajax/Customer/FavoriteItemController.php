@@ -53,7 +53,7 @@ class FavoriteItemController extends BaseAjaxController
 
             $auth = $this->getAuthenticatedUser();
 
-            $item = $this->itemService->getByCodeOne(
+            $item = $this->itemService->getByCode(
                 itemCode: $request->input('item_code'),
                 siteId: $auth->site_id
             );
@@ -92,7 +92,7 @@ class FavoriteItemController extends BaseAjaxController
 
             Log::info('お気に入りから消す商品コード: ' . json_encode($item_code));
 
-            $item = $this->itemService->getByCodeOne(
+            $item = $this->itemService->getByCode(
                 itemCode: $item_code,
                 siteId: $auth->site_id
             );

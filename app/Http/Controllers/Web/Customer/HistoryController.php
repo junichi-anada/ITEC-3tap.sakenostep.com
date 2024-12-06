@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Order\OrderService as OrderService;
 use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
 use App\Services\ItemCategory\ItemCategoryService as ItemCategoryService;
+use App\Services\Order\DTOs\OrderSearchCriteria;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -35,20 +36,32 @@ class HistoryController extends Controller
     {
         try {
             $auth = Auth::user();
+            $message = null;
 
             // カテゴリ取得
             $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
 
             // 注文履歴取得
-            $orders = $this->orderService->getOrderedOrdersByUserAndSite($auth->id, $auth->site_id);
-            if (!$orders) {
-                return view('customer.history', ['error' => __('注文履歴が見つかりません。')]);
+            $criteria = new OrderSearchCriteria(
+                userId: $auth->id,
+                siteId: $auth->site_id,
+                isOrdered: true,
+                orderBy: ['ordered_at' => 'desc']
+            );
+
+            $orders = $this->orderService->search($criteria);
+            if ($orders->isEmpty()) {
+                $message = __('注文履歴が見つかりません。');
+                return view('customer.pages.history', compact('message', 'categories', 'orders'));
             }
 
-            return view('customer.history', compact('orders', 'categories'));
+            return view('customer.pages.history', compact('orders', 'categories', 'message'));
         } catch (\Exception $e) {
             Log::error('Error fetching order history: ' . $e->getMessage());
-            return view('customer.history', ['error' => __('注文履歴の取得に失敗しました。')]);
+            $message = __('注文履歴の取得に失敗しました。');
+            $categories = collect([]);
+            $orders = collect([]);
+            return view('customer.pages.history', compact('message', 'categories', 'orders'));
         }
     }
 
@@ -62,20 +75,29 @@ class HistoryController extends Controller
     {
         try {
             $auth = Auth::user();
+            $message = null;
+
+            $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+
             // order_codeを使用して注文を取得
             $order = $this->orderService->getByOrderCode($orderCode);
 
             if (!$order || $order->user_id !== $auth->id) {
-                return view('customer.history_detail', ['error' => __('注文が見つかりません。')]);
+                $message = __('注文が見つかりません。');
+                $orderDetails = collect([]);
+                return view('customer.pages.history_detail', compact('message', 'categories', 'order', 'orderDetails'));
             }
 
-            $orderDetails = $this->orderDetailService->getDetailsByOrderId($order->id);
-            $categories = $this->itemCategoryService->getListBySiteId($auth->site_id);
+            $orderDetails = $this->orderDetailService->getOrderDetailsByOrderId($order->id);
 
-            return view('customer.history_detail', compact('order', 'orderDetails', 'categories'));
+            return view('customer.pages.history_detail', compact('order', 'orderDetails', 'categories', 'message'));
         } catch (\Exception $e) {
             Log::error('Error fetching order details: ' . $e->getMessage());
-            return view('customer.history_detail', ['error' => __('注文詳細の取得に失敗しました。')]);
+            $message = __('注文詳細の取得に失敗しました。');
+            $categories = collect([]);
+            $order = null;
+            $orderDetails = collect([]);
+            return view('customer.pages.history_detail', compact('message', 'categories', 'order', 'orderDetails'));
         }
     }
 }

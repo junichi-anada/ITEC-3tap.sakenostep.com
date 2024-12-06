@@ -1,6 +1,13 @@
 @extends('customer.layouts.app')
 
 @section('items')
+{{-- メッセージがある場合に表示 --}}
+@if ($message)
+<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
+    <p>{{ $message }}</p>
+</div>
+@endif
+
 {{-- orderItemsが空の場合 --}}
 @if (empty($orderItems))
 <div class="text-center">

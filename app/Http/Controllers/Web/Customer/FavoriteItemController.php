@@ -1,90 +1,70 @@
 <?php
-/**
- * Webコントローラ
- * 顧客向けお気に入り商品管理機能
- *
- * @author J.AnadA <anada@re-buysell.jp>
- * @version 1.0.0
- * @copyright 2024 ItecSystem co ltd.
- */
+
 namespace App\Http\Controllers\Web\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Services\FavoriteItem\FavoriteItemService as FavoriteItemService;
-use App\Services\ItemCategory\ItemCategoryService as ItemCategoryService;
-use App\Services\Order\OrderService as OrderService;
-use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
+use App\Services\Item\ItemService;
+use App\Services\ItemCategory\ItemCategoryService;
+use App\Services\Order\OrderService;
+use App\Services\OrderDetail\OrderDetailService;
+use App\Services\FavoriteItem\FavoriteItemService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class FavoriteItemController extends Controller
 {
-    protected $favoriteItemService;
-    protected $itemCategoryService;
-    protected $orderService;
-    protected $orderDetailService;
-
     public function __construct(
-        FavoriteItemService $favoriteItemService,
-        ItemCategoryService $itemCategoryService,
-        OrderService $orderService,
-        OrderDetailService $orderDetailService
-    ) {
-        $this->favoriteItemService = $favoriteItemService;
-        $this->itemCategoryService = $itemCategoryService;
-        $this->orderService = $orderService;
-        $this->orderDetailService = $orderDetailService;
-    }
+        private ItemService $itemService,
+        private ItemCategoryService $itemCategoryService,
+        private OrderService $orderService,
+        private OrderDetailService $orderDetailService,
+        private FavoriteItemService $favoriteItemService
+    ) {}
 
-    /**
-     * index
-     * お気に入り商品の一覧表示
-     */
     public function index()
     {
         try {
             $auth = Auth::user();
 
-            // カテゴリ一覧
-            $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+            // カテゴリ一覧の取得
+            $categories = $this->itemCategoryService->getAllCategories($auth->site_id);
 
-            // お気に入り商品一覧
-            $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+            // お気に入り商品の取得（itemリレーションをロード）
+            $favoriteItems = $this->favoriteItemService->getUserFavorites(
+                $auth->id,
+                $auth->site_id,
+                ['created_at' => 'desc'],
+                ['item']  // itemリレーションをロード
+            );
 
-            // 未発注伝票に紐づく注文詳細一覧
+            // 未発注の注文を取得
+            $unorderedItems = collect([]);
             $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
             if ($unorderedOrder) {
-                $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id)->toArray();
-            } else {
-                $unorderedItems = [];
+                $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
             }
 
-            $favoriteItems = $this->calculateScores($favoriteItems, $unorderedItems);
-            Log::info('お気に入り商品一覧: ' . json_encode($favoriteItems));
+            // お気に入り商品に対してスコアを計算
+            foreach ($favoriteItems as $favoriteItem) {
+                // 未注文リストに存在するかどうかのスコアを設定
+                $favoriteItem->score = $unorderedItems->contains('item_id', $favoriteItem->item->id) ? 1 : 0;
 
-            return view('customer.pages.favorite', compact('favoriteItems', 'categories'));
+                // 未注文リストに存在する場合、その数量を設定
+                if ($orderDetail = $unorderedItems->firstWhere('item_id', $favoriteItem->item->id)) {
+                    $favoriteItem->unorderedVolume = $orderDetail->volume;
+                } else {
+                    $favoriteItem->unorderedVolume = 1;
+                }
+            }
+
+            return view('customer.pages.favorite', compact(
+                'categories',
+                'favoriteItems',
+                'unorderedItems'
+            ));
         } catch (\Exception $e) {
-            Log::error('Error fetching favorite items: ' . $e->getMessage());
-            return view('customer.pages.favorite', ['error' => __('お気に入り商品の取得に失敗しました。')]);
+            Log::error('Error in favorite index: ' . $e->getMessage());
+            return back()->with('error', 'お気に入り商品の取得に失敗しました。');
         }
-    }
-
-    private function calculateScores($favoriteItems, $unorderedItems)
-    {
-        $unorderedItemIds = array_column($unorderedItems, 'item_id');
-
-        foreach ($favoriteItems as $key => $item) {
-            $isUnordered = in_array($item['item_id'], $unorderedItemIds);
-            $favoriteItems[$key]['score'] = $isUnordered ? 1 : 0;
-
-            if ($isUnordered) {
-                $index = array_search($item['item_id'], $unorderedItemIds);
-                $favoriteItems[$key]['unorderedVolume'] = $unorderedItems[$index]['volume'];
-            } else {
-                $favoriteItems[$key]['unorderedVolume'] = 1;
-            }
-        }
-
-        return $favoriteItems;
     }
 }

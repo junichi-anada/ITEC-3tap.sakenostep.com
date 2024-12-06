@@ -226,11 +226,27 @@ final class OrderRepository
      */
     private function applyDirectCondition(Builder $query, string $field, mixed $value): void
     {
+        if ($field === 'ordered_at_from') {
+            $query->where('ordered_at', '>=', $value);
+            return;
+        }
+
+        if ($field === 'ordered_at_to') {
+            $query->where('ordered_at', '<=', $value);
+            return;
+        }
+
+        if (is_array($value) && isset($value['not_null'])) {
+            $query->whereNotNull($field);
+            return;
+        }
+
         if (is_array($value)) {
             $query->whereIn($field, $value);
-        } else {
-            $query->where($field, $value);
+            return;
         }
+
+        $query->where($field, $value);
     }
 
     /**
@@ -280,6 +296,22 @@ final class OrderRepository
             ->where('site_id', $siteId)
             ->whereNull('ordered_at')
             ->latest('created_at')  // 作成日時の降順でソート
+            ->first();
+    }
+
+    /**
+     * 最新の発注済み注文を検索する
+     *
+     * @param int $userId ユーザーID
+     * @param int $siteId サイトID
+     * @return Order|null 発注済みの注文、存在しない場合はnull
+     */
+    public function findLatestOrderedOrder(int $userId, int $siteId): ?Order
+    {
+        return Order::where('user_id', $userId)
+            ->where('site_id', $siteId)
+            ->whereNotNull('ordered_at')
+            ->latest('ordered_at')  // 注文日時の降順でソート
             ->first();
     }
 }
