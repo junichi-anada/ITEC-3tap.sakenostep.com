@@ -19,16 +19,17 @@ class DeleteItemAction
      * 商品を削除する
      *
      * @param string $itemCode
+     * @param int $siteId
      * @return bool
      * @throws ItemException
      */
-    public function execute(string $itemCode): bool
+    public function execute(string $itemCode, int $siteId): bool
     {
         return $this->tryCatchWrapper(
-            function () use ($itemCode) {
-                Log::info("Deleting item with code: $itemCode");
-                
-                $item = $this->repository->findByCode($itemCode);
+            function () use ($itemCode, $siteId) {
+                Log::info("Deleting item with code: $itemCode, site ID: $siteId");
+
+                $item = $this->repository->findByCode($itemCode, $siteId);
                 if (!$item) {
                     throw ItemException::notFound($itemCode);
                 }
@@ -41,7 +42,7 @@ class DeleteItemAction
                 return $result;
             },
             '商品の削除に失敗しました',
-            ['item_code' => $itemCode]
+            ['item_code' => $itemCode, 'site_id' => $siteId]
         );
     }
 }

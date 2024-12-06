@@ -1,149 +1,121 @@
 <?php
-/**
- * 顧客向け商品カテゴリ機能のWebコントローラ
- *
- * 主な仕様:
- * - カテゴリ一覧の表示
- * - カテゴリに属する商品一覧の表示
- * - 商品のスコア計算機能
- *
- * 制限事項:
- * - 認証済みユーザーのみアクセス可能
- * - 各サイトごとのカテゴリ・商品のみ表示
- *
- * @author J.AnadA <anada@re-buysell.jp>
- * @version 1.0.0
- * @copyright 2024 ItecSystem co ltd.
- */
+
 namespace App\Http\Controllers\Web\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Services\ItemCategory\ItemCategoryService;
 use App\Services\Item\ItemService;
-use App\Services\FavoriteItem\FavoriteItemService;
+use App\Services\ItemCategory\ItemCategoryService;
 use App\Services\Order\OrderService;
 use App\Services\OrderDetail\OrderDetailService;
+use App\Services\FavoriteItem\FavoriteItemService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Log;
-final class CategoryController extends Controller
+
+class CategoryController extends Controller
 {
-    /**
-     * コンストラクタ
-     *
-     * @param ItemCategoryService $itemCategoryService カテゴリ一覧サービス
-     * @param ItemService $itemService 商品読み取りサービス
-     * @param FavoriteItemService $favoriteItemService お気に入り商品読み取りサービス
-     * @param OrderService $orderService 注文読み取りサービス
-     * @param OrderDetailService $orderDetailService 注文詳細読み取りサービス
-     */
     public function __construct(
-        private readonly ItemCategoryService $itemCategoryService,
-        private readonly ItemService $itemService,
-        private readonly FavoriteItemService $favoriteItemService,
-        private readonly OrderService $orderService,
-        private readonly OrderDetailService $orderDetailService
+        private ItemService $itemService,
+        private ItemCategoryService $itemCategoryService,
+        private OrderService $orderService,
+        private OrderDetailService $orderDetailService,
+        private FavoriteItemService $favoriteItemService
     ) {}
 
-    /**
-     * カテゴリ一覧を表示
-     *
-     * @return View
-     */
-    public function index(): View
+    public function index()
     {
-        $auth = Auth::user();
+        try {
+            $auth = Auth::user();
 
-        // カテゴリ一覧
-        $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+            // カテゴリ一覧の取得
+            $categories = $this->itemCategoryService->getAllCategories($auth->site_id);
 
-        if ($categories->isEmpty()) {
-            return view('customer.category', [
-                'error' => __('カテゴリが存在しません。')
-            ]);
+            // お気に入り商品の取得
+            $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+            $favoriteItemIds = $favoriteItems ? $favoriteItems->pluck('item_id')->toArray() : [];
+
+            // 未発注の注文を取得
+            $unorderedItems = collect([]);
+            $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            if ($unorderedOrder) {
+                $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
+            }
+
+            return view('customer.pages.category', compact(
+                'categories',
+                'favoriteItemIds',
+                'unorderedItems'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error in category index: ' . $e->getMessage());
+            return redirect()->route('user.search.item.list')
+                ->with('error', 'カテゴリ一覧の取得に失敗しました。');
         }
-
-        return view('customer.category', compact('categories'));
     }
 
-    /**
-     * カテゴリに属する商品一覧を表示
-     *
-     * @param string $categoryCode カテゴリコード
-     * @return View
-     */
-    public function show(string $categoryCode): View
+    public function show($code)
     {
-        $auth = Auth::user();
+        try {
+            $auth = Auth::user();
+            Log::info('Attempting to find category by code', ['code' => $code, 'site_id' => $auth->site_id]);
 
-        $recommendedItems = [];
-        $favoriteItems = [];
-        $unorderedItems = [];
+            // カテゴリの取得
+            $category = $this->itemCategoryService->getByCategoryCode($auth->site_id, $code);
 
-        // カテゴリ一覧
-        $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
+            if (!$category) {
+                Log::warning('Category not found', ['code' => $code, 'site_id' => $auth->site_id]);
+                return redirect()->route('user.search.item.list')
+                    ->with('error', 'カテゴリが見つかりません。');
+            }
 
-        // サイトIDとカテゴリIDを基に商品一覧を取得
-        $category = $this->itemCategoryService->getByCode($categoryCode);
-        if (!$category) {
-            return view('customer.category_item', [
-                'error' => __('カテゴリが存在しません。')
+            Log::info('Category found', ['category_id' => $category->id, 'category_name' => $category->name]);
+
+            // カテゴリ一覧の取得
+            $categories = $this->itemCategoryService->getAllCategories($auth->site_id);
+
+            // 商品一覧の取得
+            Log::info('Fetching items for category', ['category_id' => $category->id]);
+            $items = $this->itemService->getListBySiteIdAndCategoryId($auth->site_id, $category->id);
+            Log::info('Items fetched', ['items_count' => $items->count()]);
+
+            // お気に入り商品の取得
+            $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+            $favoriteItemIds = $favoriteItems ? $favoriteItems->pluck('item_id')->toArray() : [];
+
+            // 未発注の注文を取得
+            $unorderedItems = collect([]);
+            $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            if ($unorderedOrder) {
+                $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
+            }
+
+            // 商品データの整形
+            $items = $items->map(function ($item) use ($favoriteItemIds, $unorderedItems) {
+                $unorderedDetail = $unorderedItems->firstWhere('item_id', $item->id);
+                return [
+                    'id' => $item->id,
+                    'item_code' => $item->item_code,
+                    'name' => $item->name,
+                    'maker_name' => $item->maker_name,
+                    'score1' => $unorderedDetail ? 1 : 0, // 注文リストに存在するかどうか
+                    'score2' => in_array($item->id, $favoriteItemIds) ? 1 : 0, // お気に入りに存在するかどうか
+                    'unorderedVolume' => $unorderedDetail ? $unorderedDetail->volume : 0 // 未発注の注文数量
+                ];
+            });
+
+            return view('customer.pages.category_item', compact(
+                'category',
+                'categories',
+                'items',
+                'favoriteItemIds',
+                'unorderedItems'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error in category show: ' . $e->getMessage(), [
+                'code' => $code,
+                'exception' => $e
             ]);
+            return redirect()->route('user.search.item.list')
+                ->with('error', 'カテゴリ情報の取得に失敗しました。');
         }
-        $items = $this->itemService->getListBySiteIdAndCategoryId($auth->site_id, $category->id)->toArray();
-
-        // 顧客のお気に入り商品ID一覧を取得
-        $favoriteItems = $this->favoriteItemService->getUserFavorites( $auth->id, $auth->site_id )->toArray();
-        if (!$favoriteItems) {
-            $favoriteItems = [];
-        }
-
-        $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-        if (!$unorderedOrder) {
-            $unorderedItems = [];
-        } else {
-            $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId( $unorderedOrder->id )->toArray();
-        }
-
-        $items = $this->calculateItemScores($items, $favoriteItems, $unorderedItems);
-
-        return view('customer.category_item', [
-            'items' => $items,
-            'category' => $category
-        ]);
-    }
-
-    /**
-     * 商品のスコアを計算
-     *
-     * @param array $items 商品一覧
-     * @param array $favoriteItems お気に入り商品ID一覧
-     * @param array $unorderedItems 未注文商品一覧
-     * @return array スコア計算済み商品一覧
-     */
-    private function calculateItemScores(array $items, array $favoriteItems, array $unorderedItems): array
-    {
-        // お気に入り商品が空の場合は、スコア2を0にする
-        if (empty($favoriteItems)) {
-            foreach ($items as $key => $item) {
-                $items[$key]['score2'] = 0;
-            }
-        }
-        // 未注文商品が空の場合は、スコア1を0で返却
-        if (empty($unorderedItems)) {
-            foreach ($items as $key => $item) {
-                $items[$key]['score1'] = 0;
-                $items[$key]['unorderedVolume'] = 1;
-            }
-            return $items;
-        }
-
-        foreach ($items as $key => $item) {
-            $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
-            $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
-            $items[$key]['unorderedVolume'] = 1;
-        }
-
-        return $items;
     }
 }

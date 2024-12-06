@@ -21,26 +21,18 @@ class RemoveOrderDetailAction
     public function execute(OrderDetailData $data): bool
     {
         return $this->executeWithErrorHandling(function () use ($data) {
-            // 商品コードから商品情報を取得
-            $item = $this->itemRepository->findByItemCode($data->itemCode);
-            if (!$item) {
-                throw new \Exception("商品が見つかりません。商品コード: {$data->itemCode}");
-            }
-
-            // 未発注の注文を検索
-            $order = $this->orderRepository->findUnorderedOrder($data->userId, $data->siteId);
-            if (!$order) {
-                throw new \Exception("未発注の注文が見つかりません。ユーザーID: {$data->userId}, サイトID: {$data->siteId}");
+            if (!$data->orderId || !$data->itemId) {
+                throw new \Exception("注文IDと商品IDは必須です。");
             }
 
             // 注文詳細を検索
             $orderDetail = $this->orderDetailRepository->findBy([
-                'order_id' => $order->id,
-                'item_id' => $item->id
+                'order_id' => $data->orderId,
+                'item_id' => $data->itemId
             ])->first();
 
             if (!$orderDetail) {
-                throw new \Exception("注文詳細が見つかりません。注文ID: {$order->id}, 商品ID: {$item->id}");
+                throw new \Exception("注文詳細が見つかりません。注文ID: {$data->orderId}, 商品ID: {$data->itemId}");
             }
 
             return $this->orderDetailRepository->delete($orderDetail->id);

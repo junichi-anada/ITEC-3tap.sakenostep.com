@@ -44,53 +44,46 @@ class RecommendedItemController extends Controller
     {
         try {
             $auth = Auth::user();
+            $message = null;
 
-            $recommendedItems = "";
-            $favoriteItems = "";
-            $unorderedItems = "";
+            // 初期値を配列で設定
+            $recommendedItems = [];
+            $favoriteItems = [];
+            $unorderedItems = [];
 
             // カテゴリ一覧
             $categories = $this->itemCategoryService->getPublishedCategories($auth->site_id);
 
             // おすすめ商品一覧
-            $recommendedItems = $this->itemService->getRecommendedItems($auth->site_id);
-            if (!is_null($recommendedItems)) {
-                $recommendedItems = $recommendedItems->toArray();
+            $recommendedResult = $this->itemService->getRecommendedItems($auth->site_id);
+            if ($recommendedResult) {
+                $recommendedItems = $recommendedResult->toArray();
             }
 
             // お気に入り商品一覧
-            $favoriteItems = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
-            if (!is_null($favoriteItems)) {
-                $favoriteItems = $favoriteItems->toArray();
+            $favoriteResult = $this->favoriteItemService->getUserFavorites($auth->id, $auth->site_id);
+            if ($favoriteResult) {
+                $favoriteItems = $favoriteResult->toArray();
             }
 
             // 未発注伝票に紐づく注文詳細一覧
             $unorderedOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-            if (!is_null($unorderedOrder)) {
-                $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
-                if (!is_null($unorderedItems)) {
-                    $unorderedItems = $unorderedItems->toArray();
+            if ($unorderedOrder) {
+                $unorderedResult = $this->orderDetailService->getOrderDetailsByOrderId($unorderedOrder->id);
+                if ($unorderedResult) {
+                    $unorderedItems = $unorderedResult->toArray();
                 }
-            }
-
-            if (!is_array($recommendedItems)) {
-                $recommendedItems = [];
-            }
-
-            if (!is_array($favoriteItems)) {
-                $favoriteItems = [];
-            }
-
-            if (!is_array($unorderedItems)) {
-                $unorderedItems = [];
             }
 
             $recommendedItems = $this->calculateItemScores($recommendedItems, $favoriteItems, $unorderedItems);
 
-            return view('customer.recommend', compact('recommendedItems', 'categories'));
+            return view('customer.pages.recommend', compact('recommendedItems', 'categories', 'message'));
         } catch (\Exception $e) {
             Log::error('Error fetching recommended items: ' . $e->getMessage());
-            return view('customer.recommend', ['error' => __('おすすめ商品の取得に失敗しました。')]);
+            $message = __('おすすめ商品の取得に失敗しました。');
+            $recommendedItems = [];
+            $categories = collect([]);
+            return view('customer.pages.recommend', compact('message', 'recommendedItems', 'categories'));
         }
     }
 
@@ -104,40 +97,26 @@ class RecommendedItemController extends Controller
      */
     private function calculateItemScores(array $items, array $favoriteItems, array $unorderedItems): array
     {
-        // お気に入り商品が空の場合は、スコア2を0にする
-        if (empty($favoriteItems)) {
-            foreach ($items as $key => $item) {
-                $items[$key]['score2'] = 0;
-            }
-        }else {
-            foreach ($items as $key => $item) {
+        if (empty($items)) {
+            return [];
+        }
+
+        foreach ($items as $key => $item) {
+            // デフォルト値を設定
+            $items[$key]['score1'] = 0;
+            $items[$key]['score2'] = 0;
+            $items[$key]['unorderedVolume'] = 1;
+
+            // お気に入り商品のスコアを計算
+            if (!empty($favoriteItems)) {
                 $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
-                Log::info('key: ' . json_encode($key));
-                Log::info('item_id: ' . json_encode($item['id']));
-                Log::info('お気に入り商品があるの場合のスコア2: ' . json_encode($items[$key]['score2']));
-                Log::info('お気に入り商品一覧: ' . json_encode($favoriteItems));
             }
-        }
 
-        // 未注文商品が空の場合は、スコア1を0で返却
-        if (empty($unorderedItems)) {
-            foreach ($items as $key => $item) {
-                $items[$key]['score1'] = 0;
-                $items[$key]['unorderedVolume'] = 1;
-            }
-            return $items;
-        } else {
-            foreach ($items as $key => $item) {
+            // 未注文商品のスコアを計算
+            if (!empty($unorderedItems)) {
                 $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
-                $items[$key]['unorderedVolume'] = 1;
             }
         }
-
-        // foreach ($items as $key => $item) {
-        //     $items[$key]['score1'] = in_array($item['id'], array_column($unorderedItems, 'item_id')) ? 1 : 0;
-        //     $items[$key]['score2'] = in_array($item['id'], array_column($favoriteItems, 'item_id')) ? 1 : 0;
-        //     $items[$key]['unorderedVolume'] = 1;
-        // }
 
         return $items;
     }

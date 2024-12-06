@@ -29,16 +29,32 @@ class ItemRepository
             $query->where('category_id', $criteria->categoryId);
         }
 
-        if ($criteria->minPrice) {
+        if ($criteria->siteId) {
+            $query->where('site_id', $criteria->siteId);
+        }
+
+        if ($criteria->minPrice !== null) {
             $query->where('price', '>=', $criteria->minPrice);
         }
 
-        if ($criteria->maxPrice) {
+        if ($criteria->maxPrice !== null) {
             $query->where('price', '<=', $criteria->maxPrice);
         }
 
-        if (isset($criteria->isPublished)) {
-            $query->where('is_published', $criteria->isPublished);
+        if ($criteria->isPublished === true) {
+            $query->whereNotNull('published_at');
+        } elseif ($criteria->isPublished === false) {
+            $query->whereNull('published_at');
+        }
+
+        if (!empty($criteria->orderBy)) {
+            foreach ($criteria->orderBy as $column => $direction) {
+                $query->orderBy($column, $direction);
+            }
+        }
+
+        if (!empty($criteria->with)) {
+            $query->with($criteria->with);
         }
 
         return $query->get();
@@ -56,14 +72,34 @@ class ItemRepository
     }
 
     /**
-     * 商品コードで商品を取得
+     * 商品コードとサイトIDで商品を取得
      *
      * @param string $itemCode
+     * @param int $siteId
      * @return Item|null
      */
-    public function findByItemCode(string $itemCode): ?Item
+    public function findByCode(string $itemCode, int $siteId): ?Item
     {
-        return Item::where('code', $itemCode)->first();
+        return Item::where('item_code', $itemCode)
+            ->where('site_id', $siteId)
+            ->first();
+    }
+
+    /**
+     * おすすめ商品を取得
+     *
+     * @param int $siteId
+     * @param int $limit
+     * @return Collection
+     */
+    public function findRecommendedItems(int $siteId, int $limit = 10): Collection
+    {
+        return Item::where('site_id', $siteId)
+            ->whereNotNull('published_at')
+            ->where('is_recommended', true)
+            ->orderBy('updated_at', 'desc')
+            ->limit($limit)
+            ->get();
     }
 
     /**
@@ -98,5 +134,15 @@ class ItemRepository
     public function delete(Item $item): bool
     {
         return $item->delete();
+    }
+
+    /**
+     * 全ての商品を取得
+     *
+     * @return Collection
+     */
+    public function all(): Collection
+    {
+        return Item::all();
     }
 }

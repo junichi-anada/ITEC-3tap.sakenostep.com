@@ -19,10 +19,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 const itemCode = this.getAttribute("data-item-code");
 
                 // 対応する入力フィールドの値を取得
-                const inputField = this.closest(".flex.gap-x-4").querySelector(
+                const inputField = this.closest(".flex.flex-col").querySelector(
                     'input[name="volume"]'
                 );
-                const volume = inputField ? inputField.value : 1; // 値がなければデフォルトで1
+                const volume = inputField ? parseInt(inputField.value, 10) : 1; // 文字列を整数に変換
 
                 //CSRFトークン取得
                 const csrfToken = document.querySelector(

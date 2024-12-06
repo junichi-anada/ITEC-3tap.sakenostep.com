@@ -34,19 +34,19 @@ class SearchItemsByKeywordQuery
                     throw ItemException::searchFailed('検索キーワードが指定されていません。');
                 }
 
-                $searchFields = ['name', 'item_code', 'description'];
-                $result = $this->repository->searchByKeyword(
-                    searchFields: $searchFields,
-                    keyword: $criteria->keyword,
-                    conditions: $criteria->getConditions(),
-                    perPage: $criteria->perPage
-                );
+                $items = $this->repository->search($criteria);
 
-                if ($result->isEmpty()) {
+                if ($items->isEmpty()) {
                     Log::info("No items found for keyword: {$criteria->keyword}");
                 }
 
-                return $result;
+                // コレクションをページネーターに変換
+                return new LengthAwarePaginator(
+                    $items->forPage($criteria->page ?? 1, $criteria->perPage ?? 10),
+                    $items->count(),
+                    $criteria->perPage ?? 10,
+                    $criteria->page ?? 1
+                );
             },
             'キーワードによる商品検索に失敗しました',
             $criteria->toArray()

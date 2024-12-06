@@ -37,11 +37,7 @@ class SearchItemsByCategoryQuery
                     'category_code' => $criteria->categoryCode
                 ]);
 
-                $result = $this->repository->findBy(
-                    conditions: $criteria->getConditions(),
-                    with: $criteria->with,
-                    orderBy: $criteria->orderBy
-                );
+                $result = $this->repository->search($criteria);
 
                 if ($result->isEmpty()) {
                     Log::info("No items found for category", [
