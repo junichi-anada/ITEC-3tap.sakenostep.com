@@ -11,12 +11,15 @@ use App\Services\Order\DTOs\OrderSearchCriteria;
 use App\Services\Order\Actions\CreateOrderAction;
 use App\Services\Order\Actions\UpdateOrderAction;
 use App\Services\Order\Actions\DeleteOrderAction;
+use App\Services\OrderDetail\DTOs\OrderDetailData;
+use App\Services\OrderDetail\Actions\AddOrderDetailAction;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * 注文サービスクラス
- * 
+ *
  * このクラスは注文に関する全ての操作を一元管理します。
  * 具体的なビジネスロジックはActionsクラスに委譲し、
  * トランザクション管理とリポジトリの操作を担当します。
@@ -27,8 +30,27 @@ final class OrderService
         private readonly OrderRepository $repository,
         private readonly CreateOrderAction $createAction,
         private readonly UpdateOrderAction $updateAction,
-        private readonly DeleteOrderAction $deleteAction
+        private readonly DeleteOrderAction $deleteAction,
+        private readonly AddOrderDetailAction $addOrderDetailAction
     ) {}
+
+    /**
+     * 新規注文を作成（コントローラー用の簡易メソッド）
+     *
+     * @param int $siteId
+     * @param int $userId
+     * @return Order
+     */
+    public function createOrder(int $siteId, int $userId): Order
+    {
+        $orderData = new OrderData(
+            siteId: $siteId,
+            userId: $userId,
+            orderCode: Str::uuid()->toString()
+        );
+
+        return $this->create($orderData);
+    }
 
     /**
      * 新規注文を作成
@@ -59,7 +81,11 @@ final class OrderService
      */
     public function search(OrderSearchCriteria $criteria): Collection
     {
-        return $this->repository->findByCriteria($criteria);
+        $conditions = $criteria->toArray();
+        return $this->repository->findBy(
+            conditions: $conditions,
+            orderBy: $criteria->orderBy
+        );
     }
 
     /**
@@ -71,6 +97,15 @@ final class OrderService
     }
 
     /**
+     * 注文コードから注文を取得
+     */
+    public function getByOrderCode(string $orderCode): ?Order
+    {
+        $orders = $this->repository->findBy(['order_code' => $orderCode]);
+        return $orders->first();
+    }
+
+    /**
      * ユーザーIDとサイトIDに基づいて最新の未発注の注文を取得
      */
     public function getLatestUnorderedOrderByUserAndSite(int $userId, int $siteId): ?Order
@@ -79,10 +114,54 @@ final class OrderService
     }
 
     /**
-     * 注文日を更新
+     * ユーザーIDとサイトIDに基づいて最新の発注済み注文を取得
      */
-    public function updateOrderDate(int $id): bool
+    public function getLatestOrderedOrderByUserAndSite(int $userId, int $siteId): ?Order
     {
-        return DB::transaction(fn () => $this->repository->updateOrderDate($id));
+        return $this->repository->findLatestOrderedOrder($userId, $siteId);
+    }
+
+    /**
+     * 最新の発注済み注文から新規の未発注注文を作成
+     */
+    public function createUnorderedOrderFromLatestOrdered(int $userId, int $siteId): ?Order
+    {
+        return DB::transaction(function () use ($userId, $siteId) {
+            $latestOrder = $this->getLatestOrderedOrderByUserAndSite($userId, $siteId);
+            if (!$latestOrder) {
+                return null;
+            }
+
+            // 新規注文を作成
+            $orderData = new OrderData(
+                siteId: $siteId,
+                userId: $userId,
+                orderCode: Str::uuid()->toString()
+            );
+            $newOrder = $this->create($orderData);
+
+            // 最新の発注済み注文から商品をコピー
+            foreach ($latestOrder->orderDetails as $detail) {
+                $orderDetailData = new OrderDetailData(
+                    orderId: $newOrder->id,
+                    itemId: $detail->item_id,
+                    siteId: $siteId,
+                    userId: $userId,
+                    volume: $detail->volume
+                );
+                $this->addOrderDetailAction->execute($orderDetailData);
+            }
+
+            return $newOrder;
+        });
+    }
+
+    /**
+     * 注文日を更新
+     * @return Order|null 更新された注文、失敗時はnull
+     */
+    public function updateOrderDate(int $id): ?Order
+    {
+        return $this->repository->updateOrderDate($id);
     }
 }
