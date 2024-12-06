@@ -62,10 +62,10 @@ class FavoriteItemController extends Controller
             $favoriteItems = $this->calculateScores($favoriteItems, $unorderedItems);
             Log::info('お気に入り商品一覧: ' . json_encode($favoriteItems));
 
-            return view('customer.favorite', compact('favoriteItems', 'categories'));
+            return view('customer.pages.favorite', compact('favoriteItems', 'categories'));
         } catch (\Exception $e) {
             Log::error('Error fetching favorite items: ' . $e->getMessage());
-            return view('customer.favorite', ['error' => __('お気に入り商品の取得に失敗しました。')]);
+            return view('customer.pages.favorite', ['error' => __('お気に入り商品の取得に失敗しました。')]);
         }
     }
 

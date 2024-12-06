@@ -11,7 +11,7 @@ class CategoryData
         public readonly ?int $parentId = null,
         public readonly ?string $description = null,
         public readonly ?bool $isPublished = true,
-        public readonly ?int $sortOrder = 0,
+        public readonly ?int $priority = 1,
         public readonly ?array $attributes = []
     ) {}
 
@@ -24,7 +24,7 @@ class CategoryData
             parentId: $data['parent_id'] ?? null,
             description: $data['description'] ?? null,
             isPublished: $data['is_published'] ?? true,
-            sortOrder: $data['sort_order'] ?? 0,
+            priority: $data['priority'] ?? 1,
             attributes: $data['attributes'] ?? []
         );
     }
@@ -38,7 +38,7 @@ class CategoryData
             'parent_id' => $this->parentId,
             'description' => $this->description,
             'is_published' => $this->isPublished,
-            'sort_order' => $this->sortOrder,
+            'priority' => $this->priority,
             'attributes' => $this->attributes,
         ], fn($value) => !is_null($value));
     }

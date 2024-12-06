@@ -5,22 +5,22 @@ namespace App\Services\ItemCategory\DTOs;
 class CategorySearchCriteria
 {
     public function __construct(
-        public readonly ?int $siteId = null,
-        public readonly ?int $parentId = null,
+        public readonly ?string $name = null,
         public readonly ?string $categoryCode = null,
+        public readonly ?int $siteId = null,
         public readonly ?bool $isPublished = null,
-        public readonly ?array $orderBy = ['sort_order' => 'asc'],
+        public readonly ?array $orderBy = ['priority' => 'asc'],
         public readonly ?array $with = []
     ) {}
 
     public static function fromArray(array $data): self
     {
         return new self(
-            siteId: $data['site_id'] ?? null,
-            parentId: $data['parent_id'] ?? null,
+            name: $data['name'] ?? null,
             categoryCode: $data['category_code'] ?? null,
+            siteId: $data['site_id'] ?? null,
             isPublished: $data['is_published'] ?? null,
-            orderBy: $data['order_by'] ?? ['sort_order' => 'asc'],
+            orderBy: $data['order_by'] ?? ['priority' => 'asc'],
             with: $data['with'] ?? []
         );
     }
@@ -28,9 +28,9 @@ class CategorySearchCriteria
     public function toArray(): array
     {
         return array_filter([
-            'site_id' => $this->siteId,
-            'parent_id' => $this->parentId,
+            'name' => $this->name,
             'category_code' => $this->categoryCode,
+            'site_id' => $this->siteId,
             'is_published' => $this->isPublished,
             'order_by' => $this->orderBy,
             'with' => $this->with,
@@ -39,24 +39,10 @@ class CategorySearchCriteria
 
     public function getConditions(): array
     {
-        $conditions = [];
-        
-        if ($this->siteId !== null) {
-            $conditions['site_id'] = $this->siteId;
-        }
-        
-        if ($this->parentId !== null) {
-            $conditions['parent_id'] = $this->parentId;
-        }
-        
-        if ($this->categoryCode !== null) {
-            $conditions['category_code'] = $this->categoryCode;
-        }
-        
-        if ($this->isPublished !== null) {
-            $conditions['is_published'] = $this->isPublished;
-        }
-        
-        return $conditions;
+        return array_filter([
+            'name' => $this->name,
+            'category_code' => $this->categoryCode,
+            'site_id' => $this->siteId,
+        ], fn($value) => !is_null($value));
     }
 }

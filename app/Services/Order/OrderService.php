@@ -71,9 +71,9 @@ final class OrderService
     }
 
     /**
-     * ユーザーIDとサイトIDに基づいて未発注の注文を取得
+     * ユーザーIDとサイトIDに基づいて最新の未発注の注文を取得
      */
-    public function findUnorderedByUserAndSite(int $userId, int $siteId): ?Order
+    public function getLatestUnorderedOrderByUserAndSite(int $userId, int $siteId): ?Order
     {
         return $this->repository->findUnorderedOrder($userId, $siteId);
     }
