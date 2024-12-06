@@ -268,7 +268,7 @@ final class OrderRepository
     }
 
     /**
-     * 未発注の注文を検索する
+     * 最新の未発注の注文を検索する
      *
      * @param int $userId ユーザーID
      * @param int $siteId サイトID
@@ -278,8 +278,8 @@ final class OrderRepository
     {
         return Order::where('user_id', $userId)
             ->where('site_id', $siteId)
-            ->where('status', 'draft')
             ->whereNull('ordered_at')
+            ->latest('created_at')  // 作成日時の降順でソート
             ->first();
     }
 }
