@@ -7,10 +7,11 @@ use Illuminate\Support\Facades\Blade;
 use App\Contracts\LineMessagingServiceInterface;
 use App\Services\LineMessagingService;
 use App\Services\Customer\Analytics\OperatorCustomerCountAnalytics;
-use App\Services\Operator\Customer\Import\Special\SakenoStep\SakenoStepImportService;
 use App\Services\Operator\Customer\Log\CustomerLogService;
 use App\Services\Operator\Customer\Transaction\CustomerTransactionService;
-use App\View\Components\Operator\Widgets\Customer\RegistEachAreaComponent;
+use App\View\Components\Operator\Widgets\Customer\CustomerListComponent;
+use App\View\Components\Operator\Widgets\Customer\CustomerSearchFormComponent;
+use App\View\Components\Operator\Widgets\Customer\CustomerRegistrationComponent;
 use App\View\Components\Operator\Widgets\Order\MonthlyCountComponent;
 use App\View\Components\Operator\Widgets\Order\TodayCountComponent;
 use App\View\Components\Operator\Widgets\Item\PopularRankingComponent;
@@ -29,14 +30,6 @@ class AppServiceProvider extends ServiceProvider
 
         // OperatorCustomerCountAnalyticsのバインディング
         $this->app->singleton(OperatorCustomerCountAnalytics::class, OperatorCustomerCountAnalytics::class);
-
-        // SakenoStepImportServiceのバインディング
-        $this->app->singleton(SakenoStepImportService::class, function ($app) {
-            return new SakenoStepImportService(
-                $app->make(CustomerLogService::class),
-                $app->make(CustomerTransactionService::class)
-            );
-        });
     }
 
     /**
@@ -45,7 +38,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Operator Widgets Components Registration
-        Blade::component('operator.widgets.customer.regist-each-area-component', RegistEachAreaComponent::class);
+        Blade::component('operator.widgets.customer.customer-list-component', CustomerListComponent::class);
+        Blade::component('operator.widgets.customer.customer-search-form-component', CustomerSearchFormComponent::class);
+        Blade::component('operator.widgets.customer.customer-registration-component', CustomerRegistrationComponent::class);
         Blade::component('operator.widgets.order.monthly-count-component', MonthlyCountComponent::class);
         Blade::component('operator.widgets.order.today-count-component', TodayCountComponent::class);
         Blade::component('operator.widgets.item.popular-ranking-component', PopularRankingComponent::class);
