@@ -6,62 +6,66 @@ namespace App\Services\Order\Analytics;
 
 use App\Models\Order;
 use App\Services\Order\DTOs\AreaOrderData;
+use App\Services\ServiceErrorHandler;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 /**
- * 地域ごとの注文分析サービス
+ * エリア別注文数の分析クラス
  */
 final class AreaOrderAnalytics
 {
+    use ServiceErrorHandler;
+
     /**
-     * 地域ごとの注文数を取得
+     * エリア別の注文数を取得
+     * 
+     * 地域は「都道府県＋市区町村」でグループ化される
+     * 例：東京都渋谷区、大阪府大阪市など
      *
-     * @return Collection<string, int> [ key: 地域, value: 注文数 ]
+     * @return array<string, int>
      */
-    public function getOrderCountByArea(): Collection
+    public function getOrdersByArea(): array
     {
-        $siteId = Auth::user()->site_id;
+        return $this->tryCatchWrapper(
+            callback: function () {
+                $orders = Order::select('site_id', DB::raw('count(*) as count'))
+                    ->join('sites', 'orders.site_id', '=', 'sites.id')
+                    ->whereDate('orders.created_at', now()->toDateString())
+                    ->groupBy('site_id')
+                    ->with('site:id,name')
+                    ->get()
+                    ->map(fn ($order) => new AreaOrderData(
+                        areaName: $order->site->name ?? '未設定',
+                        orderCount: $order->count
+                    ));
 
-        $orders = Order::query()
-            ->join('users', 'orders.user_id', '=', 'users.id')
-            ->where('users.site_id', $siteId)
-            ->select('orders.*', 'users.name as user_name', 'users.address')
-            ->get();
-
-        return $orders->groupBy(function ($order) {
-            return $this->extractArea($order->address);
-        })->map(function ($areaOrders) {
-            return $areaOrders->count();
-        });
+                // 地域名でソートして返却
+                return $orders->sortBy('areaName')
+                    ->mapWithKeys(fn (AreaOrderData $data) => [
+                        $data->areaName => $data->orderCount
+                    ])->all();
+            },
+            errorMessage: 'エリア別注文数の取得に失敗しました'
+        );
     }
 
     /**
-     * 地域ごとの注文データを取得
+     * 月間の注文総数を取得
      *
-     * @return Collection<AreaOrderData>
+     * @return int
      */
-    public function getAreaOrderDetails(): Collection
+    public function getMonthlyOrderCount(): int
     {
-        $orderCounts = $this->getOrderCountByArea();
-
-        return $orderCounts->map(function ($count, $area) {
-            return new AreaOrderData(
-                area: $area,
-                orderCount: $count
-            );
-        });
-    }
-
-    /**
-     * 住所から地域を抽出
-     */
-    private function extractArea(string $address): string
-    {
-        if (preg_match('/^(.+?(都|道|府|県).+?(市|区|町|村))/u', $address, $matches) && isset($matches[1])) {
-            return $matches[1];
-        }
-        return '不明';
+        return $this->tryCatchWrapper(
+            callback: function () {
+                $now = Carbon::now();
+                return Order::whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->count();
+            },
+            errorMessage: '月間注文数の取得に失敗しました'
+        );
     }
 }

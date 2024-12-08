@@ -3,21 +3,21 @@
 @section('items')
 {{-- メッセージがある場合に表示 --}}
 @if ($message)
-<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
+<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 py-1 bg-[#f0f9ff] px-1" role="alert">
     <p>{{ $message }}</p>
 </div>
 @endif
 
 {{-- orderItemsが空の場合 --}}
 @if (empty($orderItems))
-<div class="text-center">
+<!-- <div class="text-center">
     <p class="text-lg font-bold">注文リストに商品がありません。</p>
-</div>
+</div> -->
 {{-- orderItemsが0件の場合 --}}
 @elseif (count($orderItems) === 0)
-<div class="text-center">
+<!-- <div class="text-center">
     <p class="text-lg font-bold">注文リストに商品がありません。</p>
-</div>
+</div> -->
 {{-- orderItemsがあった場合 --}}
 @else
     @csrf

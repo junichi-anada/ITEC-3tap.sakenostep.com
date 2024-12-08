@@ -11,12 +11,15 @@ use App\Services\Item\Actions\DeleteItemAction;
 use App\Services\Item\Actions\GetRecommendedItemsAction;
 use App\Services\Item\Queries\SearchItemsByKeywordQuery;
 use App\Services\Item\Queries\SearchItemsByCategoryQuery;
+use App\Services\Item\Queries\GetPopularItemsQuery;
 use App\Services\Item\DTOs\ItemData;
 use App\Services\Item\DTOs\ItemSearchCriteria;
+use App\Services\Item\DTOs\PopularItemData;
 use App\Repositories\Item\ItemRepository;
 use App\Services\ServiceErrorHandler;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection as SupportCollection;
 
 /**
  * 商品サービスクラス
@@ -35,7 +38,8 @@ final class ItemService
         private DeleteItemAction $deleteItemAction,
         private GetRecommendedItemsAction $getRecommendedItemsAction,
         private SearchItemsByKeywordQuery $searchItemsByKeywordQuery,
-        private SearchItemsByCategoryQuery $searchItemsByCategoryQuery
+        private SearchItemsByCategoryQuery $searchItemsByCategoryQuery,
+        private GetPopularItemsQuery $getPopularItemsQuery
     ) {}
 
     /**
@@ -171,5 +175,16 @@ final class ItemService
             fn () => $this->repository->all(),
             '全商品情報の取得に失敗しました'
         );
+    }
+
+    /**
+     * 人気商品ランキングを取得する
+     *
+     * @param int $limit 取得件数
+     * @return SupportCollection<PopularItemData>
+     */
+    public function getPopularItems(int $limit = 5): SupportCollection
+    {
+        return $this->getPopularItemsQuery->execute($limit);
     }
 }
