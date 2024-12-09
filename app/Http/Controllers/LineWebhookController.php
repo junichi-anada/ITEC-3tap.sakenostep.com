@@ -223,28 +223,44 @@ class LineWebhookController extends Controller
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
     private function accountLinkSend(string $userId, string $replayToken){
-        $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
-        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
-        $response = $bot->createLinkToken($userId);
 
-        $res_json = $response->getJSONDecodedBody();
-        $linkToken=$res_json['linkToken'];
-
-        $templateMessage = new TemplateMessageBuilder(
-            "LINEと連携ができるようになりました！",
-            new ButtonTemplateBuilder(
-                "LINE連携ができるようになりました！",
-                "3TAPオーダーシステムへのログインは↓のバナーから！！",
-                null,
-                [
-                    new UriTemplateActionBuilder(
-                        "連携はこちらから",
-                        route("customer.index",["linkToken" => $linkToken])
-                    )
-                ]
-            )
+        $client = new \GuzzleHttp\Client();
+        $config = new \LINE\Clients\MessagingApi\Configuration();
+        $config->setAccessToken(config('services.line.channel_token'));
+        $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
+            client: $client,
+            config: $config,
         );
-        $response = $bot->replyMessage($replayToken, $templateMessage);
+        $message = new TextMessage(['type' => 'text','text' => 'hello!']);
+        $request = new ReplyMessageRequest([
+            'replyToken' => $replayToken,
+            'messages' => [$message],
+        ]);
+        $response = $messagingApi->replyMessage($request);
+
+
+        // $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
+        // $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
+        // $response = $bot->createLinkToken($userId);
+
+        // $res_json = $response->getJSONDecodedBody();
+        // $linkToken=$res_json['linkToken'];
+
+        // $templateMessage = new TemplateMessageBuilder(
+        //     "LINEと連携ができるようになりました！",
+        //     new ButtonTemplateBuilder(
+        //         "LINE連携ができるようになりました！",
+        //         "3TAPオーダーシステムへのログインは↓のバナーから！！",
+        //         null,
+        //         [
+        //             new UriTemplateActionBuilder(
+        //                 "連携はこちらから",
+        //                 route("customer.index",["linkToken" => $linkToken])
+        //             )
+        //         ]
+        //     )
+        // );
+        // $response = $bot->replyMessage($replayToken, $templateMessage);
     }
 
     /**
