@@ -22,8 +22,8 @@ class AuthenticateSeeder extends Seeder
             'site_id' => 1, // 必要に応じて適切な site_id に変更
             'entity_type' => 'App\Models\User', // 対象のエンティティタイプ
             'entity_id' => 1, // 必要に応じて適切なユーザーIDに変更
-            'login_code' => 'test_anada', // サンプルのログインID
-            'password' => Hash::make('test_anada'), // パスワードをハッシュ化して保存
+            'login_code' => 'anada', // サンプルのログインID
+            'password' => Hash::make('08010629982'), // パスワードをハッシュ化して保存
             'expires_at' => now()->addMonth(), // 有効期限を設定
             'created_at' => now(),
             'updated_at' => now(),
@@ -34,8 +34,8 @@ class AuthenticateSeeder extends Seeder
             'site_id' => 1, // 必要に応じて適切な site_id に変更
             'entity_type' => 'App\Models\User', // 対象のエンティティタイプ
             'entity_id' => 2, // 必要に応じて適切なユーザーIDに変更
-            'login_code' => 'itec_user', // サンプルのログインID
-            'password' => Hash::make('itec_user'), // パスワードをハッシュ化して保存
+            'login_code' => 'wada', // サンプルのログインID
+            'password' => Hash::make('09028461629'), // パスワードをハッシュ化して保存
             'expires_at' => now()->addMonth(), // 有効期限を設定
             'created_at' => now(),
             'updated_at' => now(),
@@ -46,8 +46,8 @@ class AuthenticateSeeder extends Seeder
             'site_id' => 1, // 必要に応じて適切な site_id に変更
             'entity_type' => 'App\Models\User', // 対象のエンティティタイプ
             'entity_id' => 3, // 必要に応じて適切なユーザーIDに変更
-            'login_code' => 'step_user', // サンプルのログインID
-            'password' => Hash::make('step_user'), // パスワードをハッシュ化して保存
+            'login_code' => 'numata', // サンプルのログインID
+            'password' => Hash::make('233541'), // パスワードをハッシュ化して保存
             'expires_at' => now()->addMonth(), // 有効期限を設定
             'created_at' => now(),
             'updated_at' => now(),
@@ -59,8 +59,8 @@ class AuthenticateSeeder extends Seeder
             'site_id' => 1, // 必要に応じて適切な site_id に変更
             'entity_type' => 'App\Models\Operator', // 対象のエンティティタイプ
             'entity_id' => 1, // 必要に応じて適切なユーザーIDに変更
-            'login_code' => 'test_admin', // サンプルのログインID
-            'password' => Hash::make('test_admin'), // パスワードをハッシュ化して保存
+            'login_code' => 'admin', // サンプルのログインID
+            'password' => Hash::make('3tap3541'), // パスワードをハッシュ化して保存
             'expires_at' => now()->addMonth(), // 有効期限を設定
             'created_at' => now(),
             'updated_at' => now(),

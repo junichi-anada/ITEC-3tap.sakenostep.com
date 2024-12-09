@@ -48,7 +48,7 @@ class OrderController extends Controller
     public function index(Request $request, GetOrderListQuery $query)
     {
         $orders = $query->execute($request->all());
-        return view('operator.order.index', compact('orders'));
+        return view('operator.order.list', compact('orders'));
     }
 
     /**

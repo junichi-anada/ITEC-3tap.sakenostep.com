@@ -5,7 +5,7 @@
  * @var \Illuminate\Pagination\LengthAwarePaginator $customers
  */
 ?>
-<div class="border-t-8 border-[#F4CF41] border-l border-r border-b py-4 w-full h-[calc(100vh-5.5rem)]">
+<div class="border-t-8 border-[#F4CF41] border-l border-r border-b py-4 w-full h-[calc(100vh-7.5rem)]">
     <div class="px-4 flex flex-col gap-y-4">
         <div class="flex flex-row items-center justify-between pb-2 border-b">
             <h2 class="font-bold  text-xl">顧客一覧</h2>

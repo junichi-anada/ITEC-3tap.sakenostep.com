@@ -37,7 +37,7 @@ Route::get('welcome', function () { return view('welcome');})->name('welcome');
 /**
  * LINE Webhook - ミドルウェアを除外
  */
-Route::post('/line/webhook', [LineWebhookController::class, 'handle']);
+Route::post('line/webhook', [LineWebhookController::class, 'handle']);
 
 /**
  * ここから下は認証済みユーザーのみアクセス可能
@@ -202,32 +202,5 @@ Route::prefix('line/account')->group(function () {
         ->name('line.account.unlink');
     Route::view('/success', 'line.account.success')->name('line.account.success');
     Route::view('/error', 'line.account.error')->name('line.account.error');
-});
-
-
-use Illuminate\Http\Request;
-use LINE\LINEBot;
-use LINE\LINEBot\HTTPClient\GuzzleHTTPClient;
-
-Route::post('/webhook', function (Request $request) {
-    $httpClient = new GuzzleHTTPClient(['base_uri' => 'https://api.line.me']);
-    $bot = new LINEBot($httpClient, ['channelSecret' => env('LINE_CHANNEL_SECRET')]);
-
-    $signature = $request->header('X-Line-Signature');
-    if (!$bot->validateSignature($request->getContent(), $signature)) {
-        abort(400, 'Invalid signature');
-    }
-
-    $events = $bot->parseEventRequest($request->getContent(), $signature);
-
-    foreach ($events as $event) {
-        if ($event instanceof LINE\LINEBot\Event\MessageEvent\TextMessage) {
-            $replyToken = $event->getReplyToken();
-            $text = $event->getText();
-            $bot->replyText($replyToken, "You said: $text");
-        }
-    }
-
-    return response()->json(['status' => 'success']);
 });
 

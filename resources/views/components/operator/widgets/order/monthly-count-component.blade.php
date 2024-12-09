@@ -1,4 +1,4 @@
-<div class="w-1/2">
+<div class="w-full">
     <div class="flex border border-black gap-x-2">
         <div class="w-[20%] bg-[#B8A044]">
             <p class="text-center text-3xl font-bold py-4 text-white leading-6">{{ $month }}<br><span class="font-normal text-xl">月</span></p>
