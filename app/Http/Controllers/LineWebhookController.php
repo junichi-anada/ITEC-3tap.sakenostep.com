@@ -237,6 +237,8 @@ class LineWebhookController extends Controller
      */
     private function accountLinkSend(string $userId, string $replyToken)
     {
+        $linkToken = $this->lineMessagingService->getLinkToken($userId);
+
         $client = new \GuzzleHttp\Client();
         $config = new \LINE\Clients\MessagingApi\Configuration();
         $config->setAccessToken(config('services.line.channel_token'));
