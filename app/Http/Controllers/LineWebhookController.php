@@ -246,7 +246,6 @@ class LineWebhookController extends Controller
             client: $client,
             config: $config,
         );
-        // $message = new TextMessage(['type' => 'text','text' => 'hello!']);
 
         $templateMessage = new TemplateMessage([
             'type' => MessageType::TEMPLATE,
@@ -254,7 +253,7 @@ class LineWebhookController extends Controller
             'template' => new ButtonsTemplate([
                 'type' => TemplateType::BUTTONS,
                 'title' => "LINE連携ができるようになりました！",
-                'text' => "3TAPオーダーシステムへのログインは↓のバナーから！！",
+                'text' => "3TAPオーダーシステムへのログインは↓のリンクから！！",
                 'thumbnailImageUrl' => null,
                 'actions' => [
                     new URIAction([
@@ -270,30 +269,6 @@ class LineWebhookController extends Controller
             'messages' => [$templateMessage],
         ]);
         $response = $messagingApi->replyMessage($request);
-
-
-        // $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
-        // $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
-        // $response = $bot->createLinkToken($userId);
-
-        // $res_json = $response->getJSONDecodedBody();
-        // $linkToken=$res_json['linkToken'];
-
-        // $templateMessage = new TemplateMessageBuilder(
-        //     "LINEと連携ができるようになりました！",
-        //     new ButtonTemplateBuilder(
-        //         "LINE連携ができるようになりました！",
-        //         "3TAPオーダーシステムへのログインは↓のバナーから！！",
-        //         null,
-        //         [
-        //             new UriTemplateActionBuilder(
-        //                 "連携はこちらから",
-        //                 route("customer.index",["linkToken" => $linkToken])
-        //             )
-        //         ]
-        //     )
-        // );
-        // $response = $bot->replyMessage($replyToken, $templateMessage);
     }
 
     /**
