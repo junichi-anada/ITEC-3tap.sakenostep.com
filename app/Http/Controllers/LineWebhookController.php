@@ -82,14 +82,14 @@ class LineWebhookController extends Controller
     {
         $eventType = LineWebhookData::getEventType($event);
         $userId = LineWebhookData::getUserId($event);
-        $replayToken = LineWebhookData::getReplyToken($event);
+        $replyToken = LineWebhookData::getReplyToken($event);
 
         switch ($eventType) {
             case 'message':
-                $this->handleMessageEvent($event, $userId, $replayToken);
+                $this->handleMessageEvent($event, $userId, $replyToken);
                 break;
             case 'follow':
-                $this->handleFollowEvent($userId, $replayToken);
+                $this->handleFollowEvent($userId, $replyToken);
                 break;
             case 'accountLink':
                 $nonce = LineWebhookData::getNonce($event);
@@ -128,13 +128,13 @@ class LineWebhookController extends Controller
                 ->first();
 
             // Lineユーザーが連携していない場合
-            if(is_null($user)){
-                $this->accountLinkSend($userId, $replayToken);
+            if(is_null($lineUser)){
+                $this->accountLinkSend($userId, $replyToken);
                 return;
             }
 
             // 連携済みの場合
-            $this->mypageLinkSend($replayToken);
+            $this->mypageLinkSend($replyToken);
             return;
         }
 
@@ -165,12 +165,12 @@ class LineWebhookController extends Controller
 
         // LineUserモデルが存在しない場合はアカウント連携用のURLを送信
         if(is_null($lineUser)){
-            $this->accountLinkSend($userId, $replayToken);
+            $this->accountLinkSend($userId, $replyToken);
             return;
         }
 
         // マイページへのリンクを送信
-        $this->mypageLinkSend($replayToken);
+        $this->mypageLinkSend($replyToken);
         return;
     }
 
@@ -219,10 +219,10 @@ class LineWebhookController extends Controller
      * アカウント連携用のURLを送信
      *
      * @param string $userId
-     * @param string $replayToken
+     * @param string $replyToken
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
-    private function accountLinkSend(string $userId, string $replayToken){
+    private function accountLinkSend(string $userId, string $replyToken){
 
         $client = new \GuzzleHttp\Client();
         $config = new \LINE\Clients\MessagingApi\Configuration();
@@ -233,7 +233,7 @@ class LineWebhookController extends Controller
         );
         $message = new TextMessage(['type' => 'text','text' => 'hello!']);
         $request = new ReplyMessageRequest([
-            'replyToken' => $replayToken,
+            'replyToken' => $replyToken,
             'messages' => [$message],
         ]);
         $response = $messagingApi->replyMessage($request);
@@ -260,33 +260,33 @@ class LineWebhookController extends Controller
         //         ]
         //     )
         // );
-        // $response = $bot->replyMessage($replayToken, $templateMessage);
+        // $response = $bot->replyMessage($replyToken, $templateMessage);
     }
 
     /**
      * アカウント連携完了メッセージを送信
      *
      * @param string $userId
-     * @param string $replayToken
+     * @param string $replyToken
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
-    private function accountLinkThanks(string $replayToken){
+    private function accountLinkThanks(string $replyToken){
         $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
         $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret001')]);
-        $response = $bot->replyText($replayToken, "連携が完了しました。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
+        $response = $bot->replyText($replyToken, "連携が完了しました。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
     }
 
     /**
      * マイページへのリンクを送信
      *
      * @param string $userId
-     * @param string $replayToken
+     * @param string $replyToken
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
-    private function mypageLinkSend(string $replayToken){
+    private function mypageLinkSend(string $replyToken){
         $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
         $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
-        $response = $bot->replyText($replayToken, "LINE連携は完了しております。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
+        $response = $bot->replyText($replyToken, "LINE連携は完了しております。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
     }
 
 }
