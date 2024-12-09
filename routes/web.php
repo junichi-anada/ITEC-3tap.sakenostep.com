@@ -37,7 +37,7 @@ Route::get('welcome', function () { return view('welcome');})->name('welcome');
 /**
  * LINE Webhook - ミドルウェアを除外
  */
-Route::post('line/webhook', [LineWebhookController::class, 'handle']);
+Route::post('/line/webhook', [LineWebhookController::class, 'handle']);
 
 /**
  * ここから下は認証済みユーザーのみアクセス可能
