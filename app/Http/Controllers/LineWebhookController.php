@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\LineUser;
 use Illuminate\Http\Request;
 use App\Services\Messaging\DTOs\LineWebhookData;
+
+use App\Services\Messaging\LineMessagingService;
+
+
 use App\Services\Messaging\Actions\PushMessageAction;
 use Illuminate\Support\Facades\Log;
 use LINE\LINEBot\HTTPClient\CurlHTTPClient;
@@ -27,16 +31,18 @@ class LineWebhookController extends Controller
     private $channelSecret;
     private $pushMessageAction;
     private $siteId;
+    private $lineMessagingService;
     /**
      * コンストラクタ
      *
      * @param PushMessageAction $pushMessageAction メッセージ送信アクション
      */
-    public function __construct(PushMessageAction $pushMessageAction)
+    public function __construct(PushMessageAction $pushMessageAction, LineMessagingService $lineMessagingService)
     {
         $this->channelSecret = config('services.line.channel_secret');
         $this->pushMessageAction = $pushMessageAction;
         $this->siteId = config('services.line.site_id');
+        $this->lineMessagingService = $lineMessagingService;
     }
 
     /**
@@ -145,7 +151,8 @@ class LineWebhookController extends Controller
 
         // それ以外の場合、定型メッセージを送信
         $message = '世界中のお酒が手に入る！十和田市のお酒屋さん「酒のステップ」へようこそ！';
-        $this->pushMessageAction->sendMessage($userId, $message);
+        // $this->pushMessageAction->sendMessage($userId, $message);
+        $this->lineMessagingService->pushMessage($userId, $message);
     }
 
     /**
@@ -250,7 +257,7 @@ class LineWebhookController extends Controller
                     new URIAction([
                         'type' => ActionType::URI,
                         'label' => '連携はこちらから',
-                        'uri' => route("customer.index",["linkToken" => $linkToken]),
+                        'uri' => route("login",["linkToken" => $linkToken]),
                     ])
                 ]
             ])
