@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use App\Services\Messaging\DTOs\LineWebhookData;
 use App\Services\Messaging\Actions\PushMessageAction;
 use Illuminate\Support\Facades\Log;
+
 class LineWebhookController extends Controller
 {
     private $channelSecret;
+    private $pushMessageAction;
 
     public function __construct(PushMessageAction $pushMessageAction)
     {
