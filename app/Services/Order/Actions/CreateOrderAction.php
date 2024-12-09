@@ -8,7 +8,6 @@ use App\Models\Order;
 use App\Repositories\Order\OrderRepository;
 use App\Services\Order\DTOs\OrderData;
 use App\Services\Order\Exceptions\OrderException;
-use Illuminate\Support\Str;
 
 /**
  * 注文作成アクション
@@ -28,7 +27,7 @@ final class CreateOrderAction
     {
         try {
             // 注文コードの生成
-            $orderCode = $data->orderCode ?? $this->generateOrderCode();
+            $orderCode = $data->orderCode ?? Order::generateOrderCode();
 
             // 基本注文データの作成
             $orderData = array_merge($data->toArray(), [
@@ -50,18 +49,6 @@ final class CreateOrderAction
                 previous: $e
             );
         }
-    }
-
-    /**
-     * 一意の注文コードを生成
-     */
-    private function generateOrderCode(): string
-    {
-        do {
-            $orderCode = Str::ulid();
-        } while ($this->repository->exists(['order_code' => $orderCode]));
-
-        return $orderCode;
     }
 
     /**

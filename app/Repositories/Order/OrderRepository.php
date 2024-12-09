@@ -9,7 +9,6 @@ use App\Services\Transaction\TransactionService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Str;
 
 /**
  * 伝票のリポジトリクラス
@@ -50,11 +49,7 @@ final class OrderRepository
      */
     public function create(array $data): Order
     {
-        do {
-            $orderCode = Str::ulid();
-        } while (Order::where('order_code', $orderCode)->exists());
-
-        $data['order_code'] = $orderCode;
+        $data['order_code'] = Order::generateOrderCode();
 
         return $this->transactionService->executeInTransaction(
             fn() => Order::create($data)

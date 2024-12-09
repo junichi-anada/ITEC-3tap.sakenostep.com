@@ -1,25 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Services\LineMessagingService;
+use App\Contracts\LineMessagingServiceInterface;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LineMessageController extends Controller
 {
-    private $lineService;
+    public function __construct(
+        private readonly LineMessagingServiceInterface $lineMessagingService
+    ) {}
 
-    public function __construct(LineMessagingService $lineService)
+    /**
+     * LINEメッセージを送信する
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function send(Request $request): JsonResponse
     {
-        $this->lineService = $lineService;
-    }
+        try {
+            $request->validate([
+                'user_id' => 'required|string',
+                'message' => 'required|string|max:2000'
+            ]);
 
-    public function send()
-    {
-        $userId = 'USER_ID'; // テスト用のLINEユーザーIDを設定
-        $message = 'Hello from Laravel!';
+            $result = $this->lineMessagingService->pushMessage(
+                $request->input('user_id'),
+                $request->input('message')
+            );
 
-        $result = $this->lineService->sendMessage($userId, $message);
+            if ($result) {
+                return response()->json(['message' => 'メッセージを送信しました']);
+            }
 
-        return response()->json(['success' => $result]);
+            return response()->json(['error' => 'メッセージの送信に失敗しました'], 500);
+        } catch (\Exception $e) {
+            Log::error('Failed to send LINE message: ' . $e->getMessage());
+            return response()->json(['error' => 'メッセージの送信中にエラーが発生しました'], 500);
+        }
     }
 }

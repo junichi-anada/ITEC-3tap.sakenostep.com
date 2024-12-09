@@ -27,7 +27,7 @@ class SearchController extends Controller
         try {
             $auth = Auth::user();
             $keyword = $request->input('keyword');
-            
+
             // カテゴリ一覧の取得
             $categories = $this->itemCategoryService->getAllCategories($auth->site_id);
 

@@ -15,7 +15,6 @@ use App\Services\OrderDetail\DTOs\OrderDetailData;
 use App\Services\OrderDetail\Actions\AddOrderDetailAction;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 /**
  * 注文サービスクラス
@@ -46,7 +45,7 @@ final class OrderService
         $orderData = new OrderData(
             siteId: $siteId,
             userId: $userId,
-            orderCode: Str::uuid()->toString()
+            orderCode: Order::generateOrderCode()
         );
 
         return $this->create($orderData);
@@ -136,7 +135,7 @@ final class OrderService
             $orderData = new OrderData(
                 siteId: $siteId,
                 userId: $userId,
-                orderCode: Str::uuid()->toString()
+                orderCode: Order::generateOrderCode()
             );
             $newOrder = $this->create($orderData);
 

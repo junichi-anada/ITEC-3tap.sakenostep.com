@@ -35,6 +35,11 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('welcome', function () { return view('welcome');})->name('welcome');
 
 /**
+ * LINE Webhook - ミドルウェアを除外
+ */
+Route::post('/line/webhook', [LineWebhookController::class, 'handle']);
+
+/**
  * ここから下は認証済みユーザーのみアクセス可能
  */
 Route::middleware(['web', 'auth'])->group(function () {
@@ -127,13 +132,22 @@ Route::middleware(['web', 'auth'])->group(function () {
          * 注文管理
          */
         Route::prefix('order')->group(function () {
+            // 基本的なCRUD操作
             Route::get('/', [OperatorOrderController::class, 'index'])->name('operator.order.index');
             Route::get('/create', [OperatorOrderController::class, 'create'])->name('operator.order.create');
             Route::post('/', [OperatorOrderController::class, 'store'])->name('operator.order.store');
             Route::get('/{id}', [OperatorOrderController::class, 'show'])->name('operator.order.show');
             Route::put('/{id}', [OperatorOrderController::class, 'update'])->name('operator.order.update');
             Route::delete('/{id}', [OperatorOrderController::class, 'destroy'])->name('operator.order.destroy');
+
+            // 検索機能
             Route::post('/search', [OperatorOrderController::class, 'search'])->name('operator.order.search');
+
+            // CSV書出し関連
+            Route::post('/export', [OperatorOrderController::class, 'export'])->name('operator.order.export');
+            Route::get('/export/{taskCode}/status', [OperatorOrderController::class, 'exportStatus'])->name('operator.order.export.status');
+            Route::get('/export/{taskCode}/progress', [OperatorOrderController::class, 'exportProgress'])->name('operator.order.export.progress');
+            Route::put('/export/{id}/mark-as-exported', [OperatorOrderController::class, 'markAsExported'])->name('operator.order.export.mark');
         });
 
         /**
@@ -170,9 +184,8 @@ Route::get('/line/login', [LineAuthController::class, 'redirectToLine'])->name('
 Route::get('/line/callback', [LineAuthController::class, 'handleLineCallback'])->name('line.callback');
 
 /**
- * LINE Webhook
+ * LINE送信
  */
-Route::post('/line/webhook', [LineWebhookController::class, 'handle']);
 Route::get('/line/send-message', [LineMessageController::class, 'send']);
 
 /**

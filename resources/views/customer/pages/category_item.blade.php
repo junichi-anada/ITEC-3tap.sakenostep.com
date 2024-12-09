@@ -69,7 +69,7 @@
             </div>
             <div class="flex items-center ml-auto">
                 <div class="border px-1.5 py-0.5 border-r-0 text-lg volume-minus">－</div>
-                <input type="text" name="volume" value="{{ $item['unorderedVolume'] }}"
+                <input type="text" name="volume" value="{{ $item['unorderedVolume'] ?: 1 }}"
                     class="w-10 border border-r-0 text-center py-0.5 text-lg volume-input">
                 <div class="border px-1.5 py-0.5 text-lg volume-plus">＋</div>
                 <span class="inline-block ml-2 text-sm">本</span>

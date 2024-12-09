@@ -53,6 +53,9 @@ class GetItemListQuery
             $query->where('items.is_recommended', '=', $searchParams['is_recommended']);
         }
 
+        // 商品コードの昇順でソート
+        $query->orderBy('items.item_code', 'asc');
+
         $items = $query->paginate($perPage);
 
         return new ItemListData($items);
