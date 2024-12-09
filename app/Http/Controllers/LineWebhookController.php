@@ -11,6 +11,8 @@ use LINE\LINEBot\HTTPClient\CurlHTTPClient;
 use LINE\LINEBot\MessageBuilder\TemplateMessageBuilder;
 use LINE\LINEBot\MessageBuilder\TemplateBuilder\ButtonTemplateBuilder;
 use LINE\LINEBot\TemplateActionBuilder\UriTemplateActionBuilder;
+use LINE\Clients\MessagingApi\Model\ReplyMessageRequest;
+use LINE\Clients\MessagingApi\Model\TextMessage;
 
 /**
  * LINE Webhookを処理するコントローラー
@@ -231,8 +233,7 @@ class LineWebhookController extends Controller
             client: $client,
             config: $config,
         );
-        // $message = new TextMessage(['type' => 'text','text' => 'hello!']);
-        $message = "LINEと連携ができるようになりました！テストです！！";
+        $message = new TextMessage(['type' => 'text','text' => 'hello!']);
         $request = new ReplyMessageRequest([
             'replyToken' => $replyToken,
             'messages' => [$message],
