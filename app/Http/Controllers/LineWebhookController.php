@@ -254,8 +254,8 @@ class LineWebhookController extends Controller
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
     private function accountLinkThanks(string $replayToken){
-        $httpClient = new CurlHTTPClient(config('services.line.message.channel_token001'));
-        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.message.channel_secret001')]);
+        $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
+        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret001')]);
         $response = $bot->replyText($replayToken, "連携が完了しました。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
     }
 
@@ -267,8 +267,8 @@ class LineWebhookController extends Controller
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
     private function mypageLinkSend(string $replayToken){
-        $httpClient = new CurlHTTPClient(config('services.line.message.channel_token001'));
-        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.message.channel_secret001')]);
+        $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
+        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
         $response = $bot->replyText($replayToken, "LINE連携は完了しております。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
     }
 
