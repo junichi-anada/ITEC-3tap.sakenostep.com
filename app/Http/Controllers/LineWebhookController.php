@@ -259,7 +259,7 @@ class LineWebhookController extends Controller
                     new URIAction([
                         'type' => ActionType::URI,
                         'label' => '連携はこちらから',
-                        'uri' => route("login",["linkToken" => $linkToken]),
+                        'uri' => route("customer.index",["linkToken" => $linkToken]),
                     ])
                 ]
             ])
