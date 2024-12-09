@@ -37,7 +37,7 @@ class HandleWebhookAction
 
                 // 署名を検証
                 $parser = new EventRequestParser(config('services.line.channel_secret'));
-                $events = $parser->parseEventRequest($data->content, $data->signature);
+                $events = $parser->parseEventRequest($data->content, $data->signature, true);
 
                 foreach ($events as $event) {
                     $this->handleEvent($event);
