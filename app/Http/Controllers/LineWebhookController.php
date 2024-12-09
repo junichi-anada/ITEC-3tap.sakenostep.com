@@ -8,11 +8,14 @@ use App\Services\Messaging\DTOs\LineWebhookData;
 use App\Services\Messaging\Actions\PushMessageAction;
 use Illuminate\Support\Facades\Log;
 use LINE\LINEBot\HTTPClient\CurlHTTPClient;
-use LINE\LINEBot\MessageBuilder\TemplateMessageBuilder;
-use LINE\LINEBot\MessageBuilder\TemplateBuilder\ButtonTemplateBuilder;
-use LINE\LINEBot\TemplateActionBuilder\UriTemplateActionBuilder;
+use LINE\Clients\MessagingApi\Model\ButtonsTemplate;
 use LINE\Clients\MessagingApi\Model\ReplyMessageRequest;
 use LINE\Clients\MessagingApi\Model\TextMessage;
+use LINE\Clients\MessagingApi\Model\TemplateMessage;
+use LINE\Clients\MessagingApi\Model\URIAction;
+use LINE\Constants\ActionType;
+use LINE\Constants\MessageType;
+use LINE\Constants\TemplateType;
 
 /**
  * LINE Webhookを処理するコントローラー
@@ -224,8 +227,8 @@ class LineWebhookController extends Controller
      * @param string $replyToken
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
-    private function accountLinkSend(string $userId, string $replyToken){
-
+    private function accountLinkSend(string $userId, string $replyToken)
+    {
         $client = new \GuzzleHttp\Client();
         $config = new \LINE\Clients\MessagingApi\Configuration();
         $config->setAccessToken(config('services.line.channel_token'));
@@ -233,10 +236,28 @@ class LineWebhookController extends Controller
             client: $client,
             config: $config,
         );
-        $message = new TextMessage(['type' => 'text','text' => 'hello!']);
+        // $message = new TextMessage(['type' => 'text','text' => 'hello!']);
+
+        $templateMessage = new TemplateMessage([
+            'type' => MessageType::TEMPLATE,
+            'altText' => 'LINEと連携ができるようになりました！',
+            'template' => new ButtonsTemplate([
+                'type' => TemplateType::BUTTONS,
+                'title' => "LINE連携ができるようになりました！",
+                'text' => "3TAPオーダーシステムへのログインは↓のバナーから！！",
+                'thumbnailImageUrl' => null,
+                'actions' => [
+                    new URIAction([
+                        'type' => ActionType::URI,
+                        'label' => '連携はこちらから',
+                        'uri' => route("customer.index",["linkToken" => $linkToken]),
+                    ])
+                ]
+            ])
+        ]);
         $request = new ReplyMessageRequest([
             'replyToken' => $replyToken,
-            'messages' => [$message],
+            'messages' => [$templateMessage],
         ]);
         $response = $messagingApi->replyMessage($request);
 
