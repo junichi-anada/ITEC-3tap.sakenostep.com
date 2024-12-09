@@ -29,9 +29,9 @@ class LineWebhookController extends Controller
      */
     public function __construct(PushMessageAction $pushMessageAction)
     {
-        $this->channelSecret = env('LINE_CHANNEL_SECRET');
+        $this->channelSecret = config('services.line.channel_secret');
         $this->pushMessageAction = $pushMessageAction;
-        $this->siteId = env('LINE_SITE_ID');
+        $this->siteId = config('services.line.site_id');
     }
 
     /**
@@ -138,7 +138,7 @@ class LineWebhookController extends Controller
         }
 
         // それ以外の場合、定型メッセージを送信
-        $message = '世界中のお酒が手に入る！\n十和田市のお酒屋さん「酒のステップ」へようこそ！';
+        $message = '世界中のお酒が手に入る！十和田市のお酒屋さん「酒のステップ」へようこそ！';
         $this->pushMessageAction->sendMessage($userId, $message);
     }
 
@@ -222,8 +222,8 @@ class LineWebhookController extends Controller
      * @throws \LINE\LINEBot\Exception\CurlExecutionException
      */
     private function accountLinkSend(string $userId, string $replayToken){
-        $httpClient = new CurlHTTPClient(config('services.line.message.channel_token'));
-        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.message.channel_secret')]);
+        $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
+        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
         $response = $bot->createLinkToken($userId);
 
         $res_json = $response->getJSONDecodedBody();
@@ -256,7 +256,7 @@ class LineWebhookController extends Controller
     private function accountLinkThanks(string $replayToken){
         $httpClient = new CurlHTTPClient(config('services.line.message.channel_token001'));
         $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.message.channel_secret001')]);
-        $response = $bot->replyText($replayToken, "連携が完了しました。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/cst'));
+        $response = $bot->replyText($replayToken, "連携が完了しました。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
     }
 
     /**
@@ -269,7 +269,7 @@ class LineWebhookController extends Controller
     private function mypageLinkSend(string $replayToken){
         $httpClient = new CurlHTTPClient(config('services.line.message.channel_token001'));
         $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.message.channel_secret001')]);
-        $response = $bot->replyText($replayToken, "LINE連携は完了しております。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/cst'));
+        $response = $bot->replyText($replayToken, "LINE連携は完了しております。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
     }
 
 }
