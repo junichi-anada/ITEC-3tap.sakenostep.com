@@ -130,7 +130,7 @@ class LineWebhookController extends Controller
         $messageText = $event['message']['text'] ?? '';
 
         // LINE連携するメッセージが送信された場合
-        if( $messageText == 'LINE連携する') {
+        if( $messageText == '連携する') {
 
             // LineUserモデルを取得
             $lineUser = LineUser::where('line_user_id', $userId)
