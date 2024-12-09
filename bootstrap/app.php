@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(function(){
             return route('login');
         });
+        $middleware->validateCsrfTokens(except: ['/webhook']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
