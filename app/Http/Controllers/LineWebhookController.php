@@ -82,7 +82,7 @@ class LineWebhookController extends Controller
     {
         $eventType = LineWebhookData::getEventType($event);
         $userId = LineWebhookData::getUserId($event);
-        $replayToken = LineWebhookData::getNonce($event);
+        $replayToken = LineWebhookData::getReplyToken($event);
 
         switch ($eventType) {
             case 'message':
