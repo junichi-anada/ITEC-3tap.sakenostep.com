@@ -231,7 +231,8 @@ class LineWebhookController extends Controller
             client: $client,
             config: $config,
         );
-        $message = new TextMessage(['type' => 'text','text' => 'hello!']);
+        // $message = new TextMessage(['type' => 'text','text' => 'hello!']);
+        $message = "LINEと連携ができるようになりました！テストです！！";
         $request = new ReplyMessageRequest([
             'replyToken' => $replyToken,
             'messages' => [$message],
