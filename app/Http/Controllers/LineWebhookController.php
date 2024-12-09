@@ -165,7 +165,8 @@ class LineWebhookController extends Controller
     {
         // サンクスメッセージを送信
         $message = '友達登録ありがとうございます！';
-        $this->pushMessageAction->sendMessage($userId, $message);
+        // $this->pushMessageAction->sendMessage($userId, $message);
+        $this->lineMessagingService->pushMessage($userId, $message);
 
         // LineUserモデルを取得
         $lineUser = LineUser::where('line_user_id', $userId)->first();
