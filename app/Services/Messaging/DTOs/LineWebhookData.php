@@ -73,4 +73,15 @@ class LineWebhookData
     {
         return $event['replyToken'] ?? null;
     }
+
+    /**
+     * イベントからノンスを取得
+     *
+     * @param array $event
+     * @return string|null
+     */
+    public static function getNonce(array $event): ?string
+    {
+        return $event['link']['nonce'] ?? null;
+    }
 }
