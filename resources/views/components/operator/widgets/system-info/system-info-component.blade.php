@@ -1,7 +1,7 @@
 <?php
 /**
  * システム管理者からのお知らせ表示ウィジェット
- * 
+ *
  * @var Collection $systemInfos
  */
 ?>
@@ -13,7 +13,14 @@
         </div>
         <div class="flex flex-col gap-y-4">
             @if ($systemInfos->isEmpty())
-                <p>現在お知らせはありません。</p>
+                    <div class="border-b pb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold">ベータ版公開しました。</h3>
+                            <span class="text-sm text-gray-500">2024/12/10</span>
+                        </div>
+                        <p class="whitespace-pre-wrap">ベータ版を公開しました。お気付きの点がございましたら、ご連絡ください。</p>
+                    </div>
+                <!-- <p>現在お知らせはありません。</p> -->
             @else
                 @foreach($systemInfos as $info)
                     <div class="border-b pb-4">
