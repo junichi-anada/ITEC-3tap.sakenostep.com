@@ -7,17 +7,33 @@ use App\Services\Messaging\DTOs\LineWebhookData;
 use App\Services\Messaging\Actions\PushMessageAction;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * LINE Webhookを処理するコントローラー
+ *
+ * @package App\Http\Controllers
+ */
 class LineWebhookController extends Controller
 {
     private $channelSecret;
     private $pushMessageAction;
 
+    /**
+     * コンストラクタ
+     *
+     * @param PushMessageAction $pushMessageAction メッセージ送信アクション
+     */
     public function __construct(PushMessageAction $pushMessageAction)
     {
         $this->channelSecret = env('LINE_CHANNEL_SECRET');
         $this->pushMessageAction = $pushMessageAction;
     }
 
+    /**
+     * Webhookリクエストを処理する
+     *
+     * @param Request $request HTTPリクエスト
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function handle(Request $request)
     {
         // LineWebhookDataオブジェクトを作成
@@ -36,6 +52,13 @@ class LineWebhookController extends Controller
         return response()->json(['message' => 'OK'], 200);
     }
 
+    /**
+     * 署名を検証する
+     *
+     * @param string $signature 署名
+     * @param string $content コンテンツ
+     * @return bool
+     */
     private function isValidSignature($signature, $content)
     {
         $hash = hash_hmac('sha256', $content, $this->channelSecret, true);
@@ -43,6 +66,12 @@ class LineWebhookController extends Controller
         return hash_equals($expectedSignature, $signature);
     }
 
+    /**
+     * イベントを処理する
+     *
+     * @param array $event イベントデータ
+     * @return void
+     */
     private function handleEvent(array $event)
     {
         $eventType = LineWebhookData::getEventType($event);
@@ -61,6 +90,13 @@ class LineWebhookController extends Controller
         }
     }
 
+    /**
+     * メッセージイベントを処理する
+     *
+     * @param array $event イベントデータ
+     * @param string|null $userId ユーザーID
+     * @return void
+     */
     private function handleMessageEvent(array $event, ?string $userId)
     {
         // メッセージイベントの処理ロジックを実装
@@ -75,6 +111,12 @@ class LineWebhookController extends Controller
         // 例: メッセージ内容に応じて返信を送信する
     }
 
+    /**
+     * フォローイベントを処理する
+     *
+     * @param string|null $userId ユーザーID
+     * @return void
+     */
     private function handleFollowEvent(?string $userId)
     {
         // 友達登録イベントの処理ロジックを実装
@@ -82,7 +124,6 @@ class LineWebhookController extends Controller
 
         // サンクスメッセージを送信
         $message = '友達登録ありがとうございます！';
-        $this->PushMessageAction->sendMessage($userId, $message);
+        $this->pushMessageAction->sendMessage($userId, $message);
     }
-
 }
