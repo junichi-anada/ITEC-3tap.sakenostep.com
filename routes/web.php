@@ -30,6 +30,14 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::get('logout', [LoginController::class, 'logout'])->name('logout');
 
 /**
+ * トップページ
+ */
+Route::get('/', function () { return view('index');})->name('index');
+Route::get('/operator', function () { return view('operator.index');})->name('operator.index');
+Route::get('/customer', function () { return view('customer.index');})->name('customer.index');
+
+
+/**
  * ウェルカムページ -> ここに飛んではいけない
  */
 Route::get('welcome', function () { return view('welcome');})->name('welcome');
