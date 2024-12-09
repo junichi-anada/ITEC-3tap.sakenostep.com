@@ -1,250 +1,154 @@
 /**
- * オペレータ管理画面から注文情報を操作するためのAjax処理
- *
+ * オペレータ管理画面から注文情報を管理するためのAjax処理
  */
 
 import {
-    makeCustomerRegistConfirmModal,
-    makeCustomerRegistSuccessModal,
-    makeCustomerRegistFailModal,
-} from "../../modal/operator/customer/regist.js";
+    makeOrderUpdateConfirmModal,
+    makeOrderUpdateSuccessModal,
+    makeOrderUpdateFailModal,
+} from "../../modal/operator/order/update.js";
+
 import {
-    makeCustomerUpdateConfirmModal,
-    makeCustomerUpdateSuccessModal,
-    makeCustomerUpdateFailModal,
-} from "../../modal/operator/customer/update.js";
-import {
-    makeCustomerDeleteConfirmModal,
-    makeCustomerDeleteSuccessModal,
-    makeCustomerDeleteFailModal,
-} from "../../modal/operator/customer/delete.js";
-import {
-    makeCustomerUploadConfirmModal,
-    makeCustomerUploadSuccessModal,
-    makeCustomerUploadFailModal,
-} from "../../modal/operator/customer/upload.js";
+    makeOrderExportConfirmModal,
+    makeOrderExportSuccessModal,
+    makeOrderExportFailModal,
+} from "../../modal/operator/order/export.js";
 
 document.addEventListener("DOMContentLoaded", function () {
-    // 登録ボタンクリック → 登録確認モーダル表示
-    const customerRegistButton = document.getElementById("customer_regist");
-    if (customerRegistButton) {
-        customerRegistButton.addEventListener("click", function () {
-            makeCustomerRegistConfirmModal();
-        });
-    }
-
     // 更新ボタンクリック → 更新確認モーダル表示
-    const customerUpdateButton = document.getElementById("customer_update");
-    if (customerUpdateButton) {
-        customerUpdateButton.addEventListener("click", function () {
-            makeCustomerUpdateConfirmModal();
+    const updateQuantitiesButton = document.getElementById("update_quantities");
+    if (updateQuantitiesButton) {
+        updateQuantitiesButton.addEventListener("click", function () {
+            makeOrderUpdateConfirmModal();
         });
     }
 
-    // 削除ボタンクリック → 削除確認モーダル表示
-    const customerDeleteButton = document.getElementById("customer_delete");
-    if (customerDeleteButton) {
-        customerDeleteButton.addEventListener("click", function () {
-            makeCustomerDeleteConfirmModal();
-        });
-    }
-
-    // 顧客データを読み込むボタンクリック → アップロードモーダル表示
-    const customerUploadButton = document.getElementById("customer_upload");
-    if (customerUploadButton) {
-        customerUploadButton.addEventListener("click", function () {
-            makeCustomerUploadConfirmModal();
+    // CSV書出ボタンクリック → CSV書出確認モーダル表示
+    const exportCsvButton = document.getElementById("export_csv");
+    if (exportCsvButton) {
+        exportCsvButton.addEventListener("click", function () {
+            makeOrderExportConfirmModal();
         });
     }
 
     // 処理ボタンをクリックされた時の処理
-    const customerExec = document.getElementById("execModal");
-    if (customerExec) {
-        customerExec.addEventListener("click", function () {
-            // console.log(document.getElementById("execMode").textContent);
-            if (document.getElementById("execMode").textContent == "regist") {
-                registCustomer();
+    const execModal = document.getElementById("execModal");
+    if (execModal) {
+        execModal.addEventListener("click", function () {
+            const execMode = document.getElementById("execMode").textContent;
+            if (execMode === "update") {
+                updateOrder();
             }
-            if (document.getElementById("execMode").textContent == "update") {
-                updateCustomer();
-            }
-            if (document.getElementById("execMode").textContent == "delete") {
-                deleteCustomer();
-            }
-            if (document.getElementById("execMode").textContent == "upload") {
-                uploadCustomer();
+            if (execMode === "export") {
+                exportOrderCsv();
             }
         });
     }
 
     /**
-     * registCustomer
-     * フォームのデータをAJAXで送信
-     * 送信先: /customer/regist
-     *
-     * @return JSON
+     * 注文情報を更新
      */
-    async function registCustomer() {
-        const customerForm = document.getElementById("customer_form");
-
-        const formData = new FormData(customerForm);
-
-        const formDataObj = {};
-        formData.forEach((value, key) => {
-            formDataObj[key] = value;
-        });
-
-        // formDataの_tokenを取得
-        const csrfToken = formData.get("_token");
-
-        // ajax送信
-        const response = await fetch("/operator/customer", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": csrfToken,
-            },
-            body: JSON.stringify(formDataObj),
-        });
-        const data = await response.json();
-        if (data.message === "success") {
-            makeCustomerRegistSuccessModal(data.login_code, data.password);
-        } else {
-            console.log(data.message);
-            makeCustomerRegistFailModal(data.reason);
-        }
-        return response;
-    }
-
-    /**
-     * deleteCustomer
-     * 顧客データを削除
-     * 送信先: /customer/delete
-     *
-     * @return JSON
-     */
-    async function deleteCustomer() {
-        const customerForm = document.getElementById("customer_form");
-
-        const formData = new FormData(customerForm);
-
-        // formDataのuser_codeを取得
-        const formDataObj = {};
-        formData.forEach((value, key) => {
-            if (key == "user_code") {
-                formDataObj[key] = value;
-            }
-        });
-
-        // formDataの_tokenを取得
-        const csrfToken = formData.get("_token");
-
-        const targetURL = "/operator/customer/" + formDataObj["user_code"];
-
-        // ajax送信
-        const response = await fetch(targetURL, {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": csrfToken,
-            },
-            body: JSON.stringify(formDataObj),
-        });
-        const data = await response.json();
-        if (data.message === "success") {
-            makeCustomerDeleteSuccessModal();
-        } else {
-            console.log(data.message);
-            makeCustomerDeleteFailModal();
-        }
-        return response;
-    }
-
-    /**
-     * updateCustomer
-     * 顧客データを更新
-     * 送信先: /customer/update
-     *
-     * @return JSON
-     */
-    async function updateCustomer() {
-        const customerForm = document.getElementById("customer_form");
-
-        const formData = new FormData(customerForm);
-
-        const formDataObj = {};
-        formData.forEach((value, key) => {
-            formDataObj[key] = value;
-        });
-
-        // formDataの_tokenを取得
-        const csrfToken = formData.get("_token");
-
-        const targetURL = "/operator/customer/" + formDataObj["user_code"];
-
-        // ajax送信
-        const response = await fetch(targetURL, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": csrfToken,
-            },
-            body: JSON.stringify(formDataObj),
-        });
-        const data = await response.json();
-        if (data.message === "success") {
-            makeCustomerUpdateSuccessModal();
-        } else {
-            console.log(data.message);
-            makeCustomerUpdateFailModal();
-        }
-        return response;
-    }
-
-    /**
-     * uploadCustomer
-     * 顧客データをアップロード
-     * 送信先: /customer/upload
-     *
-     * @return JSON
-     */
-    async function uploadCustomer() {
-        const inProcessMessage = document.getElementById("processUpload");
-        const customerUploadForm = document.getElementById("uploadForm");
-        const formData = new FormData(customerUploadForm);
-
-        if (
-            !formData.get("customerFile") ||
-            formData.get("customerFile").size === 0
-        ) {
-            alert("ファイルが選択されていません。");
-            return;
-        }
-
-        inProcessMessage.style.display = "block";
-
+    async function updateOrder() {
         try {
-            const response = await fetch("/operator/customer/upload", {
+            // フォームデータを取得
+            const form = document.getElementById("order_detail_form");
+            const formData = new FormData(form);
+
+            // FormDataをオブジェクトに変換
+            const orderData = {
+                order_code: formData.get("order_code"),
+                details: [],
+            };
+
+            // 注文明細データを収集
+            const details = formData
+                .getAll("details[][item_code]")
+                .map((itemCode, index) => ({
+                    item_code: itemCode,
+                    quantity: formData.getAll("details[][quantity]")[index],
+                }));
+            orderData.details = details;
+
+            // CSRFトークンを取得
+            const token = document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute("content");
+
+            // Ajax送信
+            const response = await fetch("/operator/order/update", {
                 method: "POST",
                 headers: {
-                    "X-CSRF-TOKEN": formData.get("_token"),
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": token,
+                    "X-Requested-With": "XMLHttpRequest",
+                    Accept: "application/json",
                 },
-                body: formData,
+                body: JSON.stringify(orderData),
             });
 
             const data = await response.json();
 
-            if (data.message === "success") {
-                // 成功した場合、処理状況を表示するページにリダイレクト
-                window.location.href =
-                    "/operator/customer/upload/status?task_code=" +
-                    encodeURIComponent(data.task_code);
+            if (data.success) {
+                makeOrderUpdateSuccessModal();
             } else {
-                console.log(data.message);
-                makeCustomerUploadFailModal();
+                makeOrderUpdateFailModal(data.message);
             }
         } catch (error) {
-            makeCustomerUploadFailModal();
+            console.error("Error:", error);
+            makeOrderUpdateFailModal();
+        }
+    }
+
+    /**
+     * 注文データをCSV出力
+     */
+    async function exportOrderCsv() {
+        try {
+            // 検索フォームのデータを取得
+            const searchForm = document.getElementById("order_search_form");
+            const formData = new FormData(searchForm);
+            const searchParams = new URLSearchParams(formData);
+
+            // CSRFトークンを取得
+            const token = document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute("content");
+
+            // Ajax送信
+            const response = await fetch(
+                `/operator/order/export?${searchParams.toString()}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "X-CSRF-TOKEN": token,
+                        "X-Requested-With": "XMLHttpRequest",
+                        Accept: "application/json",
+                    },
+                }
+            );
+
+            // CSVファイルをダウンロード
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+
+            // ファイル名を年月日_order.csvの形式に変更
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, "0");
+            const day = String(today.getDate()).padStart(2, "0");
+            a.download = `${year}${month}${day}_order.csv`;
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            makeOrderExportSuccessModal();
+        } catch (error) {
+            console.error("Error:", error);
+            makeOrderExportFailModal();
         }
     }
 });

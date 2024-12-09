@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Services\Item\ItemService;
+use App\Services\Item\DTOs\ItemSearchCriteria;
 use App\Services\ItemCategory\ItemCategoryService;
 use App\Services\Order\OrderService;
 use App\Services\OrderDetail\OrderDetailService;
@@ -58,7 +59,7 @@ class CategoryController extends Controller
             $auth = Auth::user();
             Log::info('Attempting to find category by code', ['code' => $code, 'site_id' => $auth->site_id]);
 
-            // カテゴリの取得
+            // カテゴリの取得（表示用）
             $category = $this->itemCategoryService->getByCategoryCode($auth->site_id, $code);
 
             if (!$category) {
@@ -72,9 +73,16 @@ class CategoryController extends Controller
             // カテゴリ一覧の取得
             $categories = $this->itemCategoryService->getAllCategories($auth->site_id);
 
-            // 商品一覧の取得
-            Log::info('Fetching items for category', ['category_id' => $category->id]);
-            $items = $this->itemService->getListBySiteIdAndCategoryId($auth->site_id, $category->id);
+            // 商品一覧の取得（カテゴリコードで検索）
+            $criteria = new ItemSearchCriteria(
+                siteId: $auth->site_id,
+                categoryCode: $code,
+                isPublished: true,
+                orderBy: ['created_at' => 'desc']
+            );
+
+            Log::info('Fetching items for category', ['category_code' => $code]);
+            $items = $this->itemService->searchByCategory($criteria);
             Log::info('Items fetched', ['items_count' => $items->count()]);
 
             // お気に入り商品の取得

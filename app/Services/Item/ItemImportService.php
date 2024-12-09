@@ -154,8 +154,9 @@ class ItemImportService
 
             DB::commit();
 
-            // レコードを処理
+            // レコードを処理（未処理のレコードのみ）
             ImportTaskRecord::where('import_task_id', $task->id)
+                ->where('status', ImportTaskRecord::STATUS_PENDING)
                 ->orderBy('row_number')
                 ->chunk(self::CHUNK_SIZE, function ($records) use ($task, $columns) {
                     foreach ($records as $record) {
@@ -222,8 +223,9 @@ class ItemImportService
 
             DB::commit();
 
-            // レコードを処理
+            // レコードを処理（未処理のレコードのみ）
             ImportTaskRecord::where('import_task_id', $task->id)
+                ->where('status', ImportTaskRecord::STATUS_PENDING)
                 ->orderBy('row_number')
                 ->chunk(self::CHUNK_SIZE, function ($records) use ($task, $columns) {
                     foreach ($records as $record) {
@@ -438,6 +440,7 @@ class ItemImportService
                 'jan_code' => $janCode,
                 'unit_price' => $unitPrice,
                 'from_source' => 'IMPORT',
+                'published_at' => now(), // インポート時の時間を設定
             ]);
             $item->save();
 
@@ -449,6 +452,10 @@ class ItemImportService
             $task->increment('success_records');
 
             DB::commit();
+
+            // 1秒間のスリープを追加
+            sleep(1);
+
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

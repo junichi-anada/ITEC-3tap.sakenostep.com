@@ -49,7 +49,7 @@
             <div>
                 {{-- 初期表示で登録状況に応じてボタンを切り替え --}}
                 <button class="border-2 border-[#008CD4] px-1.5 add-to-favorites
-                    {{ in_array($item['id'], $favoriteItems) ? 'hidden' : '' }}"
+                    {{ in_array($item['id'], $favoriteItemIds) ? 'hidden' : '' }}"
                     data-item-code="{{ $item['item_code'] }}">
                     <div class="flex items-center gap-x-1 py-0.5">
                         <span class="material-symbols-outlined text-[#008CD4] text-3xl">heart_plus</span>
@@ -57,7 +57,7 @@
                     </div>
                 </button>
                 <button class="border-2 border-[#008CD4] bg-[#008CD4] px-1.5 del-to-favorites
-                        {{ in_array($item['id'], $favoriteItems) ? '' : 'hidden' }}"
+                        {{ in_array($item['id'], $favoriteItemIds) ? '' : 'hidden' }}"
                         data-item-code="{{ $item['item_code'] }}">
                     <div class="flex items-center gap-x-1 py-0.5">
                         <span class="material-symbols-outlined text-white text-3xl">heart_minus</span>

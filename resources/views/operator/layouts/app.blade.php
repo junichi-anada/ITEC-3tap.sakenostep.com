@@ -3,7 +3,7 @@
 @include('operator.layouts.include.site.header')
 
 <!-- container -->
-<div class="w-full mx-auto border overflow-x-hidden flex relative">
+<div class="w-full mx-auto border overflow-x-hidden flex relative min-h-screen">
 
     @include('operator.layouts.include.site.side')
 
@@ -22,18 +22,14 @@
             {{-- //hamberger menu --}}
             <div class="flex flex-row items-center gap-x-2 flex-nowrap">
                 <span class="material-symbols-outlined">person</span>
-                @if(session('operator'))
-                    <p class="text-base">{{ session('operator')->name }} 様</p>
-                @else
-                    <p class="text-base">{{ $operator->name }} 様</p>
-                @endif
+                <p class="text-base">{{ Auth::user()->entity->name }} 様</p>
             </div>
             <a href="{{ route('logout') }}"><span class="material-symbols-outlined text-3xl">logout</span></a>
         </div>
         <!-- //contents-header -->
 
         <!-- contents-body -->
-        <div class="px-5 py-5">
+        <div class="px-5 py-5 flex-1">
             @yield('content')
         </div>
         <!-- //contents-body -->

@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             SiteSeeder::class,
             OperatorRankSeeder::class,
             OperatorSeeder::class,
-            // UserSeeder::class,
+            UserSeeder::class,
             AuthenticateSeeder::class,
             // ItemSeeder::class,
             LineAuthProviderSeeder::class,

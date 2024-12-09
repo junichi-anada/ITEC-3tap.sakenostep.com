@@ -27,6 +27,7 @@
             </div>
 
             <input type="hidden" id="item_id" value="{{ $item->id }}">
+            <input type="hidden" name="unit_id" id="unit_id" value="0">
 
             <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-1">
                 <label for="item_code" class="w-full md:w-[8vw]">商品コード</label>
@@ -52,17 +53,6 @@
             <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-1">
                 <label for="description" class="w-full md:w-[8vw]">商品説明</label>
                 <textarea name="description" id="description" rows="4" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5" {{ $isDeleted() ? 'readonly' : '' }}>{{ $item->description }}</textarea>
-            </div>
-
-            <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-1">
-                <label for="unit_id" class="w-full md:w-[8vw]">単位</label>
-                <select name="unit_id" id="unit_id" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5" {{ $isDeleted() ? 'disabled' : '' }}>
-                    @foreach($units as $unit)
-                        <option value="{{ $unit->id }}" {{ $item->unit_id == $unit->id ? 'selected' : '' }}>
-                            {{ $unit->name }}
-                        </option>
-                    @endforeach
-                </select>
             </div>
 
             <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-1">

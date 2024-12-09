@@ -217,10 +217,13 @@ class ItemImportController extends BaseAjaxController
             // 前回のチェック時刻を取得（初回の場合は現在時刻の5分前を設定）
             $lastCheckedAt = Cache::get("last_checked_{$taskCode}", now()->subMinutes(5));
 
-            // 前回のチェックから今回のチェックまでの差分を取得
+            // 前回のチェックから今回のチェックまでの差分を取得（エラーレコードも含む）
             $newRecords = ImportTaskRecord::where('import_task_id', $task->id)
-                ->where('processed_at', '>', $lastCheckedAt)
-                ->orderBy('processed_at', 'asc')
+                ->where(function($query) use ($lastCheckedAt) {
+                    $query->where('processed_at', '>', $lastCheckedAt)
+                          ->orWhere('status', 'failed'); // エラーレコードも含める
+                })
+                ->orderBy('row_number', 'asc') // 行番号の昇順で並び替え
                 ->get();
 
             // 現在時刻を次回の比較用にキャッシュ

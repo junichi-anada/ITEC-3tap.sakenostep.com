@@ -35,7 +35,7 @@ class ProcessItemImport implements ShouldQueue
      *
      * @var int
      */
-    public $timeout = 3600;
+    public $timeout = 4320;
 
     /**
      * Create a new job instance.
