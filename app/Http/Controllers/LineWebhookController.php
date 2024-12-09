@@ -112,7 +112,7 @@ class LineWebhookController extends Controller
      * @param string|null $userId ユーザーID
      * @return void
      */
-    private function handleMessageEvent(array $event, ?string $userId)
+    private function handleMessageEvent(array $event, ?string $userId, ?string $replyToken)
     {
         // メッセージイベントの処理ロジックを実装
         $messageType = $event['message']['type'];
@@ -149,7 +149,7 @@ class LineWebhookController extends Controller
      * @param string|null $userId ユーザーID
      * @return void
      */
-    private function handleFollowEvent(?string $userId)
+    private function handleFollowEvent(?string $userId, ?string $replyToken)
     {
         // サンクスメッセージを送信
         $message = '友達登録ありがとうございます！';
