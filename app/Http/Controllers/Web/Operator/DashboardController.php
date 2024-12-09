@@ -16,7 +16,7 @@ class DashboardController extends Controller
         // auth->entity_idでログインしているオペレーターの名前Operatorから取得
         $operator = Operator::where('id', $auth->entity_id)->first();
 
-        return view('operator.pages.dashboard', compact('operator'));
+        return view('operator.dashboard', compact('operator'));
     }
 
 }

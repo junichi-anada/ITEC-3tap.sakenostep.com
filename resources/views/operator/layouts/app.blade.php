@@ -3,7 +3,7 @@
 @include('operator.layouts.include.site.header')
 
 <!-- container -->
-<div class="w-full mx-auto border overflow-x-hidden flex relative min-h-screen">
+<div class="w-full mx-auto border flex relative min-h-screen">
 
     @include('operator.layouts.include.site.side')
 
