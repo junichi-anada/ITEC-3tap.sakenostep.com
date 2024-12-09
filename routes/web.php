@@ -3,8 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\Web\Operator\CustomerController as OperatorCustomerController;
+use App\Http\Controllers\Web\Operator\CustomerImportController as OperatorCustomerImportController;
 use App\Http\Controllers\Web\Operator\OrderController as OperatorOrderController;
 use App\Http\Controllers\Web\Operator\ItemController as OperatorItemController;
+use App\Http\Controllers\Web\Operator\ItemImportController as OperatorItemImportController;
+use App\Http\Controllers\Ajax\Operator\CustomerImportController;
+use App\Http\Controllers\Ajax\Operator\ItemImportController;
 use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Customer\OrderController as CustomerOrderWebController;
 use App\Http\Controllers\Ajax\Customer\OrderController as CustomerOrderAjaxController;
@@ -19,7 +23,7 @@ use App\Http\Controllers\Ajax\Customer\HistoryController as HistoryAjaxControlle
 use App\Http\Controllers\LineAuthController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineMessageController;
-use App\Http\Controllers\LineAccountLinkController;
+use App\Http\Controllers\Line\AccountLinkController;
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -30,12 +34,10 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logout');
  */
 Route::get('welcome', function () { return view('welcome');})->name('welcome');
 
-
 /**
  * ここから下は認証済みユーザーのみアクセス可能
  */
 Route::middleware(['web', 'auth'])->group(function () {
-
     /**
      * 注文リスト
      */
@@ -95,17 +97,9 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/order', [CustomerPageWebController::class, 'order'])->name('user.about.order');
         Route::get('/delivery', [CustomerPageWebController::class, 'delivery'])->name('user.about.delivery');
     });
-});
-
-/* 管理者用のルーティング */
-
-/**
- * ここから下は認証済みユーザーのみアクセス可能
- */
-Route::middleware(['web', 'auth'])->group(function () {
 
     /**
-     * ダッシュボード
+     * 管理者用のルーティング
      */
     Route::prefix('operator')->group(function () {
         Route::get('/dashboard', [OperatorDashboardController::class, 'index'])->name('operator.dashboard');
@@ -118,11 +112,15 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/create', [OperatorCustomerController::class, 'create'])->name('operator.customer.create');
             Route::post('/', [OperatorCustomerController::class, 'store'])->name('operator.customer.store');
             Route::get('/{id}', [OperatorCustomerController::class, 'show'])->name('operator.customer.show');
+            Route::get('/{id}/edit', [OperatorCustomerController::class, 'edit'])->name('operator.customer.edit');
             Route::put('/{id}', [OperatorCustomerController::class, 'update'])->name('operator.customer.update');
             Route::delete('/{id}', [OperatorCustomerController::class, 'destroy'])->name('operator.customer.destroy');
-            Route::post('/search', [OperatorCustomerController::class, 'search'])->name('operator.customer.search');
-            Route::post('/upload', [OperatorCustomerController::class, 'upload'])->name('operator.customer.upload');
-            Route::get('/upload/status', [OperatorCustomerController::class, 'status'])->name('operator.customer.status');
+            Route::post('/line/send', [OperatorCustomerController::class, 'sendLineMessage'])->name('operator.customer.line.send');
+
+            // インポート関連のルート
+            Route::post('/import', [CustomerImportController::class, 'import'])->name('operator.customer.import');
+            Route::get('/import/{taskCode}/status', [CustomerImportController::class, 'status'])->name('operator.customer.import.status');
+            Route::get('/import/{taskCode}/progress', [OperatorCustomerImportController::class, 'progress'])->name('operator.customer.import.progress');
         });
 
         /**
@@ -136,30 +134,31 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::put('/{id}', [OperatorOrderController::class, 'update'])->name('operator.order.update');
             Route::delete('/{id}', [OperatorOrderController::class, 'destroy'])->name('operator.order.destroy');
             Route::post('/search', [OperatorOrderController::class, 'search'])->name('operator.order.search');
-            Route::post('/upload', [OperatorOrderController::class, 'upload'])->name('operator.order.upload');
-            Route::get('/upload/status', [OperatorOrderController::class, 'status'])->name('operator.order.status');
         });
 
         /**
          * 商品管理
          */
         Route::prefix('item')->group(function () {
+            // 基本的なCRUD操作
             Route::get('/', [OperatorItemController::class, 'index'])->name('operator.item.index');
             Route::get('/create', [OperatorItemController::class, 'create'])->name('operator.item.create');
             Route::post('/', [OperatorItemController::class, 'store'])->name('operator.item.store');
             Route::get('/{id}', [OperatorItemController::class, 'show'])->name('operator.item.show');
+            Route::get('/{id}/edit', [OperatorItemController::class, 'edit'])->name('operator.item.edit');
             Route::put('/{id}', [OperatorItemController::class, 'update'])->name('operator.item.update');
             Route::delete('/{id}', [OperatorItemController::class, 'destroy'])->name('operator.item.destroy');
-            Route::post('/search', [OperatorItemController::class, 'search'])->name('operator.item.search');
-            Route::post('/upload', [OperatorItemController::class, 'upload'])->name('operator.item.upload');
-            Route::get('/upload/status', [OperatorItemController::class, 'status'])->name('operator.item.status');
+
+            // 検索機能
+            Route::get('/search', [OperatorItemController::class, 'search'])->name('operator.item.search');
+            Route::post('/search', [OperatorItemController::class, 'search']);
+
+            // インポート関連
+            Route::post('/import', [ItemImportController::class, 'import'])->name('operator.item.import');
+            Route::get('/import/{taskCode}/status', [ItemImportController::class, 'status'])->name('operator.item.import.status');
+            Route::get('/import/{taskCode}/progress', [OperatorItemImportController::class, 'progress'])->name('operator.item.import.progress');
         });
     });
-
-    /**
-     * エラーページ
-     */
-    Route::get('/error', function () { return view('operator.customer.error'); })->name('operator.customer.error');
 });
 
 Route::get('/customer/history/detail', [HistoryController::class, 'detail']);
@@ -180,10 +179,14 @@ Route::get('/line/send-message', [LineMessageController::class, 'send']);
  * LINEアカウント連携
  */
 Route::prefix('line/account')->group(function () {
-    Route::get('/callback', [LineAccountLinkController::class, 'callback'])->name('line.account.callback');
-    Route::post('/unlink', [LineAccountLinkController::class, 'unlink'])
+    Route::get('/link/token', [AccountLinkController::class, 'issueLinkToken'])
+        ->middleware(['auth'])
+        ->name('line.account.link.token');
+    Route::get('/callback', [AccountLinkController::class, 'callback'])
+        ->name('line.account.callback');
+    Route::post('/unlink', [AccountLinkController::class, 'unlink'])
         ->middleware(['auth'])
         ->name('line.account.unlink');
-    Route::view('/success', 'line.success')->name('line.success');
-    Route::view('/error', 'line.error')->name('line.error');
+    Route::view('/success', 'line.account.success')->name('line.account.success');
+    Route::view('/error', 'line.account.error')->name('line.account.error');
 });

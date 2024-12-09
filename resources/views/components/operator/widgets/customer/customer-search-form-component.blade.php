@@ -1,6 +1,5 @@
 {{-- 顧客検索 --}}
-<form action="{{ route('operator.customer.search') }}" method="post">
-@csrf
+<form action="{{ route('operator.customer.index') }}" method="get">
 <div class="border-t-8 border-[#F4CF41] border-l border-r border-b py-4 w-full">
     <div class="px-4 flex flex-col gap-y-4">
         <div>

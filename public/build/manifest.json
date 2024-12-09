@@ -1,6 +1,12 @@
 {
+  "public/js/modal/operator/customer/import.js": {
+    "file": "assets/import-B1wwBYmd.js",
+    "name": "import",
+    "src": "public/js/modal/operator/customer/import.js",
+    "isEntry": true
+  },
   "resources/css/app.css": {
-    "file": "assets/app-DVe_Is_M.css",
+    "file": "assets/app-BItAvCNx.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },

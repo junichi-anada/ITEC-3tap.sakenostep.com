@@ -5,8 +5,10 @@ namespace App\Services\Messaging\Actions;
 use App\Services\Messaging\DTOs\LineMessageData;
 use App\Services\Messaging\Exceptions\LineMessagingException;
 use App\Services\ServiceErrorHandler;
-use LINE\LINEBot;
-use LINE\LINEBot\MessageBuilder\TextMessageBuilder;
+use LINE\Clients\MessagingApi\Api\MessagingApiApi;
+use LINE\Clients\MessagingApi\Model\TextMessage;
+use LINE\Clients\MessagingApi\Model\MulticastRequest;
+use LINE\Constants\MessageType;
 use Illuminate\Support\Facades\Log;
 
 class MulticastMessageAction
@@ -14,7 +16,7 @@ class MulticastMessageAction
     use ServiceErrorHandler;
 
     public function __construct(
-        private LINEBot $bot
+        private MessagingApiApi $messagingApi
     ) {}
 
     /**
@@ -39,13 +41,21 @@ class MulticastMessageAction
                     return;
                 }
 
-                $messageBuilder = new TextMessageBuilder($message);
-                $response = $this->bot->multicast($userIds, $messageBuilder);
+                $textMessage = (new TextMessage())
+                    ->setType(MessageType::TEXT)
+                    ->setText($message);
 
-                if (!$response->isSucceeded()) {
+                $request = (new MulticastRequest())
+                    ->setTo($userIds)
+                    ->setMessages([$textMessage]);
+
+                try {
+                    $this->messagingApi->multicast($request);
+                } catch (\Exception $e) {
                     throw LineMessagingException::multicastFailed(
                         $userIds,
-                        $response->getHTTPStatus()
+                        $e->getCode(),
+                        $e->getMessage()
                     );
                 }
             },
@@ -79,7 +89,7 @@ class MulticastMessageAction
     public function executeInChunks(array $userIds, string $message, int $chunkSize = 150): void
     {
         $chunks = array_chunk($userIds, $chunkSize);
-        
+
         foreach ($chunks as $chunk) {
             $this->execute($chunk, $message);
         }

@@ -15,9 +15,15 @@
                 <p class="font-bold">顧客CSVデータ読込</p>
                 <p>顧客情報をCSVデータから読み込み、システムに登録します。</p>
                 <div class="flex justify-end">
-                    <button class="bg-red-500 text-white px-4 py-1 rounded-md" id="customer_upload">顧客データを読み込む</a>
+                    <button type="button" class="bg-red-500 text-white px-4 py-1 rounded-md" id="customer_upload">顧客データを読み込む</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- モーダル用の非表示要素 -->
+<div id="execMode" class="hidden"></div>
+
+<!-- 共通モーダル -->
+@include('operator.layouts.widgets.modal')

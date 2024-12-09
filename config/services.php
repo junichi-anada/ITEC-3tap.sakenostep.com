@@ -35,8 +35,10 @@ return [
         ],
     ],
     'line' => [
-        'channel_token' => env('LINE_CHANNEL_TOKEN'),
+        'channel_id' => env('LINE_CHANNEL_ID'),
         'channel_secret' => env('LINE_CHANNEL_SECRET'),
+        'channel_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
+        'callback_url' => env('LINE_CALLBACK_URL'),
         'provider_id' => env('LINE_PROVIDER_ID', 1),
         'site_id' => env('LINE_SITE_ID', 1),
     ],

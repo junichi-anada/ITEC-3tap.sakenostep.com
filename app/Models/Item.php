@@ -31,6 +31,9 @@ class Item extends Model
         'from_source',
         'is_recommended',
         'published_at',
+        'capacity',
+        'quantity_per_unit',
+        'jan_code',
     ];
 
     protected $dates = ['published_at', 'created_at', 'updated_at', 'deleted_at'];
