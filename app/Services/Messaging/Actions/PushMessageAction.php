@@ -12,7 +12,7 @@ class PushMessageAction
     public function __construct()
     {
         $this->httpClient = new Client();
-        $this->channelAccessToken = env('LINE_CHANNEL_ACCESS_TOKEN');
+        $this->channelAccessToken = config('services.line.channel_token');
     }
 
     public function sendMessage($userId, $message)
