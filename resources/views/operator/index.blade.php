@@ -26,9 +26,7 @@
     <div class="flex flex-row h-full">
         <!-- left -->
         <div class="bg-[#f1d979] w-1/2 hidden md:flex">
-            <div class="flex justify-center items-center w-full">
-                <img src="{{ asset('image/3tap-step.png') }}" alt="酒のステップ" style="max-width: 400px;">
-            </div>
+            <img src="{{ asset('image/step.png') }}" alt="酒のステップ">
         </div>
         <!-- //left -->
 
