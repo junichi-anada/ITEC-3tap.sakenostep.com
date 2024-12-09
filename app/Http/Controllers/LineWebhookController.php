@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Model\LineUser;
+use App\Models\LineUser;
 use Illuminate\Http\Request;
 use App\Services\Messaging\DTOs\LineWebhookData;
 use App\Services\Messaging\Actions\PushMessageAction;
