@@ -60,7 +60,7 @@ class AuthenticateSeeder extends Seeder
             'entity_type' => 'App\Models\Operator', // 対象のエンティティタイプ
             'entity_id' => 1, // 必要に応じて適切なユーザーIDに変更
             'login_code' => 'admin', // サンプルのログインID
-            'password' => Hash::make('3tap3541'), // パスワードをハッシュ化して保存
+            'password' => Hash::make('3tap2024'), // パスワードをハッシュ化して保存
             'expires_at' => now()->addMonth(), // 有効期限を設定
             'created_at' => now(),
             'updated_at' => now(),
