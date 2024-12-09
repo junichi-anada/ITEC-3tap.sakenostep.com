@@ -5,9 +5,11 @@ namespace App\Services\Messaging\Actions;
 use App\Services\Messaging\DTOs\LineWebhookData;
 use App\Services\Messaging\Exceptions\LineMessagingException;
 use App\Services\ServiceErrorHandler;
-use LINE\LINEBot;
-use LINE\LINEBot\Event\MessageEvent\TextMessage;
-use LINE\LINEBot\Event\FollowEvent;
+use LINE\Clients\MessagingApi\Api\MessagingApiApi;
+use LINE\Clients\MessagingApi\Model\TextMessage;
+use LINE\Webhook\Model\MessageEvent;
+use LINE\Webhook\Model\FollowEvent;
+use LINE\Parser\EventRequestParser;
 use Illuminate\Support\Facades\Log;
 
 class HandleWebhookAction
@@ -15,7 +17,7 @@ class HandleWebhookAction
     use ServiceErrorHandler;
 
     public function __construct(
-        private LINEBot $bot,
+        private MessagingApiApi $messagingApi,
         private HandleFollowEventAction $handleFollowEventAction,
         private HandleTextMessageAction $handleTextMessageAction
     ) {}
@@ -34,7 +36,8 @@ class HandleWebhookAction
                 Log::info('Processing webhook', ['events' => $data->events]);
 
                 // 署名を検証
-                $events = $this->bot->parseEventRequest($data->content, $data->signature);
+                $parser = new EventRequestParser(config('services.line.channel_secret'));
+                $events = $parser->parse($data->content, $data->signature);
 
                 foreach ($events as $event) {
                     $this->handleEvent($event);
@@ -48,14 +51,14 @@ class HandleWebhookAction
     /**
      * イベントを処理する
      *
-     * @param \LINE\LINEBot\Event\BaseEvent $event
+     * @param \LINE\Webhook\Model\Event $event
      * @return void
      * @throws LineMessagingException
      */
     private function handleEvent($event): void
     {
         try {
-            if ($event instanceof TextMessage) {
+            if ($event instanceof MessageEvent && $event->getMessage() instanceof TextMessage) {
                 $this->handleTextMessageAction->execute($event);
             } elseif ($event instanceof FollowEvent) {
                 $this->handleFollowEventAction->execute($event);

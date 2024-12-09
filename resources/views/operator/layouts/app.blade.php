@@ -24,7 +24,7 @@
                 <span class="material-symbols-outlined">person</span>
                 @if(session('operator'))
                     <p class="text-base">{{ session('operator')->name }} 様</p>
-                @else 
+                @else
                     <p class="text-base">{{ $operator->name }} 様</p>
                 @endif
             </div>

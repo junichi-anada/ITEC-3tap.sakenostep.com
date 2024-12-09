@@ -4,8 +4,11 @@ namespace App\Services\Messaging\Actions;
 
 use App\Services\Messaging\Exceptions\LineMessagingException;
 use App\Services\ServiceErrorHandler;
-use LINE\LINEBot;
-use LINE\LINEBot\Event\MessageEvent\TextMessage;
+use LINE\Clients\MessagingApi\Api\MessagingApiApi;
+use LINE\Clients\MessagingApi\Model\TextMessage;
+use LINE\Clients\MessagingApi\Model\ReplyMessageRequest;
+use LINE\Constants\MessageType;
+use LINE\Webhook\Model\MessageEvent;
 use Illuminate\Support\Facades\Log;
 
 class HandleTextMessageAction
@@ -13,23 +16,24 @@ class HandleTextMessageAction
     use ServiceErrorHandler;
 
     public function __construct(
-        private LINEBot $bot
+        private MessagingApiApi $messagingApi
     ) {}
 
     /**
      * テキストメッセージを処理する
      *
-     * @param TextMessage $event
+     * @param MessageEvent $event
      * @return void
      * @throws LineMessagingException
      */
-    public function execute(TextMessage $event): void
+    public function execute(MessageEvent $event): void
     {
         $this->tryCatchWrapper(
             function () use ($event) {
                 $replyToken = $event->getReplyToken();
-                $text = $event->getText();
-                $userId = $event->getUserId();
+                $message = $event->getMessage();
+                $text = $message->getText();
+                $userId = $event->getSource()->getUserId();
 
                 Log::info("Processing text message", [
                     'user_id' => $userId,
@@ -37,12 +41,13 @@ class HandleTextMessageAction
                 ]);
 
                 // メッセージの内容に応じた処理を実装
-                $response = $this->handleMessageContent($text, $replyToken);
-
-                if (!$response->isSucceeded()) {
+                try {
+                    $this->handleMessageContent($text, $replyToken);
+                } catch (\Exception $e) {
                     throw LineMessagingException::messageSendFailed(
                         $userId,
-                        $response->getHTTPStatus()
+                        $e->getCode(),
+                        $e->getMessage()
                     );
                 }
             },
@@ -55,14 +60,22 @@ class HandleTextMessageAction
      *
      * @param string $text
      * @param string $replyToken
-     * @return \LINE\LINEBot\Response
+     * @return void
      */
-    private function handleMessageContent(string $text, string $replyToken)
+    private function handleMessageContent(string $text, string $replyToken): void
     {
         // ここでメッセージの内容に応じた処理を実装
         // 現在はエコーボットとして実装
         $replyMessage = "受信したメッセージ: {$text}";
 
-        return $this->bot->replyText($replyToken, $replyMessage);
+        $textMessage = (new TextMessage())
+            ->setType(MessageType::TEXT)
+            ->setText($replyMessage);
+
+        $request = (new ReplyMessageRequest())
+            ->setReplyToken($replyToken)
+            ->setMessages([$textMessage]);
+
+        $this->messagingApi->replyMessage($request);
     }
 }

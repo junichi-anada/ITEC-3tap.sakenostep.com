@@ -5,8 +5,10 @@ namespace App\Services\Messaging\Actions;
 use App\Services\Messaging\DTOs\LineMessageData;
 use App\Services\Messaging\Exceptions\LineMessagingException;
 use App\Services\ServiceErrorHandler;
-use LINE\LINEBot;
-use LINE\LINEBot\MessageBuilder\TextMessageBuilder;
+use LINE\Clients\MessagingApi\Api\MessagingApiApi;
+use LINE\Clients\MessagingApi\Model\TextMessage;
+use LINE\Clients\MessagingApi\Model\PushMessageRequest;
+use LINE\Constants\MessageType;
 use Illuminate\Support\Facades\Log;
 
 class PushMessageAction
@@ -14,7 +16,7 @@ class PushMessageAction
     use ServiceErrorHandler;
 
     public function __construct(
-        private LINEBot $bot
+        private MessagingApiApi $messagingApi
     ) {}
 
     /**
@@ -34,13 +36,21 @@ class PushMessageAction
                     'message' => $message
                 ]);
 
-                $messageBuilder = new TextMessageBuilder($message);
-                $response = $this->bot->pushMessage($userId, $messageBuilder);
+                $textMessage = (new TextMessage())
+                    ->setType(MessageType::TEXT)
+                    ->setText($message);
 
-                if (!$response->isSucceeded()) {
+                $request = (new PushMessageRequest())
+                    ->setTo($userId)
+                    ->setMessages([$textMessage]);
+
+                try {
+                    $this->messagingApi->pushMessage($request);
+                } catch (\Exception $e) {
                     throw LineMessagingException::messageSendFailed(
                         $userId,
-                        $response->getHTTPStatus()
+                        $e->getCode(),
+                        $e->getMessage()
                     );
                 }
             },

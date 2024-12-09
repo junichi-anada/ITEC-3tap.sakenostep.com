@@ -6,8 +6,8 @@ use App\Models\AuthenticateOauth;
 use App\Services\Messaging\DTOs\LineProfileData;
 use App\Services\Messaging\Exceptions\LineMessagingException;
 use App\Services\ServiceErrorHandler;
-use LINE\LINEBot;
-use LINE\LINEBot\Event\FollowEvent;
+use LINE\Clients\MessagingApi\Api\MessagingApiApi;
+use LINE\Webhook\Model\FollowEvent;
 use Illuminate\Support\Facades\Log;
 
 class HandleFollowEventAction
@@ -15,7 +15,7 @@ class HandleFollowEventAction
     use ServiceErrorHandler;
 
     public function __construct(
-        private LINEBot $bot,
+        private MessagingApiApi $messagingApi,
         private PushMessageAction $pushMessageAction
     ) {}
 
@@ -30,23 +30,29 @@ class HandleFollowEventAction
     {
         $this->tryCatchWrapper(
             function () use ($event) {
-                $userId = $event->getUserId();
+                $userId = $event->getSource()->getUserId();
                 Log::info("Processing follow event for user: {$userId}");
 
-                // ユーザープロフィールを取得
-                $profile = $this->bot->getProfile($userId);
-                if (!$profile->isSucceeded()) {
-                    throw LineMessagingException::profileGetFailed($userId, $profile->getHTTPStatus());
+                try {
+                    // ユーザープロフィールを取得
+                    $profile = $this->messagingApi->getProfile($userId);
+
+                    // プロフィールデータをDTOに変換
+                    $profileData = new LineProfileData(
+                        userId: $profile->getUserId(),
+                        displayName: $profile->getDisplayName(),
+                        pictureUrl: $profile->getPictureUrl(),
+                        statusMessage: $profile->getStatusMessage()
+                    );
+
+                    // AuthenticateOauthモデルを使用してデータを保存/更新
+                    $this->saveAuthenticateOauth($profileData);
+
+                    // 歓迎メッセージを送信
+                    $this->sendWelcomeMessage($userId);
+                } catch (\Exception $e) {
+                    throw LineMessagingException::profileGetFailed($userId, $e->getCode(), $e->getMessage());
                 }
-
-                // プロフィールデータをDTOに変換
-                $profileData = LineProfileData::fromLineResponse($profile->getJSONDecodedBody());
-
-                // AuthenticateOauthモデルを使用してデータを保存/更新
-                $this->saveAuthenticateOauth($profileData);
-
-                // 歓迎メッセージを送信
-                $this->sendWelcomeMessage($userId);
             },
             'フォローイベントの処理に失敗しました'
         );

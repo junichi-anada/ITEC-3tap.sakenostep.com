@@ -13,9 +13,14 @@ use App\Services\Messaging\DTOs\LineMessageData;
 use App\Services\Messaging\DTOs\LineWebhookData;
 use App\Services\ServiceErrorHandler;
 use Illuminate\Http\Request;
-use LINE\LINEBot;
-use LINE\LINEBot\HTTPClient\CurlHTTPClient;
+use LINE\Clients\MessagingApi\Api\MessagingApiApi;
+use LINE\Clients\MessagingApi\Model\TextMessage;
+use LINE\Clients\MessagingApi\Model\PushMessageRequest;
+use LINE\Clients\MessagingApi\Model\MulticastRequest;
+use LINE\Clients\MessagingApi\Model\GetProfileResponse;
+use LINE\Constants\MessageType;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 /**
  * LINEメッセージングサービスクラス
@@ -27,16 +32,12 @@ final class LineMessagingService implements LineMessagingServiceInterface
 {
     use ServiceErrorHandler;
 
-    private LINEBot $bot;
-
     public function __construct(
+        private MessagingApiApi $messagingApi,
         private HandleWebhookAction $handleWebhookAction,
         private PushMessageAction $pushMessageAction,
         private MulticastMessageAction $multicastMessageAction
-    ) {
-        $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
-        $this->bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
-    }
+    ) {}
 
     /**
      * Webhookからのリクエストを処理する
@@ -76,9 +77,17 @@ final class LineMessagingService implements LineMessagingServiceInterface
     public function pushMessage(string $userId, string $message): bool
     {
         try {
-            $this->pushMessageAction->execute($userId, $message);
+            $textMessage = (new TextMessage())
+                ->setType(MessageType::TEXT)
+                ->setText($message);
+
+            $request = (new PushMessageRequest())
+                ->setTo($userId)
+                ->setMessages([$textMessage]);
+
+            $this->messagingApi->pushMessage($request);
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to push message: ' . $e->getMessage());
             return false;
         }
@@ -94,9 +103,17 @@ final class LineMessagingService implements LineMessagingServiceInterface
     public function multicast(array $userIds, string $message): bool
     {
         try {
-            $this->multicastMessageAction->executeInChunks($userIds, $message);
+            $textMessage = (new TextMessage())
+                ->setType(MessageType::TEXT)
+                ->setText($message);
+
+            $request = (new MulticastRequest())
+                ->setTo($userIds)
+                ->setMessages([$textMessage]);
+
+            $this->messagingApi->multicast($request);
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to multicast message: ' . $e->getMessage());
             return false;
         }
@@ -112,10 +129,125 @@ final class LineMessagingService implements LineMessagingServiceInterface
     {
         return $this->tryCatchWrapper(
             function () use ($userId) {
-                $profile = $this->bot->getProfile($userId);
-                return $profile->isSucceeded() ? $profile->getJSONDecodedBody() : null;
+                /** @var GetProfileResponse $profile */
+                $profile = $this->messagingApi->getProfile($userId);
+                return [
+                    'displayName' => $profile->getDisplayName(),
+                    'userId' => $profile->getUserId(),
+                    'pictureUrl' => $profile->getPictureUrl(),
+                    'statusMessage' => $profile->getStatusMessage()
+                ];
             },
             'プロフィールの取得に失敗しました',
+            ['user_id' => $userId]
+        );
+    }
+
+    /**
+     * アカウント連携用のリンクトークンを取得する
+     *
+     * @param string $userId
+     * @return string|null
+     */
+    public function getLinkToken(string $userId): ?string
+    {
+        return $this->tryCatchWrapper(
+            function () use ($userId) {
+                $response = $this->messagingApi->issueLinkToken($userId);
+                return $response->getLinkToken();
+            },
+            'リンクトークンの取得に失敗しました',
+            ['user_id' => $userId]
+        );
+    }
+
+    /**
+     * リンクトークンを発行する
+     *
+     * @return string
+     * @throws Exception
+     */
+    public function issueLinkToken(): string
+    {
+        $nonce = bin2hex(random_bytes(16));
+        $linkToken = $this->tryCatchWrapper(
+            function () use ($nonce) {
+                return base64_encode(json_encode([
+                    'nonce' => $nonce,
+                    'timestamp' => time(),
+                    'channel_id' => config('services.line.channel_id')
+                ]));
+            },
+            'リンクトークンの発行に失敗しました'
+        );
+
+        if (!$linkToken) {
+            throw new Exception('リンクトークンの発行に失敗しました');
+        }
+
+        return $linkToken;
+    }
+
+    /**
+     * アカウントを連携する
+     *
+     * @param string $linkToken
+     * @param int $userId
+     * @return bool
+     */
+    public function linkAccount(string $linkToken, int $userId): bool
+    {
+        return $this->tryCatchWrapper(
+            function () use ($linkToken, $userId) {
+                // リンクトークンの検証
+                $tokenData = json_decode(base64_decode($linkToken), true);
+                if (!$tokenData ||
+                    !isset($tokenData['nonce']) ||
+                    !isset($tokenData['timestamp']) ||
+                    !isset($tokenData['channel_id'])) {
+                    return false;
+                }
+
+                // タイムスタンプの検証（10分以内）
+                if (time() - $tokenData['timestamp'] > 600) {
+                    return false;
+                }
+
+                // チャンネルIDの検証
+                if ($tokenData['channel_id'] !== config('services.line.channel_id')) {
+                    return false;
+                }
+
+                // アカウント連携情報を保存
+                AuthenticateOauth::create([
+                    'user_id' => $userId,
+                    'auth_provider_id' => config('services.line.provider_id'),
+                    'auth_code' => $tokenData['nonce'],
+                    'site_id' => config('services.line.site_id')
+                ]);
+
+                return true;
+            },
+            'アカウント連携に失敗しました',
+            ['user_id' => $userId]
+        );
+    }
+
+    /**
+     * アカウント連携を解除する
+     *
+     * @param string $userId
+     * @return bool
+     */
+    public function unlinkAccount(string $userId): bool
+    {
+        return $this->tryCatchWrapper(
+            function () use ($userId) {
+                return AuthenticateOauth::where('auth_code', $userId)
+                    ->where('auth_provider_id', config('services.line.provider_id'))
+                    ->delete() > 0;
+            },
+            'アカウント連携解除に失敗しました',
             ['user_id' => $userId]
         );
     }

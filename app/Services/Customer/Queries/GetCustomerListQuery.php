@@ -21,15 +21,22 @@ class GetCustomerListQuery
     public function execute(array $searchParams = [], int $perPage = 10): CustomerListData
     {
         $query = User::query()
-            ->join('authenticates', 'users.id', '=', 'authenticates.entity_id')
+            ->withTrashed() // usersテーブルの削除済みレコードも取得
             ->select(
                 'users.*',
                 'authenticates.login_code',
                 'authenticates.created_at as first_login_at',
-                'authenticates.updated_at as last_login_at'
+                'authenticates.updated_at as last_login_at',
+                'line_users.id as line_user_id'
             )
-            ->where('authenticates.entity_type', User::class)
-            ->whereNull('users.deleted_at');
+            ->join('authenticates', function ($join) {
+                $join->on('users.id', '=', 'authenticates.entity_id')
+                    ->where('authenticates.entity_type', '=', User::class);
+            })
+            ->leftJoin('line_users', function ($join) {
+                $join->on('users.id', '=', 'line_users.user_id')
+                    ->whereNull('line_users.deleted_at');
+            });
 
         // 検索条件の適用
         if (!empty($searchParams['customer_code'])) {

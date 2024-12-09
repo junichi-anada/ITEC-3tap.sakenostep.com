@@ -3,377 +3,318 @@
 namespace App\Http\Controllers\Web\Operator;
 
 use App\Http\Controllers\Controller;
-use App\Models\Authenticate;
-use App\Models\ImportTask;
+use App\Models\Item;
+use App\Models\ItemCategory;
+use App\Models\ItemUnit;
 use App\Models\Operator;
-use App\Models\Order;
-use App\Models\User;
-use App\Services\Operator\Item\ListService as ItemListService;
-use App\Services\Operator\Item\RegistService as ItemRegistService;
-use App\Services\Operator\Item\DeleteService as ItemDeleteService;
-use App\Services\Operator\Item\UpdateService as ItemUpdateService;
+use App\Models\Site;
+use App\Services\Item\ItemRegistrationService;
+use App\Services\Item\ItemDeleteService;
+use App\Services\Item\ItemUpdateService;
+use App\Services\Item\ItemImportService;
+use App\Services\Item\Queries\GetItemListQuery;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-
-// 酒のステップ専用のインポートサービスクラス
-use App\Services\Operator\Item\SakenoStep\ItemImportService as SakenoStepItemImportService;
-
 
 class ItemController extends Controller
 {
-    /**
-     * 顧客一覧ページ
-     *
-     * @return \Illuminate\View\View
-     */
-    public function index(ItemListService $itemListService)
+    protected $itemImportService;
+
+    public function __construct(ItemImportService $itemImportService)
     {
-        $auth = Auth::user();
-
-        // auth->entity_idでログインしているオペレーターの名前Operatorから取得
-        $operator = Operator::where('id', $auth->entity_id)->first();
-
-        // 検索条件なしで顧客一覧を取得
-        $items = $itemListService->getList();
-
-        return view('operator.item.list', compact('operator', 'items'));
+        $this->itemImportService = $itemImportService;
     }
 
     /**
-     * 顧客手動登録ページ表示
+     * 商品一覧ページ
+     *
+     * @return \Illuminate\View\View
+     */
+    public function index(Request $request, GetItemListQuery $query)
+    {
+        $auth = Auth::user();
+        $operator = Operator::where('id', $auth->entity_id)->first();
+
+        $searchParams = $request->only([
+            'item_code',
+            'name',
+            'maker_name',
+            'category_id',
+            'published_at_from',
+            'published_at_to',
+            'from_source',
+            'is_recommended'
+        ]);
+
+        $items = $query->execute($searchParams);
+        $categories = ItemCategory::all();
+
+        return view('operator.item.list', compact('operator', 'items', 'categories'));
+    }
+
+    /**
+     * 商品登録ページ表示
      *
      * @return \Illuminate\View\View
      */
     public function create()
     {
         $auth = Auth::user();
-
-        // auth->entity_idでログインしているオペレーターの名前Operatorから取得
         $operator = Operator::where('id', $auth->entity_id)->first();
 
-        // お客様番号をUUIDで生成(仮)
-        $item_code = Str::uuid();
+        $categories = ItemCategory::all();
+        $units = ItemUnit::all();
+        $sites = Site::all();
 
-        return view('operator.item.regist', compact('operator', 'item_code'));
+        return view('operator.item.regist', compact('operator', 'categories', 'units', 'sites'));
     }
 
     /**
-     * 顧客手動登録処理
+     * 商品登録処理
      *
      * @param Request $request
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request, ItemRegistService $itemRegistService)
+    public function store(Request $request, ItemRegistrationService $itemRegistService)
     {
         // バリデーション
-        $request->validate([
-            'user_code' => 'required|string|max:255',
-            'name' => 'required|string|max:255',
-            'postal_code' => 'required|string|max:255',
-            'phone' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
+        $validator = validator($request->all(), [
+            'item_code' => 'required|string|max:64|unique:items',
+            'category_id' => 'required|exists:item_categories,id',
+            'maker_name' => 'nullable|string|max:64',
+            'name' => 'required|string|max:64',
+            'description' => 'nullable|string',
+            'is_recommended' => 'boolean',
+            'published_at' => 'nullable|date',
+        ], [
+            'item_code.required' => '商品コードは必須です。',
+            'item_code.max' => '商品コードは64文字以内で入力してください。',
+            'item_code.unique' => 'この商品コードは既に使用されています。',
+            'category_id.required' => 'カテゴリーは必須です。',
+            'category_id.exists' => '選択されたカテゴリーは存在しません。',
+            'maker_name.max' => 'メーカー名は64文字以内で入力してください。',
+            'name.required' => '商品名は必須です。',
+            'name.max' => '商品名は64文字以内で入力してください。',
+            'is_recommended.boolean' => 'おすすめフラグは真偽値で指定してください。',
+            'published_at.date' => '公開日時は正しい日付形式で入力してください。',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         $auth = Auth::user();
+
+        // from_sourceを設定
+        $request->merge([
+            'from_source' => 'MANUAL'
+        ]);
 
         $result = $itemRegistService->registItem($request, $auth);
 
         if ($result['message'] === 'success') {
-            return response()->json(['message' => 'success', 'login_code' => $result['login_code'], 'password' => $result['password']]);
+            return response()->json(['message' => 'success', 'item_id' => $result['item_id']]);
         } else {
-            return response()->json(['message' => $result['message'], 'reason' => $result['reason']], 500);
+            return response()->json(['message' => 'error', 'reason' => $result['reason']], 500);
         }
     }
 
     /**
-     * 顧客データ1件取得
+     * 商品詳細情報表示
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show(Request $request, $id)
-    {
-        $auth = Auth::user();
-
-        // auth->entity_idでログインしているオペレーターの名前Operatorから取得
-        $operator = Operator::where('id', $auth->entity_id)->first();
-
-        // userとauthenticatesを結合して取得(未削除のデータ)
-        $item = User::where('users.id', $request->id)
-            ->join('authenticates', 'users.id', '=', 'authenticates.entity_id')
-            ->select('users.*', 'authenticates.login_code', 'authenticates.created_at as first_login_at', 'authenticates.updated_at as last_login_at')
-            ->whereNull('users.deleted_at')
-            ->where('authenticates.entity_type', User::class)
-            ->first();
-
-        if (!$item) {
-            $error_message = '該当する顧客情報が見つかりませんでした。';
-            return redirect()->route('operator.item.error')
-                ->with('error_message', $error_message)
-                ->with('operator', $operator);
-        }
-
-        // 注文履歴をページネーション
-        $orders = Order::where('site_id', $auth->site_id)
-            ->where('user_id', $item->id)
-            ->orderBy('ordered_at', 'desc')
-            ->paginate(10);
-
-        return view('operator.item.description', compact('item', 'operator', 'orders'));
-    }
-
-    /**
-     * 顧客データ1件削除
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy(Request $request, ItemDeleteService $itemDeleteService, $id)
-    {
-        $auth = Auth::user();
-
-        // バリデーション
-        // $request->validate([
-        //     'user_code' => 'required|string|max:255',
-        // ]);
-
-        $result = $itemDeleteService->deleteItem($id);
-
-        if ($result['message'] === 'success') {
-            return response()->json(['message' => 'success']);
-        } else {
-            return response()->json(['message' => $result['reason']], 500);
-        }
-    }
-
-    /**
-     * 検索
-     *
+     * @param int $id
      * @return \Illuminate\View\View
      */
-    public function search(Request $request, ItemListService $itemListService)
+    public function show($id)
     {
-        // バリデーション
-        $request->validate([
-            'item_code' => 'nullable|string|max:255',
-            'item_name' => 'nullable|string|max:255',
-            'item_address' => 'nullable|string|max:255',
-            'item_phone' => 'nullable|string|max:255',
-            'first_login_date_from' => 'nullable|date',
-            'first_login_date_to' => 'nullable|date',
-            'last_login_date_from' => 'nullable|date',
-            'last_login_date_to' => 'nullable|date',
-        ]);
-
         $auth = Auth::user();
-
-        // auth->entity_idでログインしているオペレーターの名前Operatorから取得
         $operator = Operator::where('id', $auth->entity_id)->first();
 
-        // 検索条件を取得
-        $search = [
-            'item_code' => $request->item_code,
-            'item_name' => $request->item_name,
-            'item_address' => $request->item_address,
-            'item_phone' => $request->item_phone,
-            'first_login_date_from' => $request->first_login_date_from,
-            'first_login_date_to' => $request->first_login_date_to,
-            'last_login_date_from' => $request->last_login_date_from,
-            'last_login_date_to' => $request->last_login_date_to,
-        ];
+        $item = Item::with(['category', 'unit', 'site'])
+                    ->findOrFail($id);
 
-        // 検索条件を元に顧客一覧を取得
-        $items = $itemListService->searchList($search);
-
-        return view('operator.item.list', compact('operator', 'items'));
+        return view('operator.item.show', compact('operator', 'item'));
     }
 
     /**
-     * 顧客データ更新
+     * 商品情報編集ページ表示
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, ItemUpdateService $itemUpdateService, $id)
-    {
-        // バリデーション
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'postal_code' => 'required|string|max:255',
-            'phone' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-        ]);
-
-        $data = $request->only(['name', 'postal_code', 'phone', 'address']);
-
-        $result = $itemUpdateService->updateItem($id, $data);
-
-        if ($result['message'] === 'success') {
-            return response()->json(['message' => 'success']);
-        } else {
-            return response()->json(['message' => $result['reason']], 500);
-        }
-    }
-
-    /**
-     * アップロードファイル受取処理
-     * 1. アップロードファイルを受け取り、保存する
-     * 2. importTaskに登録する
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function upload(Request $request)
-    {
-        // 許可する拡張子
-        $accept_extension = ['csv', 'txt', 'xlsx', 'xls'];
-
-        // バリデーション
-        $request->validate([
-            'itemFile' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain,application/vnd.ms-excel',
-        ]);
-
-        // サイトごとのサービスクラスを取得
-        $auth = Auth::user();
-        if($auth->site_id == 1) {
-            $itemImportService = new SakenoStepItemImportService();
-        } else {
-            // $itemImportService = new ItemImportService();
-        }
-
-        $file = $request->file('itemFile');
-
-        // ファイルの保存先の絶対パスを取得する。
-        $file_path = $file->storeAs('item', $file->getClientOriginalName(), 'public');
-        $file_path = storage_path('app/' . $file_path);
-
-        Log::info("file_path:".$file_path);
-        if (!in_array($extension, $accept_extension)) {
-            return response()->json(['message' => 'error', 'reason' => 'Invalid file extension'], 400);
-        }
-
-        // タスク作成
-        $importTask = $itemImportService->createTask($file_path);
-        if (!$importTask) {
-            return response()->json(['message' => 'error', 'reason' => 'Failed to create import task'], 500);
-        }
-
-        // 成功した場合のレスポンス
-        return response()->json(['message' => 'success', 'task_code' => $importTask->task_code], 200);
-
-        // 失敗した場合のレスポンス
-        return response()->json(['message' => 'error', 'reason' => 'Some error message'], 500);
-    }
-
-    /**
-     * アップロードステータス
-     *
+     * @param int $id
      * @return \Illuminate\View\View
      */
-    public function status(Request $request)
+    public function edit($id)
     {
-        // バリデーション
-        $request->validate([
-            'task_code' => 'required|string|max:255',
-        ]);
-
         $auth = Auth::user();
-        if($auth->site_id == 1) {
-            $itemImportService = new SakenoStepItemImportService();
-        } else {
-            // $itemImportService = new ItemImportService();
-        }
-        // auth->entity_idでログインしているオペレーターの名前Operatorから取得
         $operator = Operator::where('id', $auth->entity_id)->first();
 
-        $taskCode = $request->task_code;
+        $item = Item::findOrFail($id);
+        $categories = ItemCategory::all();
+        $units = ItemUnit::all();
+        $sites = Site::all();
 
-        // タスクを取得
-        $importTask = ImportTask::where('task_code', $taskCode)->first();
-        if (!$importTask) {
-            return response()->json(['message' => 'error', 'reason' => 'Task not found'], 404);
-        }
-
-        // ファイルの存在確認
-        if (!file_exists($importTask->file_path)) {
-            return response()->json(['message' => 'error', 'reason' => 'File does not exist.'], 400);
-        }
-
-        $file = new \SplFileInfo($importTask->file_path);
-        $extension = $file->getExtension();
-
-        $rows = $this->processFileContent($file, $extension);
-
-        // ファイルの内容をチェック
-        $validationErrors = $itemImportService->validateFileContent($rows);
-        if (!empty($validationErrors)) {
-            return response()->json(['message' => 'error', 'reason' => 'The content of the data file is invalid.', 'errors' => $validationErrors], 400);
-        }
-
-        // formatDataメソッドで整形する
-        $formattedData = $itemImportService->formatData($rows);
-        if (empty($formattedData)) {
-            return response()->json(['message' => 'error', 'reason' => 'Formatting error'], 400);
-        }
-
-        $amount = "";
-        $amount = count($formattedData);
-
-        // ファイルパスから処理をここで行う
-        try {
-            $result = $itemImportService->importToDatabase($formattedData);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'error', 'reason' => 'An error occurred during import to the database.'], 500);
-        }
-
-        return view('operator.item.upload.status', compact('operator', 'amount'));
+        return view('operator.item.edit', compact('operator', 'item', 'categories', 'units', 'sites'));
     }
 
     /**
-     * ファイルの内容を配列化
+     * 商品情報更新処理
      *
-     * @param [type] $file
-     * @param [type] $extension
-     * @return array
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
-    private function processFileContent($file, $extension): array
+    public function update(Request $request, $id, ItemUpdateService $itemUpdateService)
     {
-        // CSVファイル、テキストファイルの場合
-        if (in_array($extension, ['csv', 'txt'])) {
-            $fileContent = file_get_contents($file->getRealPath());
+        $auth = Auth::user();
 
-            // カンマ区切りでデータを配列に変換
-            return array_map('str_getcsv', explode("\n", $fileContent));
-        }
+        // バリデーション
+        $validator = validator($request->all(), [
+            'category_id' => 'required|exists:item_categories,id',
+            'maker_name' => 'nullable|string|max:64',
+            'name' => 'required|string|max:64',
+            'description' => 'nullable|string',
+            'is_recommended' => 'boolean',
+            'published_at' => 'nullable|date',
+        ], [
+            'category_id.required' => 'カテゴリーは必須です。',
+            'category_id.exists' => '選択されたカテゴリーは存在しません。',
+            'maker_name.max' => 'メーカー名は64文字以内で入力してください。',
+            'name.required' => '商品名は必須です。',
+            'name.max' => '商品名は64文字以内で入力してください。',
+            'is_recommended.boolean' => 'おすすめフラグは真偽値で指定してください。',
+            'published_at.date' => '公開日時は正しい日付形式で入力してください。',
+        ]);
 
-        // Excelファイルの場合
-        if (in_array($extension, ['xlsx', 'xls'])) {
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
-            $worksheet = $spreadsheet->getActiveSheet();
-            $rows = [];
-            $headers = []; // タイトル行を格納する配列
-            foreach ($worksheet->getRowIterator() as $rowIndex => $row) {
-                $cellIterator = $row->getCellIterator();
-                $cellIterator->setIterateOnlyExistingCells(false);
-                $rowData = [];
-                foreach ($cellIterator as $cellIndex => $cell) {
-                    if ($rowIndex === 1) {
-                        // 先頭行の場合、ヘッダーとして設定
-                        $headers[$cellIndex] = $cell->getValue();
-                    } else {
-                        // データ行の場合、ヘッダーをキーとした連想配列に変換
-                        $rowData[$headers[$cellIndex]] = $cell->getValue();
-                    }
-                }
-                if ($rowIndex !== 1) { // 先頭行を除外
-                    $rows[] = $rowData;
-                }
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => 'error',
+                    'errors' => $validator->errors()
+                ], 422);
             }
-            return $rows;
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $result = $itemUpdateService->updateItem($id, $request->all());
+
+        if ($request->ajax()) {
+            return response()->json($result);
+        }
+
+        if ($result['message'] === 'success') {
+            return redirect()->route('operator.item.show', $id)
+                ->with('success', '商品情報を更新しました。');
+        } else {
+            return redirect()->route('operator.item.show', $id)
+                ->with('error', '商品情報の更新に失敗しました。');
+        }
+    }
+
+    /**
+     * 商品情報削除処理
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function destroy(Request $request, $id, ItemDeleteService $itemDeleteService)
+    {
+        $auth = Auth::user();
+        $item = Item::findOrFail($id);
+
+        $result = $itemDeleteService->deleteItem($item, $auth);
+
+        if ($request->ajax()) {
+            return response()->json($result);
+        }
+
+        if ($result['message'] === 'success') {
+            return redirect()->route('operator.item.index')
+                ->with('success', '商品情報を削除しました。');
+        } else {
+            return redirect()->route('operator.item.show', $id)
+                ->with('error', '商品情報の削除に失敗しました。');
+        }
+    }
+
+    /**
+     * 商品インポート処理
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function import(Request $request)
+    {
+        // バリデーション
+        $validator = validator($request->all(), [
+            'file' => 'required|file|mimes:csv,txt,xls,xlsx|max:10240',
+        ], [
+            'file.required' => 'ファイルを選択してください。',
+            'file.file' => '有効なファイルを選択してください。',
+            'file.mimes' => 'CSV、TXT、XLS、XLSXファイルを選択してください。',
+            'file.max' => 'ファイルサイズは10MB以下にしてください。',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        try {
+            $auth = Auth::user();
+            $file = $request->file('file');
+            $task = $this->itemImportService->createImportTask(
+                $file->getRealPath(),
+                $auth->site_id,
+                $auth->login_code
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'taskCode' => $task->task_code
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * インポート状態の確認
+     *
+     * @param string $taskCode
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function importStatus($taskCode)
+    {
+        try {
+            $status = $this->itemImportService->getTaskStatus($taskCode);
+
+            if (!$status) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'タスクが見つかりません'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $status
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -1,64 +1,54 @@
-/**
- * 顧客登録確認モーダルの表示
- */
+// モーダル関連の要素
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modalTitle");
+const modalBody = document.getElementById("modalBody");
+const execModal = document.getElementById("execModal");
+const cancelModal = document.getElementById("cancelModal");
+const execMode = document.getElementById("execMode");
 
-// モーダルの開閉を制御するJavaScript
-// 表示処理
-
+// 削除確認モーダルの表示
 export function makeCustomerDeleteConfirmModal() {
-    const CustomerDeleteConfirmModal = document.getElementById("modal");
-    if (CustomerDeleteConfirmModal) {
-        // #modalの中にある#modaleTitleと#modalContentにテキストを追加
-        document.getElementById("modalTitle").textContent = "削除確認";
-        document.getElementById("modalContent").innerHTML =
-            "顧客情報を削除してもよろしいですか？";
-        document.getElementById("execModal").style.display = "block";
-        document.getElementById("execModal").textContent = "顧客情報を削除する";
-        document.getElementById("cancelModal").textContent = "キャンセル";
-        document.getElementById("execMode").textContent = "delete";
-        document.getElementById("modal").classList.remove("hidden");
-    }
-
-    const cancelModal = document.getElementById("cancelModal");
-    if (cancelModal) {
-        cancelModal.addEventListener("click", function () {
-            document.getElementById("modal").classList.add("hidden");
-        });
-    }
-
-    // モーダルの背景をクリックしても閉じるようにする
-    const modal = document.getElementById("modal");
-    if (modal) {
-        modal.addEventListener("click", function (e) {
-            if (e.target === this) {
-                this.classList.add("hidden");
-            }
-        });
-    }
+    modalTitle.textContent = "顧客削除の確認";
+    modalBody.textContent = "この顧客情報を削除してもよろしいですか？";
+    execModal.textContent = "削除する";
+    execModal.classList.remove("bg-[#F4CF41]");
+    execModal.classList.add("bg-red-500", "text-white");
+    execMode.textContent = "delete";
+    modal.classList.remove("hidden");
 }
 
-// 削除完了モーダルの表示
+// 削除成功モーダルの表示
 export function makeCustomerDeleteSuccessModal() {
-    const CustomerDeleteCompleteModal = document.getElementById("modal");
-    if (CustomerDeleteCompleteModal) {
-        document.getElementById("modalTitle").textContent = "削除完了";
-        document.getElementById("modalContent").innerHTML =
-            "顧客情報を削除しました。";
-        document.getElementById("execModal").style.display = "none";
-        document.getElementById("cancelModal").textContent = "閉じる";
-        document.getElementById("modal").classList.remove("hidden");
-    }
+    modalTitle.textContent = "削除完了";
+    modalBody.textContent = "顧客情報の削除が完了しました。";
+    execModal.classList.add("hidden");
+    cancelModal.textContent = "閉じる";
+    modal.classList.remove("hidden");
+
+    // 3秒後に一覧画面に遷移
+    setTimeout(() => {
+        window.location.href = "/operator/customer";
+    }, 3000);
 }
 
 // 削除失敗モーダルの表示
 export function makeCustomerDeleteFailModal() {
-    const CustomerDeleteFailModal = document.getElementById("modal");
-    if (CustomerDeleteFailModal) {
-        document.getElementById("modalTitle").textContent = "削除失敗";
-        document.getElementById("modalContent").innerHTML =
-            "顧客情報の削除に失敗しました。";
-        document.getElementById("execModal").style.display = "none";
-        document.getElementById("cancelModal").textContent = "閉じる";
-        document.getElementById("modal").classList.remove("hidden");
-    }
+    modalTitle.textContent = "エラー";
+    modalBody.textContent = "顧客情報の削除に失敗しました。";
+    execModal.classList.add("hidden");
+    cancelModal.textContent = "閉じる";
+    modal.classList.remove("hidden");
+}
+
+// モーダルのキャンセルボタンクリックイベント
+cancelModal?.addEventListener("click", function () {
+    hideModal();
+});
+
+// モーダルを非表示
+function hideModal() {
+    modal.classList.add("hidden");
+    execModal.classList.remove("bg-red-500", "text-white");
+    execModal.classList.add("bg-[#F4CF41]");
+    execModal.classList.remove("hidden");
 }
