@@ -82,13 +82,14 @@ class LineWebhookController extends Controller
     {
         $eventType = LineWebhookData::getEventType($event);
         $userId = LineWebhookData::getUserId($event);
+        $replayToken = LineWebhookData::getReplayToken($event);
 
         switch ($eventType) {
             case 'message':
-                $this->handleMessageEvent($event, $userId);
+                $this->handleMessageEvent($event, $userId, $replayToken);
                 break;
             case 'follow':
-                $this->handleFollowEvent($userId);
+                $this->handleFollowEvent($userId, $replayToken);
                 break;
             case 'accountLink':
                 $nonce = LineWebhookData::getNonce($event);
