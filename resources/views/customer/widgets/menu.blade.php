@@ -13,7 +13,7 @@
     id="menu">
     <div>
         <div class="w-[22px] ml-auto">
-            <a href="#">
+            <a href="https://lin.ee/3tlOo9K" target="_blank">
                 <img src="{{ asset('image/user/mymenu/svg/line.svg') }}" alt="LINE">
             </a>
         </div>
