@@ -43,14 +43,17 @@
         <div class="h-[calc(100vh-(2rem+6rem+2px))]">
             <form action="{{ route('login') }}" method="POST">
                 @csrf
+                @if (!empty($linkToken))
+                    <input type="hidden" name="link_token" value="{{ $linkToken }}">
+                @endif
                 <div class="flex flex-col py-8 px-6 gap-y-6">
                     <div>
-                        <label>■ 当社にご登録の電話番号</label>
-                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full" name="login_code" value="test_user"  required autofocus>
+                        <label>■ お客様番号</label>
+                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full" name="login_code" value=""  required autofocus>
                     </div>
                     <div>
-                        <label>■ お客様番号</label>
-                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full" name="password" value="test_user" required>
+                        <label>■ 当社にご登録の電話番号</label>
+                        <input type="text" class="border border-[#F4CF41] rounded-lg p-2 mt-1 font-bold w-full" name="password" value="" required>
                     </div>
                     @error('login_code')
                     <div>

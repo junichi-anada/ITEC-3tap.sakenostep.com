@@ -26,30 +26,35 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $this->validateLogin($request);
-        Log::info('Login attempt with credentials: ' . json_encode($credentials));
 
         try {
             $site = $this->authService->validateSite($credentials['site_code']);
-            Log::info('Site validated: ' . $site->id);
 
             $auth = $this->authService->authenticateUser($credentials['login_code'], $site->id, $credentials['password']);
-            Log::info('User authenticated: ' . $auth->id);
 
             return $this->handleUserWasAuthenticated($request, $auth);
         } catch (ValidationException $e) {
-            Log::warning('Login failed: ' . json_encode($e->errors()));
             return back()->withErrors($e->errors());
         } catch (\Exception $e) {
-            Log::error('Unexpected error during login: ' . $e->getMessage());
             return back()->withErrors(['error' => 'ログインに失敗しました。']);
         }
     }
 
     public function logout(Request $request)
     {
+        // Authenticateのentity_typeを取得
+        $entityType = Auth::user()->entity_type;
+
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // ログアウト後、ログイン画面へ
+        if ($entityType === 'App\Models\User') {
+            return redirect()->route('customer.index');
+        } elseif ($entityType === 'App\Models\Operator') {
+            return redirect()->route('operator.index');
+        }
         return redirect('/login');
     }
 
@@ -69,19 +74,36 @@ class LoginController extends Controller
         $request->session()->regenerate();
 
         if (!Auth::check()) {
-            Log::error('User is not authenticated after login.');
             return redirect('/login')->withErrors(['error' => 'ログインに失敗しました。']);
         }
 
+        // LinkTokenチェック
+        if (!empty($request->link_token)) {
+            $nonce = $this->generateNonce();
+
+            // 出来上がったnonceをLineUserテーブルに登録しておく
+            $lineUser = LineUser::create([
+                'site_id' => $site->id,
+                'user_id' => $auth->id,
+                'nonce' => $nonce,
+            ]);
+
+            return redirect()->away('https://access.line.me/dialog/bot/accountLink?linkToken='.$linkToken.'&nonce='.$nonce);
+        }
+
+        // ログイン後、それぞれのメニュー画面へ
         if ($auth->entity_type === 'App\Models\User') {
-            Log::info('Redirecting to user order list');
             return redirect()->intended(route('user.order.item.list'));
         } elseif ($auth->entity_type === 'App\Models\Operator') {
-            Log::info('Redirecting to operator dashboard');
             return redirect()->intended(route('operator.dashboard'));
         }
 
-        Log::info('Redirecting to default user order list');
         return redirect()->intended(route('user.order.item.list'));
     }
+
+    private function generateNonce()
+    {
+        return bin2hex(random_bytes(16));
+    }
+
 }
