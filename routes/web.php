@@ -10,6 +10,7 @@ use App\Http\Controllers\Web\Operator\ItemImportController as OperatorItemImport
 use App\Http\Controllers\Ajax\Operator\CustomerImportController;
 use App\Http\Controllers\Ajax\Operator\ItemImportController;
 use App\Http\Controllers\Web\Auth\LoginController;
+use App\Http\Controllers\Web\Customer\LoginController as CustomerLoginController;
 use App\Http\Controllers\Web\Customer\OrderController as CustomerOrderWebController;
 use App\Http\Controllers\Ajax\Customer\OrderController as CustomerOrderAjaxController;
 use App\Http\Controllers\Web\Customer\RecommendedItemController as CustomerRecommendedItemWebController;
@@ -34,8 +35,9 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logout');
  */
 Route::get('/', function () { return view('index');})->name('index');
 Route::get('/operator', function () { return view('operator.index');})->name('operator.index');
-Route::get('/customer', function () { return view('customer.index');})->name('customer.index');
-
+Route::get('/customer', [CustomerLoginController::class, 'index'])->name('customer.index');
+// Route::post('/customer/login', [CustomerLoginController::class, 'login'])->name('customer.login');
+// Route::post('/customer/logout', [CustomerLoginController::class, 'logout'])->name('customer.logout');
 
 /**
  * ウェルカムページ -> ここに飛んではいけない
