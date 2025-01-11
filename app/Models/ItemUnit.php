@@ -1,24 +1,26 @@
 <?php
-/**
- * 商品単位モデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * 商品単位モデル
+ */
 class ItemUnit extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'unit_code',
         'site_id',
@@ -27,14 +29,30 @@ class ItemUnit extends Model
         'is_published',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'priority' => 'integer',
+        'is_published' => 'boolean',
+    ];
 
-    public function site()
+    /**
+     * サイトとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
     }
 
-    public function items()
+    /**
+     * 商品との関連を取得
+     *
+     * @return HasMany
+     */
+    public function items(): HasMany
     {
         return $this->hasMany(Item::class, 'unit_id');
     }

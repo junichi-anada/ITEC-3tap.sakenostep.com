@@ -1,47 +1,61 @@
 <?php
-/**
- * お知らせモデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * お知らせモデル
+ */
 class Notification extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'notification_code',
-        'category_id',
+        'site_id',
         'title',
         'content',
-        'publish_start_at',
-        'publish_end_at',
+        'notification_type',
+        'published_at',
+        'expired_at',
     ];
 
-    protected $dates = ['publish_start_at', 'publish_end_at', 'created_at', 'updated_at', 'deleted_at'];
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'published_at' => 'datetime',
+        'expired_at' => 'datetime',
+    ];
 
-    public function category()
+    /**
+     * サイトとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function site(): BelongsTo
     {
-        return $this->belongsTo(NotificationCategory::class);
+        return $this->belongsTo(Site::class);
     }
 
-    public function receivers()
+    /**
+     * お知らせ既読との関連を取得
+     *
+     * @return HasMany
+     */
+    public function notificationReads(): HasMany
     {
-        return $this->hasMany(NotificationReceiver::class);
-    }
-
-    public function senders()
-    {
-        return $this->hasMany(NotificationSender::class);
+        return $this->hasMany(NotificationRead::class);
     }
 }

@@ -1,32 +1,43 @@
 <?php
-/**
- * オペレーターランクモデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * オペレータランクモデル
+ */
 class OperatorRank extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'priority',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'priority' => 'integer',
+    ];
 
-    public function operators()
+    /**
+     * オペレータとの関連を取得
+     *
+     * @return HasMany
+     */
+    public function operators(): HasMany
     {
         return $this->hasMany(Operator::class);
     }

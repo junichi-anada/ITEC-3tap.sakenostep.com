@@ -1,54 +1,59 @@
 <?php
-/**
- * お気に入り商品モデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * お気に入り商品モデル
+ */
 class FavoriteItem extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
+        'site_id',
         'user_id',
         'item_id',
-        'site_id'
+        'memo',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-
     /**
-     * アイテムとのリレーション
+     * サイトとの関連を取得
+     *
+     * @return BelongsTo
      */
-    public function item()
+    public function site(): BelongsTo
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Site::class);
     }
 
     /**
-     * ユーザーとのリレーション
+     * ユーザーとの関連を取得
+     *
+     * @return BelongsTo
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
     /**
-     * サイトとのリレーション
+     * 商品との関連を取得
+     *
+     * @return BelongsTo
      */
-    public function site()
+    public function item(): BelongsTo
     {
-        return $this->belongsTo(Site::class);
+        return $this->belongsTo(Item::class);
     }
-
 }

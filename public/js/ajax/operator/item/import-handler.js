@@ -69,42 +69,10 @@ export class ItemImportHandler {
             }
 
             const result = await response.json();
-            console.log("ステータス確認結果:", result);
 
             if (result.success) {
-                const status = result.data.task.status;
-                console.log("タスクステータス:", status);
-
-                // ステータスに応じたモーダル表示
-                if (status === "pending" || status === "processing") {
-                    if (typeof makeItemImportProcessingModal === "function") {
-                        makeItemImportProcessingModal();
-                    }
-                    // 3秒後に再度ステータスを確認（処理状況を維持）
-                    setTimeout(() => {
-                        if (this.processingLock) {
-                            this.checkImportStatus(taskCode);
-                        }
-                    }, 3000);
-                } else if (
-                    status === "completed" ||
-                    status === "completed_with_errors"
-                ) {
-                    // 完了時は進捗確認画面へリダイレクト
-                    window.location.href = `/operator/item/import/${taskCode}/progress`;
-                } else if (status === "failed") {
-                    if (typeof makeItemImportFailModal === "function") {
-                        makeItemImportFailModal(
-                            result.data.task.statusMessage ||
-                                "インポート処理に失敗しました。"
-                        );
-                    }
-                    this.processingLock = false;
-                }
-            } else {
-                throw new Error(
-                    result.message || "ステータスの取得に失敗しました。"
-                );
+                // 進捗確認画面へリダイレクト
+                window.location.href = `/operator/item/import/${taskCode}/progress`;
             }
         } catch (error) {
             console.error("ステータス確認エラー:", error);
@@ -124,6 +92,11 @@ export class ItemImportHandler {
     async handleImport() {
         if (this.isProcessing || this.processingLock) {
             console.log("処理中のため、リクエストをスキップします");
+            if (typeof makeItemImportFailModal === "function") {
+                makeItemImportFailModal(
+                    "現在処理中です。しばらくお待ちください。"
+                );
+            }
             return;
         }
 

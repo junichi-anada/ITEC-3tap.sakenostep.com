@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\AuthenticateOauth;
+use App\Models\Authenticate;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Log;
@@ -36,16 +36,18 @@ class LineAuthController extends Controller
             auth()->login($user, true);
 
             // LINE認証情報を保存/更新
-            AuthenticateOauth::updateOrCreate(
+            Authenticate::updateOrCreate(
                 [
-                    'auth_provider_id' => config('services.line.provider_id'),
+                    'provider_id' => config('services.line.provider_id'),
                     'auth_code' => $lineUser->id,
                 ],
                 [
-                    'user_id' => $user->id,
+                    'entity_type' => User::class,
+                    'entity_id' => $user->id,
                     'site_id' => config('services.line.site_id'),
-                    'access_token' => $lineUser->token,
-                    'refresh_token' => $lineUser->refreshToken,
+                    'token' => $lineUser->token,
+                    'token_expiry' => now()->addDays(30),
+                    'expires_at' => now()->addYear(),
                 ]
             );
 
@@ -65,12 +67,12 @@ class LineAuthController extends Controller
     private function findOrCreateUser($lineUser)
     {
         // LINE IDで既存ユーザーを検索
-        $authInfo = AuthenticateOauth::where('auth_code', $lineUser->id)
-            ->where('auth_provider_id', config('services.line.provider_id'))
+        $authInfo = Authenticate::where('auth_code', $lineUser->id)
+            ->where('provider_id', config('services.line.provider_id'))
             ->first();
 
         if ($authInfo) {
-            return User::find($authInfo->user_id);
+            return User::find($authInfo->entity_id);
         }
 
         // 新規ユーザーを作成

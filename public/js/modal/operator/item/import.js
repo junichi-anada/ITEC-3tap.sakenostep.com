@@ -119,28 +119,28 @@ export function makeItemImportProcessingModal() {
 
     const { modal, modalTitle, modalBody, execModal, cancelModal } = elements;
 
-    modalTitle.textContent = "アップロード中";
+    modalTitle.textContent = "インポート処理中";
     modalBody.innerHTML = `
-        <div class="flex flex-col items-center">
-            <div class="relative">
-                <!-- メインのスピナー -->
-                <div class="animate-spin rounded-full h-16 w-16 border-4 border-[#F4CF41] border-t-transparent"></div>
-                <!-- 中央のアイコン -->
-                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <svg class="w-8 h-8 text-[#F4CF41]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                    </svg>
+        <div class="text-center">
+            <p class="mb-4">ファイルをアップロードしています。しばらくお待ちください。</p>
+            <div class="relative pt-1">
+                <div class="flex mb-2 items-center justify-between">
+                    <div>
+                        <span id="uploadProgressText" class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                            0%
+                        </span>
+                    </div>
+                </div>
+                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                    <div id="uploadProgressBar" style="width:0%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-300"></div>
                 </div>
             </div>
-            <p class="mt-4 text-sm text-gray-500">ファイルをアップロードしています。しばらくお待ちください。</p>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4">
-                <div id="uploadProgressBar" class="bg-[#F4CF41] h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-            <p id="uploadProgressText" class="mt-2 text-sm text-gray-500">0%</p>
         </div>
     `;
+
     execModal.classList.add("hidden");
     cancelModal.classList.add("hidden");
+    modal.classList.remove("hidden");
     modal.dataset.modalType = "processing";
 }
 

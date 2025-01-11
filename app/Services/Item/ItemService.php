@@ -20,6 +20,7 @@ use App\Services\ServiceErrorHandler;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection as SupportCollection;
+use App\Services\BaseService;
 
 /**
  * 商品サービスクラス
@@ -27,7 +28,7 @@ use Illuminate\Support\Collection as SupportCollection;
  * このクラスは商品に関する操作のファサードとして機能し、
  * 具体的な処理を各ActionクラスとQueryクラスに委譲します。
  */
-final class ItemService
+final class ItemService extends BaseService
 {
     use ServiceErrorHandler;
 

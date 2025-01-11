@@ -15,7 +15,7 @@ trait ServiceErrorHandler
      * @return mixed
      * @throws \Exception
      */
-    private function tryCatchWrapper($callback, string $errorMessage, array $context = [])
+    protected function tryCatchWrapper($callback, string $errorMessage, array $context = [])
     {
         try {
             return $callback();

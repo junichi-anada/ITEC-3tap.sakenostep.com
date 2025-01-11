@@ -1,43 +1,57 @@
 <?php
-/**
- * サイトオペレーターモデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * サイトオペレータモデル
+ */
 class SiteOperator extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'site_id',
         'operator_id',
         'role_id',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-
-    public function site()
+    /**
+     * サイトとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
     }
 
-    public function operator()
+    /**
+     * オペレータとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function operator(): BelongsTo
     {
         return $this->belongsTo(Operator::class);
     }
 
-    public function role()
+    /**
+     * サイトオペレータロールとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function role(): BelongsTo
     {
         return $this->belongsTo(SiteOperatorRole::class);
     }

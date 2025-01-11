@@ -24,11 +24,31 @@ class ProcessItemImport implements ShouldQueue
     protected $task;
 
     /**
-     * 試行回数
+     * 最大試行回数を3回に設定
      *
      * @var int
      */
-    public $tries = 1;
+    public $tries = 3;
+
+    /**
+     * 再試行までの待機時間（秒）を設定
+     *
+     * @return array
+     */
+    public function backoff()
+    {
+        return [60, 180, 300]; // 1分、3分、5分後に再試行
+    }
+
+    /**
+     * ジョブの一意のIDを取得
+     *
+     * @return string
+     */
+    public function uniqueId()
+    {
+        return $this->task->task_code;
+    }
 
     /**
      * タイムアウト時間（秒）
@@ -118,15 +138,19 @@ class ProcessItemImport implements ShouldQueue
     {
         Log::error('商品データインポートジョブが失敗しました', [
             'task_code' => $this->task->task_code,
-            'error' => $exception->getMessage()
+            'error' => $exception->getMessage(),
+            'attempt' => $this->attempts(),
+            'max_tries' => $this->tries
         ]);
 
-        // タスクのステータスを更新
-        DB::transaction(function () use ($exception) {
-            $this->task->status = 'failed';
-            $this->task->error_message = $exception->getMessage();
-            $this->task->imported_at = now();
-            $this->task->save();
-        });
+        // 最大試行回数に達した場合のみ、タスクを失敗状態に更新
+        if ($this->attempts() >= $this->tries) {
+            DB::transaction(function () use ($exception) {
+                $this->task->status = 'failed';
+                $this->task->error_message = "最大試行回数({$this->tries}回)を超えました。: " . $exception->getMessage();
+                $this->task->imported_at = now();
+                $this->task->save();
+            });
+        }
     }
 }

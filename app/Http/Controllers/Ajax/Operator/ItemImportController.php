@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use App\Jobs\ProcessItemImport;
+use App\Jobs\ImportQueue;
 use App\Models\ImportTask;
 use App\Models\ImportTaskRecord;
 use Carbon\Carbon;
@@ -122,7 +122,7 @@ class ItemImportController extends BaseAjaxController
                     Log::info('インポートタスクを作成しました', ['task_code' => $task->task_code]);
 
                     // 非同期でインポート処理を開始
-                    ProcessItemImport::dispatch($task);
+                    ImportQueue::dispatch($task);
 
                     Log::info('インポート処理をキューに追加しました');
 

@@ -1,24 +1,26 @@
 <?php
-/**
- * オペレーターモデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * オペレータモデル
+ */
 class Operator extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'operator_code',
         'company_id',
@@ -26,46 +28,33 @@ class Operator extends Model
         'operator_rank_id',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-
-    public function company()
+    /**
+     * 会社との関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function rank()
+    /**
+     * オペレータランクとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function operatorRank(): BelongsTo
     {
-        return $this->belongsTo(OperatorRank::class, 'operator_rank_id');
+        return $this->belongsTo(OperatorRank::class);
     }
 
-    public function siteOperators()
+    /**
+     * サイトオペレータとの関連を取得
+     *
+     * @return HasMany
+     */
+    public function siteOperators(): HasMany
     {
         return $this->hasMany(SiteOperator::class);
-    }
-
-    public function authenticates()
-    {
-        return $this->hasMany(Authenticate::class, 'entity_id')->where('entity_type', self::class);
-    }
-
-    public function authenticateOauths()
-    {
-        return $this->hasMany(AuthenticateOauth::class, 'entity_id')->where('entity_type', self::class);
-    }
-
-    public function authenticateUser($loginCode, $password)
-    {
-        $auth = $this->authenticates()->where('login_code', $loginCode)->first();
-
-        if ($auth && \Hash::check($password, $auth->password)) {
-            return $auth;
-        }
-
-        return null;
-    }
-
-    public function authenticateWithToken($token)
-    {
-        return $this->authenticateOauths()->where('token', $token)->first();
     }
 }

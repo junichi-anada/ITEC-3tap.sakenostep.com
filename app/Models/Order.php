@@ -1,24 +1,26 @@
 <?php
-/**
- * 注文基本モデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * 注文モデル
+ */
 class Order extends Model
 {
     use HasFactory;
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'order_code',
         'site_id',
@@ -31,69 +33,44 @@ class Order extends Model
         'exported_at',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
+        'total_price' => 'decimal:2',
+        'tax' => 'decimal:0',
+        'postage' => 'decimal:0',
         'ordered_at' => 'datetime',
         'processed_at' => 'datetime',
         'exported_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
     ];
 
-    protected $appends = ['status'];
-
-    public function getStatusAttribute()
-    {
-        if ($this->processed_at) {
-            return '処理済';
-        }
-        return '未処理';
-    }
-
     /**
-     * 注文番号を生成する
-     * フォーマット: p + YYYYMMDDHHmm + _XX（XXは連番2桁）
+     * サイトとの関連を取得
      *
-     * @return string
+     * @return BelongsTo
      */
-    public static function generateOrderCode()
-    {
-        $now = Carbon::now();
-        $datePrefix = 'p' . $now->format('YmdHi');
-
-        // 同じ時間（分）の最後の注文番号を取得
-        $lastOrder = self::where('order_code', 'LIKE', $datePrefix . '_%')
-            ->orderBy('order_code', 'desc')
-            ->first();
-
-        if ($lastOrder) {
-            // 最後の注文番号から連番を取得して+1
-            $lastNumber = intval(substr($lastOrder->order_code, -2));
-            $newNumber = str_pad($lastNumber + 1, 2, '0', STR_PAD_LEFT);
-        } else {
-            // その時間の最初の注文
-            $newNumber = '01';
-        }
-
-        return $datePrefix . '_' . $newNumber;
-    }
-
-    public function site()
+    public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
     }
 
-    public function user()
+    /**
+     * ユーザーとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function customer()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function orderDetails()
+    /**
+     * 注文明細との関連を取得
+     *
+     * @return HasMany
+     */
+    public function orderDetails(): HasMany
     {
         return $this->hasMany(OrderDetail::class);
     }

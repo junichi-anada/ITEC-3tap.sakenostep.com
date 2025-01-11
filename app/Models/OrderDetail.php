@@ -1,24 +1,25 @@
 <?php
-/**
- * 注文詳細モデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * 注文明細モデル
+ */
 class OrderDetail extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'detail_code',
         'order_id',
@@ -31,14 +32,33 @@ class OrderDetail extends Model
         'processed_at',
     ];
 
-    protected $dates = ['processed_at', 'created_at', 'updated_at', 'deleted_at'];
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'volume' => 'integer',
+        'unit_price' => 'decimal:2',
+        'price' => 'decimal:2',
+        'tax' => 'decimal:0',
+        'processed_at' => 'datetime',
+    ];
 
-    public function order()
+    /**
+     * 注文との関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function item()
+    /**
+     * 商品との関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
     }

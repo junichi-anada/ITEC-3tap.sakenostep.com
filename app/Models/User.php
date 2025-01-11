@@ -1,88 +1,130 @@
 <?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+
 /**
  * ユーザーモデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
  */
-
- namespace App\Models;
-
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-// use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
 class User extends Authenticatable
 {
+    use HasApiTokens;
     use HasFactory;
-    // use Notifiable;
-
+    use Notifiable;
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
+        'name',
+        'email',
+        'password',
         'user_code',
         'site_id',
-        'name',
+        'last_name',
+        'first_name',
+        'last_name_kana',
+        'first_name_kana',
         'postal_code',
         'address',
         'phone',
         'phone2',
         'fax',
+        'birthday',
+        'gender',
+        'is_active',
+        'last_login_at',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+    /**
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
-    public function site()
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'birthday' => 'date',
+        'is_active' => 'boolean',
+        'last_login_at' => 'datetime',
+    ];
+
+    /**
+     * サイトとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
     }
 
-    public function authenticates()
-    {
-        return $this->hasMany(Authenticate::class, 'entity_id')->where('entity_type', self::class);
-    }
-
-    public function authenticateOauths()
-    {
-        return $this->hasMany(AuthenticateOauth::class, 'entity_id')->where('entity_type', self::class);
-    }
-
-    public function orders()
+    /**
+     * 注文との関連を取得
+     *
+     * @return HasMany
+     */
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
-    public function favoriteItems()
+    /**
+     * お気に入り商品との関連を取得
+     *
+     * @return HasMany
+     */
+    public function favoriteItems(): HasMany
     {
         return $this->hasMany(FavoriteItem::class);
     }
 
-    public function notificationReceivers()
+    /**
+     * メッセージログとの関連を取得
+     *
+     * @return HasMany
+     */
+    public function messageLogs(): HasMany
     {
-        return $this->hasMany(NotificationReceiver::class);
+        return $this->hasMany(MessageLog::class);
     }
 
-    public function userExternalCodes()
+    /**
+     * フルネームを取得
+     *
+     * @return string
+     */
+    public function getFullNameAttribute(): string
     {
-        return $this->hasMany(UserExternalCode::class);
+        return "{$this->last_name} {$this->first_name}";
     }
 
-    public function authenticateUser($loginCode, $password)
+    /**
+     * フルネーム（カナ）を取得
+     *
+     * @return string|null
+     */
+    public function getFullNameKanaAttribute(): ?string
     {
-        $auth = $this->authenticates()->where('login_code', $loginCode)->first();
-
-        if ($auth && \Hash::check($password, $auth->password)) {
-            return $auth;
+        if ($this->last_name_kana === null || $this->first_name_kana === null) {
+            return null;
         }
-
-        return null;
-    }
-
-    public function authenticateWithToken($token)
-    {
-        return $this->authenticateOauths()->where('token', $token)->first();
+        return "{$this->last_name_kana} {$this->first_name_kana}";
     }
 }

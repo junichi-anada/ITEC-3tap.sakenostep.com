@@ -1,31 +1,35 @@
 <?php
-/**
- * サイトオペレーター権限モデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * サイトオペレータロールモデル
+ */
 class SiteOperatorRole extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-
-    public function siteOperators()
+    /**
+     * サイトオペレータとの関連を取得
+     *
+     * @return HasMany
+     */
+    public function siteOperators(): HasMany
     {
         return $this->hasMany(SiteOperator::class, 'role_id');
     }

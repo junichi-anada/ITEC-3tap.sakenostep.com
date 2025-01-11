@@ -27,7 +27,7 @@ class CountService
             ->where('site_id', $auth->site_id)
             ->whereNull('deleted_at')
             ->count();
-        
+
         return $user_count_auth + $user_count_oauth;
     }
 
@@ -50,7 +50,7 @@ class CountService
             ->where('created_at', '>=', now()->startOfDay())
             ->whereNull('deleted_at')
             ->count();
-        
+
         return $auth_user_count + $oauth_user_count;
     }
 
@@ -62,7 +62,7 @@ class CountService
     public function getLineUserCount()
     {
         $auth = Auth::user();
-        return AuthenticateOauth::where('auth_provider_id', 1)
+        return Authenticate::where('provider_id', 1)
             ->where('entity_type', User::class)
             ->where('site_id', $auth->site_id)
             ->whereNull('deleted_at')

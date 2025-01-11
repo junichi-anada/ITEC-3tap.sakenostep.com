@@ -1,24 +1,25 @@
 <?php
-/**
- * 利用可能サイトモデル（マルチテナント）
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * 使用可能サイトモデル
+ */
 class UsableSite extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'entity_type',
         'entity_id',
@@ -26,9 +27,19 @@ class UsableSite extends Model
         'shared_login_allowed',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'shared_login_allowed' => 'boolean',
+    ];
 
-    public function site()
+    /**
+     * サイトとの関連を取得
+     *
+     * @return BelongsTo
+     */
+    public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
     }

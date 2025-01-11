@@ -20,8 +20,13 @@
 </head>
 
 <body class="font-body">
-    <div class="flex justify-center items-center" style="height: 100vh;">
-        <img src="{{ asset('image/3tap-step.png') }}" alt="酒のステップ" style="max-width: 500px;">
+    <div class="flex flex-col justify-center items-center gap-y-8" style="height: 100vh;">
+        <div>
+            <img src="{{ asset('image/3tap-step.png') }}" alt="酒のステップ" style="max-width: 500px;">
+        </div>
+        <a href="{{ route('customer.index') }}" class="px-6 py-3 bg-[#F4CF41] hover:bg-[#E4BF31] text-gray-800 font-semibold rounded-md shadow-md transition-colors duration-300">
+            お取引業者様はこちら
+        </a>
     </div>
 </body>
 

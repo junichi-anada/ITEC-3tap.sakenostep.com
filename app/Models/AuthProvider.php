@@ -1,24 +1,25 @@
 <?php
-/**
- * 認証プロバイダモデル
- *
- * @category モデル
- * @package App\Models
- * @version 1.0
- */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * 認証プロバイダーモデル
+ */
 class AuthProvider extends Model
 {
     use HasFactory;
-
     use SoftDeletes;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'provider_code',
         'name',
@@ -26,9 +27,29 @@ class AuthProvider extends Model
         'is_enable',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_enable' => 'boolean',
+    ];
 
-    public function siteAuthProviders()
+    /**
+     * OAuth認証との関連を取得
+     *
+     * @return HasMany
+     */
+    public function authenticateOauths(): HasMany
+    {
+        return $this->hasMany(AuthenticateOauth::class);
+    }
+
+    /**
+     * サイト認証プロバイダーとの関連を取得
+     *
+     * @return HasMany
+     */
+    public function siteAuthProviders(): HasMany
     {
         return $this->hasMany(SiteAuthProvider::class);
     }
