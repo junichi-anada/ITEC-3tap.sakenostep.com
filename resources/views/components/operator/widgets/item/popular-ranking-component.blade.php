@@ -25,7 +25,7 @@
                     @else
                     <div class="flex items-center justify-between border-b border-b-[#a6a6a6] pb-2">
                     @endif
-                        <a href="#" class="flex items-center justify-start gap-x-3 w-full">
+                        <a href="{{ route('item.show', ['item_id' => $popularItem->id]) }}" class="flex items-center justify-start gap-x-3 w-full">
                             @if ($i == 1)
                                 <span class="material-symbols-outlined text-2xl text-[#d29e44]">looks_one</span>
                             @elseif ($i == 2)
