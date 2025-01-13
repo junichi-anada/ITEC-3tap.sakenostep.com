@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Site;
 use App\Models\LineUser;
-use App\Models\Authenticate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -92,11 +91,11 @@ class LineAccountLinkController extends Controller
             }
 
             // 認証出来たらline_usersのuser_idを更新
-            $auth = Authenticate::where('login_code', $lineUser->nonce)
-                ->where('site_id', $lineUser->site_id)
-                ->first();
+            $authUser = Auth::user();
 
-            $lineUser->user_id = $auth->entity_id;
+            Log::info('認証済みユーザー: ' . $authUser);
+
+            $lineUser->user_id = $authUser->entity_id;
             $lineUser->save();
 
             // LINEのアカウント連携画面にリダイレクト
