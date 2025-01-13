@@ -93,6 +93,18 @@ class LineAccountLinkService
                 // LINE認証情報を保存
                 $authProvider = AuthProvider::where('provider_name', 'line')->first();
                 
+                // 認証情報からユ�ーIDを取得
+                $auth = Authenticate::where('login_code', $lineUser->nonce)
+                    ->where('site_id', $lineUser->site_id)
+                    ->first();
+
+                if (!$auth) {
+                    throw new LineMessagingException('認証情報が�つかりません');
+                }
+
+                // LineUserにuser_idを設定
+                $lineUser->user_id = $auth->entity_id;
+                
                 AuthenticateOauth::updateOrCreate(
                     [
                         'site_id' => $lineUser->site_id,
@@ -108,9 +120,12 @@ class LineAccountLinkService
 
                 // LINEユーザー情報を更新
                 $lineUser->update([
+                    'user_id' => $auth->entity_id,
                     'display_name' => $profile['displayName'],
                     'picture_url' => $profile['pictureUrl'] ?? null,
-                    'status_message' => $profile['statusMessage'] ?? null
+                    'status_message' => $profile['statusMessage'] ?? null,
+                    'is_linked' => true,
+                    'followed_at' => now()
                 ]);
             });
 
