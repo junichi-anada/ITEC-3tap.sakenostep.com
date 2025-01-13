@@ -90,6 +90,10 @@ class LineAccountLinkController extends Controller
                 throw new \Exception('認証に失敗しました');
             }
 
+            // 認証出来たらline_usersのuser_idを更新
+            $lineUser->user_id = auth()->user()->id;
+            $lineUser->save();
+
             // LINEのアカウント連携画面にリダイレクト
             return redirect()->away(
                 "https://access.line.me/dialog/bot/accountLink?linkToken={$linkToken}&nonce={$nonce}"
