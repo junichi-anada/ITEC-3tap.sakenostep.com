@@ -10,13 +10,15 @@ namespace App\Services\Item\DTOs;
 final class PopularItemData
 {
     public function __construct(
+        public readonly int $id,
         public readonly string $name,
-        public readonly int $orderCount
+        public readonly int $orderCount,
     ) {}
 
     public static function fromArray(array $data): self
     {
         return new self(
+            id: $data['id'],
             name: $data['name'],
             orderCount: $data['order_count']
         );
@@ -25,6 +27,7 @@ final class PopularItemData
     public function toArray(): array
     {
         return [
+            'id' => $this->id,
             'name' => $this->name,
             'orderCount' => $this->orderCount
         ];
