@@ -92,6 +92,8 @@ class LineAccountLinkService
             DB::transaction(function () use ($lineUser, $token, $profile) {
                 // 認証済みユーザーの情報を取得
                 $user = auth()->user();
+                // Logに$userを出力
+                Log::info('認証済みユーザー: ' . $user);
                 if (!$user) {
                     throw new LineMessagingException('ユーザー情報が取得できません');
                 }
@@ -99,18 +101,18 @@ class LineAccountLinkService
                 // LINE認証情報を保存
                 $authProvider = AuthProvider::where('provider_name', 'line')->first();
                 
-                AuthenticateOauth::updateOrCreate(
-                    [
-                        'site_id' => $lineUser->site_id,
-                        'entity_type' => LineUser::class,
-                        'entity_id' => $lineUser->id,
-                        'auth_provider_id' => $authProvider->id
-                    ],
-                    [
-                        'token' => $token,
-                        'expires_at' => now()->addDays(30)
-                    ]
-                );
+                // AuthenticateOauth::updateOrCreate(
+                //     [
+                //         'site_id' => $lineUser->site_id,
+                //         'entity_type' => LineUser::class,
+                //         'entity_id' => $lineUser->id,
+                //         'auth_provider_id' => $authProvider->id
+                //     ],
+                //     [
+                //         'token' => $token,
+                //         'expires_at' => now()->addDays(30)
+                //     ]
+                // );
 
                 // LINEユーザー情報を更新
                 $lineUser->update([
