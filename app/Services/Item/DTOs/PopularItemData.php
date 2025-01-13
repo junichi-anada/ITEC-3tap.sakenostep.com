@@ -12,7 +12,7 @@ final class PopularItemData
     public function __construct(
         public readonly int $id,
         public readonly string $name,
-        public readonly int $orderCount,
+        public readonly int $orderCount
     ) {}
 
     public static function fromArray(array $data): self
