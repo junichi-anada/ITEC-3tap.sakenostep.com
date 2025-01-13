@@ -9,7 +9,10 @@
     <div class="px-4 flex flex-col gap-y-4">
         <div class="flex flex-row items-center justify-between pb-2 border-b">
             <h2 class="font-bold text-xl">商品一覧</h2>
-            <p class="text-sm">{{ $items->total() }}件中 {{ $items->count() }}件表示</p>
+            <p class="text-sm">
+                {{ number_format($items->total()) }}件中
+                {{ number_format($items->firstItem()) }}件目～{{ number_format($items->lastItem()) }}件目表示
+            </p>
         </div>
         <div class="flex flex-col gap-y-4 items-start">
             <div class="w-full flex flex-col">

@@ -18,6 +18,7 @@ use LINE\Clients\MessagingApi\Model\TextMessage;
 use LINE\Clients\MessagingApi\Model\PushMessageRequest;
 use LINE\Clients\MessagingApi\Model\MulticastRequest;
 use LINE\Clients\MessagingApi\Model\GetProfileResponse;
+use LINE\Clients\MessagingApi\Model\ReplyMessageRequest;
 use LINE\Constants\MessageType;
 use Illuminate\Support\Facades\Log;
 use Exception;
@@ -77,18 +78,24 @@ final class LineMessagingService implements LineMessagingServiceInterface
     public function pushMessage(string $userId, string $message): bool
     {
         try {
-            $textMessage = (new TextMessage())
-                ->setType(MessageType::TEXT)
-                ->setText($message);
+            $textMessage = new TextMessage([
+                'type' => MessageType::TEXT,
+                'text' => $message
+            ]);
 
-            $request = (new PushMessageRequest())
-                ->setTo($userId)
-                ->setMessages([$textMessage]);
+            $request = new PushMessageRequest([
+                'to' => $userId,
+                'messages' => [$textMessage]
+            ]);
 
             $this->messagingApi->pushMessage($request);
             return true;
-        } catch (Exception $e) {
-            Log::error('Failed to push message: ' . $e->getMessage());
+
+        } catch (\Exception $e) {
+            Log::error('プッシュメッセージ送信エラー: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'message' => $message
+            ]);
             return false;
         }
     }
@@ -144,48 +151,35 @@ final class LineMessagingService implements LineMessagingServiceInterface
     }
 
     /**
-     * アカウント連携用のリンクトークンを取得する
+     * LINEのリンクトークンを取得
      *
      * @param string $userId
      * @return string|null
      */
     public function getLinkToken(string $userId): ?string
     {
-        return $this->tryCatchWrapper(
-            function () use ($userId) {
-                $response = $this->messagingApi->issueLinkToken($userId);
-                return $response->getLinkToken();
-            },
-            'リンクトークンの取得に失敗しました',
-            ['user_id' => $userId]
-        );
+        try {
+            $response = $this->messagingApi->issueLinkToken($userId);
+            return $response->getLinkToken();
+        } catch (\Exception $e) {
+            Log::error('リンクトークン取得エラー: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
      * リンクトークンを発行する
      *
+     * @param string $userId LINEユーザーID
      * @return string
-     * @throws Exception
      */
-    public function issueLinkToken(): string
+    public function issueLinkToken(string $userId): string
     {
-        $nonce = bin2hex(random_bytes(16));
-        $linkToken = $this->tryCatchWrapper(
-            function () use ($nonce) {
-                return base64_encode(json_encode([
-                    'nonce' => $nonce,
-                    'timestamp' => time(),
-                    'channel_id' => config('services.line.channel_id')
-                ]));
-            },
-            'リンクトークンの発行に失敗しました'
+        return $this->tryCatchWrapper(
+            fn () => $this->messagingApi->issueLinkToken($userId)->getLinkToken(),
+            'リンクトークンの発行に失敗しました',
+            ['user_id' => $userId]
         );
-
-        if (!$linkToken) {
-            throw new Exception('リンクトークンの発行に失敗しました');
-        }
-
-        return $linkToken;
     }
 
     /**
@@ -249,6 +243,24 @@ final class LineMessagingService implements LineMessagingServiceInterface
             },
             'アカウント連携解除に失敗しました',
             ['user_id' => $userId]
+        );
+    }
+
+    /**
+     * リプライメッセージを送信する
+     *
+     * @param ReplyMessageRequest $request
+     * @return bool
+     */
+    public function replyMessage(ReplyMessageRequest $request): bool
+    {
+        return $this->tryCatchWrapper(
+            function () use ($request) {
+                $this->messagingApi->replyMessage($request);
+                return true;
+            },
+            'リプライメッセージの送信に失敗しました',
+            ['reply_token' => $request->getReplyToken()]
         );
     }
 }

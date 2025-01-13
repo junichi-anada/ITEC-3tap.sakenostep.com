@@ -21,6 +21,9 @@ use App\View\Components\Operator\Widgets\SystemInfo\SystemInfoComponent;
 use GuzzleHttp\Client;
 use LINE\Clients\MessagingApi\Configuration;
 use LINE\Clients\MessagingApi\Api\MessagingApiApi;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -62,5 +65,18 @@ class AppServiceProvider extends ServiceProvider
         Blade::component('operator.widgets.item.popular-ranking-component', PopularRankingComponent::class);
         Blade::component('operator.widgets.order.each-area-order-component', EachAreaOrderComponent::class);
         Blade::component('operator.widgets.system-info.system-info-component', SystemInfoComponent::class);
+
+        Queue::failing(function (JobFailed $event) {
+            Log::error('Queue job failed', [
+                'job' => get_class($event->job),
+                'exception' => get_class($event->exception),
+                'message' => $event->exception->getMessage(),
+                'trace' => $event->exception->getTraceAsString()
+            ]);
+            
+            // 必要に応じて管理者に通知
+            // Notification::route('mail', 'admin@example.com')
+            //     ->notify(new JobFailedNotification($event));
+        });
     }
 }

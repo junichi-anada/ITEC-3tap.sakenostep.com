@@ -24,7 +24,8 @@ use App\Http\Controllers\Ajax\Customer\HistoryController as HistoryAjaxControlle
 use App\Http\Controllers\LineAuthController;
 use App\Http\Controllers\LineWebhookController;
 use App\Http\Controllers\LineMessageController;
-use App\Http\Controllers\Line\AccountLinkController;
+use App\Http\Controllers\Web\AccountLinkController;
+use App\Http\Controllers\Web\LineAccountLinkController;
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -123,6 +124,13 @@ Route::middleware(['web', 'auth'])->group(function () {
          * 顧客管理
          */
         Route::prefix('customer')->group(function () {
+            // 具体的なパスを先に定義
+            Route::post('/line/send', [OperatorCustomerController::class, 'sendLineMessage'])->name('operator.customer.line.send');
+            Route::post('/import', [CustomerImportController::class, 'import'])->name('operator.customer.import');
+            Route::get('/import/{taskCode}/status', [CustomerImportController::class, 'status'])->name('operator.customer.import.status');
+            Route::get('/import/{taskCode}/progress', [OperatorCustomerImportController::class, 'progress'])->name('operator.customer.import.progress');
+
+            // IDを含むルートをその後に定義
             Route::get('/', [OperatorCustomerController::class, 'index'])->name('operator.customer.index');
             Route::get('/create', [OperatorCustomerController::class, 'create'])->name('operator.customer.create');
             Route::post('/', [OperatorCustomerController::class, 'store'])->name('operator.customer.store');
@@ -130,12 +138,7 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/{id}/edit', [OperatorCustomerController::class, 'edit'])->name('operator.customer.edit');
             Route::put('/{id}', [OperatorCustomerController::class, 'update'])->name('operator.customer.update');
             Route::delete('/{id}', [OperatorCustomerController::class, 'destroy'])->name('operator.customer.destroy');
-            Route::post('/line/send', [OperatorCustomerController::class, 'sendLineMessage'])->name('operator.customer.line.send');
-
-            // インポート関連のルート
-            Route::post('/import', [CustomerImportController::class, 'import'])->name('operator.customer.import');
-            Route::get('/import/{taskCode}/status', [CustomerImportController::class, 'status'])->name('operator.customer.import.status');
-            Route::get('/import/{taskCode}/progress', [OperatorCustomerImportController::class, 'progress'])->name('operator.customer.import.progress');
+            Route::post('/{id}/restore', [OperatorCustomerController::class, 'restore'])->name('operator.customer.restore');
         });
 
         /**
@@ -177,10 +180,11 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/search', [OperatorItemController::class, 'search'])->name('operator.item.search');
             Route::post('/search', [OperatorItemController::class, 'search']);
 
-            // インポート関連
+            // インポート関連のルートをここに追加
             Route::post('/import', [ItemImportController::class, 'import'])->name('operator.item.import');
             Route::get('/import/{taskCode}/status', [ItemImportController::class, 'status'])->name('operator.item.import.status');
-            Route::get('/import/{taskCode}/progress', [OperatorItemImportController::class, 'progress'])->name('operator.item.import.progress');
+            Route::get('/import/{taskCode}/progress', [OperatorItemImportController::class, 'progress'])
+                ->name('operator.item.import.progress');
         });
     });
 });
@@ -201,16 +205,20 @@ Route::get('/line/send-message', [LineMessageController::class, 'send']);
 /**
  * LINEアカウント連携
  */
-Route::prefix('line/account')->group(function () {
-    Route::get('/link/token', [AccountLinkController::class, 'issueLinkToken'])
-        ->middleware(['auth'])
-        ->name('line.account.link.token');
-    Route::get('/callback', [AccountLinkController::class, 'callback'])
-        ->name('line.account.callback');
-    Route::post('/unlink', [AccountLinkController::class, 'unlink'])
-        ->middleware(['auth'])
-        ->name('line.account.unlink');
-    Route::view('/success', 'line.account.success')->name('line.account.success');
-    Route::view('/error', 'line.account.error')->name('line.account.error');
+Route::prefix('line/account')->name('line.account.')->group(function () {
+    Route::post('/link/{site_code}', [\App\Http\Controllers\LineAccountLinkController::class, 'processLink'])
+        ->name('process-link');
+    Route::get('/link', [\App\Http\Controllers\LineAccountLinkController::class, 'showLinkForm'])
+        ->name('link');
+    Route::view('/error', 'customer.line.account.error')->name('error');
+    Route::view('/success', 'customer.line.account.success')->name('success');
 });
+
+Route::middleware(['auth'])->group(function () {
+    Route::prefix('operator')->group(function () {
+        Route::get('customer/import/{taskCode}/progress', [CustomerImportController::class, 'progress'])
+            ->name('operator.customer.import.progress');
+    });
+});
+
 

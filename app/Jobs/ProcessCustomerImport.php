@@ -10,111 +10,97 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use App\Models\ImportTaskRecord;
 
-class ProcessCustomerImport implements ShouldQueue, ShouldBeUnique
+class ProcessCustomerImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private ImportTask $task;
+    protected ImportTask $task;
+    protected int $startRow;
+    protected int $batchSize;
 
     /**
-     * 最大試行回数
+     * 再試行回数
      *
      * @var int
      */
     public $tries = 3;
 
     /**
-     * タイムアウトまでの秒数
-     *
-     * @var int
+     * ジョブのタイムアウト時間（秒）
      */
-    public $timeout = 600;
+    public $timeout = 300;
 
     /**
      * Create a new job instance.
+     *
+     * @param ImportTask $task
+     * @param int $startRow
+     * @param int $batchSize
+     * @return void
      */
-    public function __construct(ImportTask $task)
+    public function __construct(ImportTask $task, int $startRow, int $batchSize)
     {
         $this->task = $task;
-    }
-
-    /**
-     * ジョブの一意のIDを取得
-     *
-     * @return string
-     */
-    public function uniqueId(): string
-    {
-        return $this->task->task_code;
+        $this->startRow = $startRow;
+        $this->batchSize = $batchSize;
     }
 
     /**
      * Execute the job.
+     *
+     * @param CustomerImportService $service
+     * @return void
      */
     public function handle(CustomerImportService $service): void
     {
+        Log::info('インポートジョブを開始します', [
+            'task_code' => $this->task->task_code,
+            'start_row' => $this->startRow,
+            'batch_size' => $this->batchSize
+        ]);
+
         try {
-            Log::info('インポートジョブを開始します', [
-                'task_code' => $this->task->task_code,
-                'file_path' => $this->task->file_path,
-                'attempt' => $this->attempts()
-            ]);
-
-            // ファイルの存在確認
-            if (!file_exists($this->task->file_path)) {
-                throw new \Exception('インポートファイルが見つかりません: ' . $this->task->file_path);
-            }
-
-            // タスクのステータスを処理中に更新
-            $this->task->status = 'processing';
-            $this->task->status_message = 'インポート処理を実行中です。';
-            $this->task->save();
-
-            $service->processFile($this->task);
-
-            Log::info('インポートジョブが完了しました', [
-                'task_code' => $this->task->task_code,
-                'status' => $this->task->status,
-                'total_records' => $this->task->total_records,
-                'processed_records' => $this->task->processed_records,
-                'success_records' => $this->task->success_records,
-                'error_records' => $this->task->error_records
-            ]);
+            // 指定された行から処理を開始
+            $service->processFile($this->task, $this->startRow);
 
         } catch (\Exception $e) {
             Log::error('インポートジョブでエラーが発生しました', [
                 'task_code' => $this->task->task_code,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'attempt' => $this->attempts()
+                'start_row' => $this->startRow,
+                'error' => $e->getMessage()
             ]);
 
-            // タスクのステータスを更新
-            $this->task->status = 'failed';
-            $this->task->status_message = $e->getMessage();
-            $this->task->save();
+            // 失敗したレコードのステータスを更新
+            ImportTaskRecord::where('import_task_id', $this->task->id)
+                ->where('row_number', '>=', $this->startRow)
+                ->where('row_number', '<', $this->startRow + $this->batchSize)
+                ->update(['status' => ImportTaskRecord::STATUS_FAILED]);
 
             throw $e;
         }
     }
 
     /**
-     * ジョブの失敗を処理
+     * ジョブが失敗したときの処理
+     *
+     * @param \Exception $exception
+     * @return void
      */
-    public function failed(\Throwable $exception): void
+    public function failed(\Exception $exception)
     {
         Log::error('インポートジョブが失敗しました', [
             'task_code' => $this->task->task_code,
-            'error' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString(),
-            'final_attempt' => $this->attempts()
+            'start_row' => $this->startRow,
+            'error' => $exception->getMessage()
         ]);
 
-        // タスクのステータスを更新
-        $this->task->status = 'failed';
-        $this->task->status_message = $exception->getMessage();
-        $this->task->save();
+        // 最大試行回数に達した場合、タスク全体を失敗状態に
+        if ($this->attempts() >= $this->tries) {
+            $this->task->status = ImportTask::STATUS_FAILED;
+            $this->task->error_message = $exception->getMessage();
+            $this->task->save();
+        }
     }
 }

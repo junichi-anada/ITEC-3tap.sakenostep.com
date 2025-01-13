@@ -3,23 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\LineUser;
+use App\Models\Site;
 use Illuminate\Http\Request;
-use App\Services\Messaging\DTOs\LineWebhookData;
-
-use App\Services\Messaging\LineMessagingService;
-
-
-use App\Services\Messaging\Actions\PushMessageAction;
 use Illuminate\Support\Facades\Log;
 use LINE\LINEBot\HTTPClient\CurlHTTPClient;
+use LINE\LINEBot;
 use LINE\Clients\MessagingApi\Model\ButtonsTemplate;
 use LINE\Clients\MessagingApi\Model\ReplyMessageRequest;
 use LINE\Clients\MessagingApi\Model\TextMessage;
 use LINE\Clients\MessagingApi\Model\TemplateMessage;
 use LINE\Clients\MessagingApi\Model\URIAction;
-use LINE\Constants\ActionType;
 use LINE\Constants\MessageType;
-use LINE\Constants\TemplateType;
+use App\Services\Messaging\DTOs\LineWebhookData;
+use App\Services\Messaging\LineMessagingService;
+use App\Services\Messaging\Actions\PushMessageAction;
 
 /**
  * LINE Webhookを処理するコントローラー
@@ -28,17 +25,25 @@ use LINE\Constants\TemplateType;
  */
 class LineWebhookController extends Controller
 {
-    private $channelSecret;
-    private $pushMessageAction;
-    private $siteId;
-    private $lineMessagingService;
+    /**
+     * メッセージ文言を定数として定義
+     */
+    private const LOGIN_GUIDE_MESSAGE = "今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n";
+
+    private string $channelSecret;
+    private int $siteId;
+    private PushMessageAction $pushMessageAction;
+    private LineMessagingService $lineMessagingService;
     /**
      * コンストラクタ
      *
      * @param PushMessageAction $pushMessageAction メッセージ送信アクション
+     * @param LineMessagingService $lineMessagingService LINEメッセージングサービス
      */
-    public function __construct(PushMessageAction $pushMessageAction, LineMessagingService $lineMessagingService)
-    {
+    public function __construct(
+        PushMessageAction $pushMessageAction, 
+        LineMessagingService $lineMessagingService
+    ) {
         $this->channelSecret = config('services.line.channel_secret');
         $this->pushMessageAction = $pushMessageAction;
         $this->siteId = config('services.line.site_id');
@@ -104,11 +109,10 @@ class LineWebhookController extends Controller
                 break;
             case 'accountLink':
                 $nonce = LineWebhookData::getNonce($event);
-                $this->handleAccountLinkEvent($userId, $nonce);
+                $this->handleAccountLinkEvent($userId, $nonce, $replyToken);
                 break;
             case 'unfollow':
-                $nonce = LineWebhookData::getNonce($event);
-                $this->handleUnfollowEvent($userId, $nonce);
+                $this->handleUnfollowEvent($userId);
                 break;
             default:
                 Log::info('Unhandled event type: ' . $eventType);
@@ -121,90 +125,133 @@ class LineWebhookController extends Controller
      *
      * @param array $event イベントデータ
      * @param string|null $userId ユーザーID
+     * @param string|null $replyToken リプライトークン
      * @return void
      */
     private function handleMessageEvent(array $event, ?string $userId, ?string $replyToken)
     {
-        // メッセージイベントの処理ロジックを実装
-        $messageType = $event['message']['type'];
-        $messageText = $event['message']['text'] ?? '';
+        try {
+            $messageType = $event['message']['type'];
+            $messageText = $event['message']['text'] ?? '';
 
-        // LINE連携するメッセージが送信された場合
-        if( $messageText == '連携する') {
+            // LINE連携するメッセージが送信された場合
+            if ($messageText == '連携する') {
+                // LineUserモデルを取得
+                $lineUser = LineUser::where('line_user_id', $userId)
+                    ->where('site_id', $this->siteId)
+                    ->whereNull('deleted_at')
+                    ->first();
 
-            // LineUserモデルを取得
-            $lineUser = LineUser::where('line_user_id', $userId)
-                ->where('site_id', $this->siteId)
-                ->whereNull('deleted_at')
-                ->first();
+                if ($lineUser && $lineUser->is_linked) {
+                    // 連携済みの場合
+                    $this->mypageLinkSend($replyToken);
+                    return;
+                }
 
-            // Lineユーザーが連携していない場合
-            if(is_null($lineUser)){
+                // 未連携の場合はアカウント連携URLを送信
                 $this->accountLinkSend($userId, $replyToken);
                 return;
             }
 
-            // 連携済みの場合
-            $this->mypageLinkSend($replyToken);
-            return;
-        }
+            // それ以外の場合、定型メッセージを送信
+            $message = '世界中のお酒が手に入る！十和田市のお酒屋さん「酒のステップ」へようこそ！';
+            $this->lineMessagingService->pushMessage($userId, $message);
 
-        // それ以外の場合、定型メッセージを送信
-        $message = '世界中のお酒が手に入る！十和田市のお酒屋さん「酒のステップ」へようこそ！';
-        // $this->pushMessageAction->sendMessage($userId, $message);
-        $this->lineMessagingService->pushMessage($userId, $message);
+        } catch (\Exception $e) {
+            Log::error('メッセージ処理エラー: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'message' => $messageText ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     /**
      * フォローイベントを処理する
      *
      * @param string|null $userId ユーザーID
+     * @param string|null $replyToken リプライトークン
      * @return void
      */
     private function handleFollowEvent(?string $userId, ?string $replyToken)
     {
-        // サンクスメッセージを送信
-        $message = '友達登録ありがとうございます！';
-        // $this->pushMessageAction->sendMessage($userId, $message);
-        $this->lineMessagingService->pushMessage($userId, $message);
+        try {
+            // サンクスメッセージを送信
+            $message = '友達登録ありがとうございます！';
+            $this->lineMessagingService->pushMessage($userId, $message);
 
-        // LineUserモデルを取得
-        $lineUser = LineUser::where('line_user_id', $userId)->first();
+            // LineUserモデルを取得または作成
+            $lineUser = LineUser::where('line_user_id', $userId)
+                ->where('site_id', $this->siteId)
+                ->whereNull('deleted_at')
+                ->first();
 
-        $lineUser->followed_at = now();
-        $lineUser->unfollowed_at = null;
-        $lineUser->nonce = null;
-        $lineUser->save();
+            if ($lineUser) {
+                // 既存ユーザーの場合、フォロー状態を更新
+                $lineUser->update([
+                    'followed_at' => now(),
+                    'unfollowed_at' => null
+                ]);
 
-        // LineUserモデルが存在しない場合はアカウント連携用のURLを送信
-        if(is_null($lineUser)){
+                // 連携済みの場合はマイページリンクを送信
+                if ($lineUser->is_linked) {
+                    $this->mypageLinkSend($replyToken);
+                    return;
+                }
+            }
+
+            // 未連携の場合はアカウント連携URLを送信
             $this->accountLinkSend($userId, $replyToken);
-            return;
-        }
 
-        // マイページへのリンクを送信
-        $this->mypageLinkSend($replyToken);
-        return;
+        } catch (\Exception $e) {
+            Log::error('フォロー処理エラー: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     /**
-     * アカウント連携イベントを処理する
+     * アカウントリンクイベントを処理する
      *
-     * @param string|null $userId ユーザーID
-     * @param string|null $nonce ノンス
+     * @param string|null $userId LINEユーザーID
+     * @param string|null $nonce ノンタイトークン
+     * @param string|null $replyToken リプライトークン
      * @return void
      */
-    private function handleAccountLinkEvent(?string $userId, ?string $nonce)
+    private function handleAccountLinkEvent(?string $userId, ?string $nonce, ?string $replyToken)
     {
-        // LineUserモデルを取得
-        $lineUser = LineUser::where('nonce', $nonce)->first();
+        try {
+            // LineUserモデルを取得
+            $lineUser = LineUser::where('nonce', $nonce)
+                ->where('site_id', $this->siteId)
+                ->whereNull('deleted_at')
+                ->first();
 
-        // LineUserモデルがある場合、アカウントリンク成立フラグを立てる
-        if(!is_null($lineUser)){
-            $lineUser->user_id = $userId;
-            $lineUser->is_linked = true;
-            $lineUser->nonce = null;
-            $lineUser->save();
+            if (!$lineUser) {
+                Log::error('LINE連携エラー: 無効なnonce', [
+                    'nonce' => $nonce,
+                    'user_id' => $userId
+                ]);
+                return;
+            }
+
+            // アカウント連携を完了
+            if (!$lineUser->completeLink($userId)) {
+                throw new \Exception('アカウント連携情報の更新に失敗しました');
+            }
+
+            // 連携完了メッセージを送信
+            if ($replyToken) {
+                $this->accountLinkThanks($replyToken);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('LINE連携エラー: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'nonce' => $nonce,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -214,17 +261,23 @@ class LineWebhookController extends Controller
      * @param string|null $userId ユーザーID
      * @return void
      */
-    private function handleUnfollowEvent(?string $userId, ?string $nonce)
+    private function handleUnfollowEvent(?string $userId)
     {
-        // LineUserモデルを取得
-        $lineUser = LineUser::where('line_user_id', $userId)->first();
+        try {
+            $lineUser = LineUser::where('line_user_id', $userId)
+                ->where('site_id', $this->siteId)
+                ->whereNull('deleted_at')
+                ->first();
 
-        // LineUserモデルがある場合、フォロー解除フラグを立てる
-        if(!is_null($lineUser)){
-            $lineUser->is_linked = false;
-            $lineUser->followed_at = null;
-            $lineUser->unfollowed_at = now();
-            $lineUser->save();
+            if ($lineUser) {
+                $lineUser->unlink();
+            }
+
+        } catch (\Exception $e) {
+            Log::error('フォロー解除処理エラー: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -233,12 +286,104 @@ class LineWebhookController extends Controller
      *
      * @param string $userId
      * @param string $replyToken
-     * @throws \LINE\LINEBot\Exception\CurlExecutionException
+     * @throws \Exception
      */
     private function accountLinkSend(string $userId, string $replyToken)
     {
-        $linkToken = $this->lineMessagingService->getLinkToken($userId);
+        try {
+            // リンクトークンを取得
+            $linkToken = $this->lineMessagingService->issueLinkToken($userId);
+            
+            if (!$linkToken) {
+                throw new \Exception('リンクトークンの取得に失敗しました');
+            }
 
+            // ユーザープロフィールを取得
+            $profile = $this->lineMessagingService->getProfile($userId);
+            if (!$profile) {
+                throw new \Exception('ユーザープロフィールの取得に失敗しました');
+            }
+
+            // LineUserモデルを作成または更新し、新しいnonceを生成
+            $lineUser = LineUser::updateOrCreate(
+                [
+                    'site_id' => $this->siteId,
+                    'line_user_id' => $userId
+                ],
+                [
+                    'is_linked' => false,
+                    'display_name' => $profile['displayName'],
+                    'picture_url' => $profile['pictureUrl'] ?? null,
+                    'status_message' => $profile['statusMessage'] ?? null
+                ]
+            );
+
+            // 新しいnonceを生成
+            $nonce = $lineUser->refreshNonce();
+
+            // アカウント連携URLを生成
+            $site = Site::find($this->siteId);
+            if (!$site) {
+                throw new \Exception('サイト情報が見つかりません');
+            }
+
+            $linkUrl = route('line.account.link', [
+                'site_code' => $site->site_code,
+                'nonce' => $nonce,
+                'link_token' => $linkToken
+            ], true);
+
+            // テンプレートメッセージを作成
+            $templateMessage = new TemplateMessage([
+                'type' => MessageType::TEMPLATE,
+                'altText' => 'アカウント連携のお願い',
+                'template' => [
+                    'type' => 'buttons',
+                    'text' => "サービスをご利用いただくには、アカウント連携が必要です。\n以下のボタンから連携を行ってください。",
+                    'actions' => [
+                        [
+                            'type' => 'uri',
+                            'label' => 'アカウント連携',
+                            'uri' => $linkUrl
+                        ]
+                    ]
+                ]
+            ]);
+
+            // URLをログファイルに出す
+            Log::info('アカウント連携用URL: ' . $linkUrl);
+
+            // URLをメッセージとして送信
+            $textMessage = new TextMessage([
+                'type' => MessageType::TEXT,
+                'text' => "アカウント連携用URL:\n" . $linkUrl
+            ]);
+
+            // 両方のメッセージを送信
+            $request = new ReplyMessageRequest([
+                'replyToken' => $replyToken,
+                'messages' => [$templateMessage, $textMessage]
+            ]);
+
+            $this->lineMessagingService->replyMessage($request);
+
+        } catch (\Exception $e) {
+            Log::error('アカウント連携URL送信エラー: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'replyToken' => $replyToken
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * アカウント連携完了メッセージを送信
+     *
+     * @param string $replyToken リプライトークン
+     * @return void
+     */
+    private function accountLinkThanks(string $replyToken)
+    {
         $client = new \GuzzleHttp\Client();
         $config = new \LINE\Clients\MessagingApi\Configuration();
         $config->setAccessToken(config('services.line.channel_token'));
@@ -247,54 +392,60 @@ class LineWebhookController extends Controller
             config: $config,
         );
 
-        $templateMessage = new TemplateMessage([
-            'type' => MessageType::TEMPLATE,
-            'altText' => 'LINEと連携ができるようになりました！',
-            'template' => new ButtonsTemplate([
-                'type' => TemplateType::BUTTONS,
-                'title' => "LINE連携ができるようになりました！",
-                'text' => "3TAPオーダーシステムへのログインは↓のリンクから！！",
-                'thumbnailImageUrl' => null,
-                'actions' => [
-                    new URIAction([
-                        'type' => ActionType::URI,
-                        'label' => '連携はこちらから',
-                        'uri' => route("customer.index",["linkToken" => $linkToken]),
-                    ])
-                ]
-            ])
+        // メッセージを作成
+        $message = new \LINE\Clients\MessagingApi\Model\TextMessage([
+            'type' => 'text',
+            'text' => "連携が完了しました。\n" . self::LOGIN_GUIDE_MESSAGE . url('/customer')
         ]);
-        $request = new ReplyMessageRequest([
-            'replyToken' => $replyToken,
-            'messages' => [$templateMessage],
-        ]);
-        $response = $messagingApi->replyMessage($request);
-    }
 
-    /**
-     * アカウント連携完了メッセージを送信
-     *
-     * @param string $userId
-     * @param string $replyToken
-     * @throws \LINE\LINEBot\Exception\CurlExecutionException
-     */
-    private function accountLinkThanks(string $replyToken){
-        $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
-        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret001')]);
-        $response = $bot->replyText($replyToken, "連携が完了しました。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
+        // リプライメッセージリクエストを作成
+        $request = new \LINE\Clients\MessagingApi\Model\ReplyMessageRequest([
+            'replyToken' => $replyToken,
+            'messages' => [$message]
+        ]);
+
+        // メッセージを送信
+        try {
+            $response = $messagingApi->replyMessage($request);
+        } catch (\Exception $e) {
+            Log::error('LINE返信エラー: ' . $e->getMessage());
+        }
     }
 
     /**
      * マイページへのリンクを送信
      *
-     * @param string $userId
-     * @param string $replyToken
-     * @throws \LINE\LINEBot\Exception\CurlExecutionException
+     * @param string $replyToken リプライトークン
+     * @return void
      */
-    private function mypageLinkSend(string $replyToken){
-        $httpClient = new CurlHTTPClient(config('services.line.channel_token'));
-        $bot = new LINEBot($httpClient, ['channelSecret' => config('services.line.channel_secret')]);
-        $response = $bot->replyText($replyToken, "LINE連携は完了しております。\n今後ともよろしくお願いいたします。\nログインはこちらからお願いします。\n".url('/login'));
+    private function mypageLinkSend(string $replyToken)
+    {
+        $client = new \GuzzleHttp\Client();
+        $config = new \LINE\Clients\MessagingApi\Configuration();
+        $config->setAccessToken(config('services.line.channel_token'));
+        $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
+            client: $client,
+            config: $config,
+        );
+
+        // メッセージを作成
+        $message = new \LINE\Clients\MessagingApi\Model\TextMessage([
+            'type' => 'text',
+            'text' => "LINE連携は完了しております。\n" . self::LOGIN_GUIDE_MESSAGE . url('/customer')
+        ]);
+
+        // リプライメッセージリクエストを作成
+        $request = new \LINE\Clients\MessagingApi\Model\ReplyMessageRequest([
+            'replyToken' => $replyToken,
+            'messages' => [$message]
+        ]);
+
+        // メッセージを送信
+        try {
+            $response = $messagingApi->replyMessage($request);
+        } catch (\Exception $e) {
+            Log::error('LINE返信エラー: ' . $e->getMessage());
+        }
     }
 
 }

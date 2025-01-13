@@ -51,26 +51,26 @@
                     </div>
                 </div>
 
-                <div class="overflow-y-auto max-h-[400px]">
+                <div class="overflow-y-auto max-h-[360px]">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     行番号
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     取引先コード
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     取引先名
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     ステータス
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     処理日時
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     エラーメッセージ
                                 </th>
                             </tr>
@@ -78,24 +78,24 @@
                         <tbody class="bg-white divide-y divide-gray-200" id="importRecords">
                             @foreach($records as $record)
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
                                     {{ $record->row_number }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
                                     {{ $record->customer_code }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
                                     {{ $record->customer_name }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-2 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $record->status_class }}">
                                         {{ $record->status_label }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
                                     {{ $record->processed_at ?? '-' }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-red-600">
+                                <td class="px-6 py-2 text-sm text-red-600">
                                     {{ $record->error_message ?? '' }}
                                 </td>
                             </tr>
@@ -113,7 +113,6 @@
         </div>
     </div>
 </div>
-
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -176,3 +175,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+

@@ -6,6 +6,7 @@ use App\Services\Customer\Actions\CreateCustomerAction;
 use App\Services\Customer\Actions\UpdateCustomerAction;
 use App\Services\Customer\Actions\DeleteCustomerAction;
 use App\Services\Customer\Actions\ImportCustomerAction;
+use App\Services\Customer\Actions\RestoreCustomerAction;
 use App\Services\Customer\DTOs\CustomerData;
 use App\Services\Customer\DTOs\CustomerSearchCriteria;
 use App\Services\Customer\Exceptions\CustomerException;
@@ -14,6 +15,9 @@ use App\Services\Interfaces\OperatorServiceInterface;
 use App\Services\ServiceErrorHandler;
 use App\Services\Traits\OperatorActionTrait;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use App\Models\Customer;
+use App\Models\Authentication;
 
 class CustomerService implements OperatorServiceInterface
 {
@@ -118,5 +122,21 @@ class CustomerService implements OperatorServiceInterface
             callback: fn() => $this->searchCustomerQuery->count($criteria),
             errorMessage: 'Failed to count customers'
         ) ?? 0;
+    }
+
+    /**
+     * 顧客を復元します
+     *
+     * @param int $customerId
+     * @param int $operatorId
+     * @return bool
+     */
+    public function restoreCustomer(int $customerId, int $operatorId): bool
+    {
+        return $this->tryCatchWrapper(
+            callback: fn() => $this->restoreCustomerAction->execute($customerId, $operatorId),
+            errorMessage: 'Failed to restore customer',
+            context: ['customer_id' => $customerId, 'operator_id' => $operatorId]
+        ) ?? false;
     }
 }

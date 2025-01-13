@@ -73,6 +73,12 @@
                         <button type="button" id="customer_update" class="bg-[#F4CF41] text-black px-8 py-1 rounded-md cursor-pointer">更新</button>
                     </div>
                 @endif
+
+                @if($isDeleted())
+                    <div>
+                        <button type="button" id="customer_restore" class="bg-red-500 text-white px-8 py-1 rounded-md">顧客を復元する</button>
+                    </div>
+                @endif
                 <div>
                     <a href="{{ route('operator.customer.index') }}" class="bg-[#F4CF41] text-black px-8 py-1 rounded-md">一覧に戻る</a>
                 </div>
