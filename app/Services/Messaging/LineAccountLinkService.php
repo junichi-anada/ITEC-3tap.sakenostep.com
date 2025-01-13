@@ -90,20 +90,14 @@ class LineAccountLinkService
             $profile = $this->lineMessaging->getProfile($token);
 
             DB::transaction(function () use ($lineUser, $token, $profile) {
-                // LINE認証情報を保存
-                $authProvider = AuthProvider::where('provider_name', 'line')->first();
-                
-                // 認証情報からユ�ーIDを取得
-                $auth = Authenticate::where('login_code', $lineUser->nonce)
-                    ->where('site_id', $lineUser->site_id)
-                    ->first();
-
-                if (!$auth) {
-                    throw new LineMessagingException('認証情報が�つかりません');
+                // 認証済みユーザーの情報を取得
+                $user = auth()->user();
+                if (!$user) {
+                    throw new LineMessagingException('ユーザー情報が取得できません');
                 }
 
-                // LineUserにuser_idを設定
-                $lineUser->user_id = $auth->entity_id;
+                // LINE認証情報を保存
+                $authProvider = AuthProvider::where('provider_name', 'line')->first();
                 
                 AuthenticateOauth::updateOrCreate(
                     [
@@ -120,12 +114,13 @@ class LineAccountLinkService
 
                 // LINEユーザー情報を更新
                 $lineUser->update([
-                    'user_id' => $auth->entity_id,
+                    'user_id' => $user->id,  // �証済みユーザーのIDを設定
                     'display_name' => $profile['displayName'],
                     'picture_url' => $profile['pictureUrl'] ?? null,
                     'status_message' => $profile['statusMessage'] ?? null,
                     'is_linked' => true,
-                    'followed_at' => now()
+                    'followed_at' => now(),
+                    'nonce' => null  // nonceは使用済みなのでクリア
                 ]);
             });
 
