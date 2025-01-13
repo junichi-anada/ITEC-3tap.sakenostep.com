@@ -576,21 +576,21 @@ class CustomerImportService
             try {
                 $password = $this->formatter->generatePasswordFromPhone($phone, $phone2, $fax);
             } catch (\Exception $e) {
-                Log::warning('Password generation failed', [
-                    'error' => $e->getMessage(),
-                    'data' => $data
-                ]);
+                // Log::warning('Password generation failed', [
+                //     'error' => $e->getMessage(),
+                //     'data' => $data
+                // ]);
                 // パスワード生成失敗時は、「R」+6桁の数字をパスワードとして生成
                 $randomNumbers = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
                 $randomPassword = 'R' . $randomNumbers;
                 $password = Hash::make($randomPassword);
                 // 電話番号としても保存
                 $phone = $randomPassword;
-                Log::info('Random password generated for customer', [
-                    'code' => $code,
-                    'name' => $name,
-                    'random_password' => $randomPassword
-                ]);
+                // Log::info('Random password generated for customer', [
+                //     'code' => $code,
+                //     'name' => $name,
+                //     'random_password' => $randomPassword
+                // ]);
             }
 
             // バリデーション
@@ -771,10 +771,10 @@ class CustomerImportService
         try {
             $password = $this->formatter->generatePasswordFromPhone($phone, $phone2, $fax);
         } catch (\Exception $e) {
-            Log::warning('Password generation failed', [
-                'error' => $e->getMessage(),
-                'data' => $data
-            ]);
+            // Log::warning('Password generation failed', [
+            //     'error' => $e->getMessage(),
+            //     'data' => $data
+            // ]);
             $password = null;
         }
 
