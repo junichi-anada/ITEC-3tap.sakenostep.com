@@ -7,16 +7,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Exception;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Authenticate;
 
 class CustomerUpdateService
 {
     /**
+     * 顧客情報更新サービスクラス
+     *
+     * このクラスは顧客情報を更新するためのサービスを提供します。
+     * 顧客情報の更新時に、�話番号を基にパスワードも更新します。
+     */
+    /**
      * 顧客情報を更新する
      *
-     * @param mixed $request
-     * @param User $user
-     * @param mixed $auth
-     * @return array
+     * @param mixed $request リクエストデータ
+     * @param User $user 更新対象ユーザー
+     * @param mixed $auth 認証情報
+     * @return array 処理結果
      */
     public function updateCustomer($request, $user, $auth)
     {
@@ -70,6 +78,26 @@ class CustomerUpdateService
                     throw new Exception('ユーザー情報の更新に失敗しました。');
                 }
 
+                // 認証情報を取得
+                $authenticate = Authenticate::where('entity_type', User::class)
+                    ->where('entity_id', $user->id)
+                    ->first();
+
+                if (!$authenticate) {
+                    throw new Exception('認証情報が見つかりません。');
+                }
+
+                // パスワードを更新（電話番号の優先順位: phone > phone2 > fax）
+                $phoneForPassword = $this->determinePhoneForPassword($request->phone, $request->phone2, $request->fax);
+                if ($phoneForPassword) {
+                    $normalizedPhone = $this->normalizePhoneNumber($phoneForPassword);
+                    $authenticate->password = Hash::make($normalizedPhone);
+                    
+                    if (!$authenticate->save()) {
+                        throw new Exception('認証情報の更新に失敗しました。');
+                    }
+                }
+
                 Log::info('Customer update successful', [
                     'user_id' => $user->id,
                     'user_code' => $user->user_code
@@ -84,8 +112,7 @@ class CustomerUpdateService
             Log::error('Customer update failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request' => $request->all(),
-                'user_id' => $user->id
+                'request' => $request->all()
             ]);
 
             return [
@@ -96,7 +123,40 @@ class CustomerUpdateService
     }
 
     /**
-     * エラーメッセージを取得
+     * パスワードとして使用する電話番号を決定する
+     *
+     * @param string|null $phone 電話番号
+     * @param string|null $phone2 電話番号2
+     * @param string|null $fax FAX番号
+     * @return string|null
+     */
+    private function determinePhoneForPassword($phone, $phone2, $fax)
+    {
+        if (!empty($phone)) {
+            return $phone;
+        }
+        if (!empty($phone2)) {
+            return $phone2;
+        }
+        if (!empty($fax)) {
+            return $fax;
+        }
+        return null;
+    }
+
+    /**
+     * 電話番号を正規化する（ハイフンを削除）
+     *
+     * @param string $phone
+     * @return string
+     */
+    private function normalizePhoneNumber($phone)
+    {
+        return str_replace('-', '', $phone);
+    }
+
+    /**
+     * エラメッセージを取得
      *
      * @param string $message
      * @return string
