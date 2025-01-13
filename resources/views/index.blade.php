@@ -21,7 +21,7 @@
 
 <body class="font-body">
     <div class="flex justify-center items-center" style="height: 100vh;">
-        <img src="{{ asset('image/3tap-step.png') }}" alt="酒のステップ" style="max-width: 500px;">
+        <img src="{{ asset('image/3tap-step.png') }}" alt="酒のステップ" style="max-width: 500px; width: 60%;">
     </div>
 </body>
 
