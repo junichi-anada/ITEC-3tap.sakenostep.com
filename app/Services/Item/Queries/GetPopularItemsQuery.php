@@ -36,6 +36,7 @@ final class GetPopularItemsQuery
                     ->limit($limit)
                     ->get()
                     ->map(fn ($item) => new PopularItemData(
+                        id: $item->id,
                         name: $item->name,
                         orderCount: $item->order_count
                     ));
