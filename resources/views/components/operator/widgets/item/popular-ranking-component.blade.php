@@ -15,7 +15,7 @@
             @if (empty($popularItems))
                 <p>人気商品はありません。</p>
             @else
-                @for ($i = 1; $i <= count($popularItems); $i++)
+                @for ($i = 1; $i <= 5; $i++)
                     @php
                         $popularItem = $popularItems[$i - 1];
                     @endphp
