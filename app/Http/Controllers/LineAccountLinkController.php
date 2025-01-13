@@ -92,9 +92,6 @@ class LineAccountLinkController extends Controller
 
             // 認証出来たらline_usersのuser_idを更新
             $authUser = Auth::user();
-
-            Log::info('認証済みユーザー: ' . $authUser);
-
             $lineUser->user_id = $authUser->entity_id;
             $lineUser->save();
 
