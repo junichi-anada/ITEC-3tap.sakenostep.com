@@ -34,4 +34,12 @@ class AuthenticationException extends Exception
             'Invalid credentials provided'
         );
     }
+
+    public static function passwordUpdateFailed(): self
+    {
+        return new self(
+            ['password' => __('パスワード（電話番号）の更新に失敗しました。')],
+            'Failed to update password'
+        );
+    }
 }
