@@ -14,18 +14,18 @@ class CustomerRestoreService
         try {
             DB::beginTransaction();
 
-            // Delete LINE user if exists
-            LineUser::where('user_id', $user->id)->delete();
+            // LINE連携情報は新規作成のため、削除は維持
 
-            // Soft delete authenticate record
-            Authenticate::where('entity_id', $user->id)
+            // 認証情報を復元
+            Authenticate::withTrashed()
+                ->where('entity_id', $user->id)
                 ->where('entity_type', User::class)
                 ->get()
                 ->each(function ($auth) {
-                    $auth->delete();
+                    $auth->restore(); // deleteの代わりにrestoreを使用
                 });
 
-            // softdelete解除
+            // ユーザー情報を復元
             $user->restore();
 
             DB::commit();
