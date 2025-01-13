@@ -91,7 +91,11 @@ class LineAccountLinkController extends Controller
             }
 
             // 認証出来たらline_usersのuser_idを更新
-            $lineUser->user_id = auth()->user()->id;
+            $auth = Authenticate::where('login_code', $lineUser->nonce)
+                ->where('site_id', $lineUser->site_id)
+                ->first();
+
+            $lineUser->user_id = $auth->entity_id;
             $lineUser->save();
 
             // LINEのアカウント連携画面にリダイレクト
