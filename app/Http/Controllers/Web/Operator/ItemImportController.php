@@ -15,15 +15,18 @@ class ItemImportController extends Controller
      * @param string $taskCode
      * @return \Illuminate\View\View
      */
-    public function progress($taskCode)
+    public function progress(string $taskCode)
     {
         $auth = Auth::user();
-        $operator = Operator::where('id', $auth->entity_id)->first();
-
+        
+        // タスク情報を取得
         $task = ImportTask::where('task_code', $taskCode)
-            ->where('data_type', ImportTask::DATA_TYPE_ITEM)
+            ->where('site_id', $auth->site_id)
             ->firstOrFail();
 
-        return view('operator.item.import-progress', compact('operator', 'task'));
+        return view('operator.item.import.progress', [
+            'task' => $task,
+            'operator' => $auth
+        ]);
     }
 }

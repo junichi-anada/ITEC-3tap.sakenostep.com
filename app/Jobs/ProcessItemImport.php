@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ImportTask;
+use App\Models\ImportTaskRecord;
 use App\Services\Item\ItemImportService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,123 +11,91 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 
 class ProcessItemImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * インポートタスク
-     *
-     * @var ImportTask
-     */
-    protected $task;
+    protected ImportTask $task;
+    protected int $startRow;
+    protected int $batchSize;
 
     /**
-     * 試行回数
+     * 再試行回数
      *
      * @var int
      */
-    public $tries = 1;
-
-    /**
-     * タイムアウト時間（秒）
-     *
-     * @var int
-     */
-    public $timeout = 4320;
+    public $tries = 3;
 
     /**
      * Create a new job instance.
      *
      * @param ImportTask $task
+     * @param int $startRow
+     * @param int $batchSize
      * @return void
      */
-    public function __construct(ImportTask $task)
+    public function __construct(ImportTask $task, int $startRow, int $batchSize)
     {
         $this->task = $task;
+        $this->startRow = $startRow;
+        $this->batchSize = $batchSize;
     }
 
     /**
      * Execute the job.
      *
-     * @param ItemImportService $itemImportService
+     * @param ItemImportService $service
      * @return void
      */
-    public function handle(ItemImportService $itemImportService)
+    public function handle(ItemImportService $service): void
     {
+        Log::info('インポートジョブを開始します', [
+            'task_code' => $this->task->task_code,
+            'start_row' => $this->startRow,
+            'batch_size' => $this->batchSize
+        ]);
+
         try {
-            Log::info('商品データインポート処理を開始します', [
-                'task_code' => $this->task->task_code
-            ]);
-
-            // 処理開始時にステータスを更新
-            DB::transaction(function () {
-                $this->task->status = 'processing';
-                $this->task->error_message = null;
-                $this->task->save();
-            });
-
-            // インポート処理を実行
-            $itemImportService->processFile($this->task);
-
-            // 処理完了時にステータスを更新
-            DB::transaction(function () {
-                if ($this->task->error_records > 0) {
-                    $this->task->status = 'completed_with_errors';
-                } else {
-                    $this->task->status = 'completed';
-                }
-                $this->task->imported_at = now();
-                $this->task->save();
-            });
-
-            Log::info('商品データインポート処理が完了しました', [
-                'task_code' => $this->task->task_code,
-                'status' => $this->task->status,
-                'total_records' => $this->task->total_records,
-                'success_records' => $this->task->success_records,
-                'error_records' => $this->task->error_records
-            ]);
+            // 指定された行から処理を開始
+            $service->processFile($this->task, $this->startRow);
 
         } catch (\Exception $e) {
-            Log::error('商品データインポート処理でエラーが発生しました', [
+            Log::error('インポートジョブでエラーが発生しました', [
                 'task_code' => $this->task->task_code,
+                'start_row' => $this->startRow,
                 'error' => $e->getMessage()
             ]);
 
-            // エラー時にステータスを更新
-            DB::transaction(function () use ($e) {
-                $this->task->status = 'failed';
-                $this->task->error_message = $e->getMessage();
-                $this->task->imported_at = now();
-                $this->task->save();
-            });
+            // 失敗したレコードのステータスを更新
+            ImportTaskRecord::where('import_task_id', $this->task->id)
+                ->where('row_number', '>=', $this->startRow)
+                ->where('row_number', '<', $this->startRow + $this->batchSize)
+                ->update(['status' => ImportTaskRecord::STATUS_FAILED]);
 
             throw $e;
         }
     }
 
     /**
-     * ジョブの失敗を処理
+     * ジョブが失敗したときの処理
      *
      * @param \Exception $exception
      * @return void
      */
     public function failed(\Exception $exception)
     {
-        Log::error('商品データインポートジョブが失敗しました', [
+        Log::error('インポートジョブが失敗しました', [
             'task_code' => $this->task->task_code,
+            'start_row' => $this->startRow,
             'error' => $exception->getMessage()
         ]);
 
-        // タスクのステータスを更新
-        DB::transaction(function () use ($exception) {
-            $this->task->status = 'failed';
+        // 最大試行回数に達した場合、タスク全体を失敗状態に
+        if ($this->attempts() >= $this->tries) {
+            $this->task->status = ImportTask::STATUS_FAILED;
             $this->task->error_message = $exception->getMessage();
-            $this->task->imported_at = now();
             $this->task->save();
-        });
+        }
     }
 }

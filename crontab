@@ -1,0 +1,2 @@
+# Laravel Queue Workerを1分ごとに実行
+* * * * * cd /home/rbsdev/web2/ITEC-3tap.sakenostep.com && sail artisan queue:work --stop-when-empty --max-jobs=100 >> /home/rbsdev/web2/ITEC-3tap.sakenostep.com/storage/logs/worker.log 2>&1 

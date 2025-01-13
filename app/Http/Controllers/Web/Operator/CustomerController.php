@@ -12,6 +12,7 @@ use App\Services\Customer\Queries\GetCustomerListQuery;
 use App\Services\Customer\CustomerRegistrationService;
 use App\Services\Customer\CustomerDeleteService;
 use App\Services\Customer\CustomerUpdateService;
+use App\Services\Customer\CustomerRestoreService;
 use App\Services\Customer\Queries\CustomerSearchQuery;
 use App\Contracts\LineMessagingServiceInterface;
 use Illuminate\Support\Facades\Auth;
@@ -308,4 +309,32 @@ class CustomerController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 顧客情報を復元する
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function restore(Request $request, $id, CustomerRestoreService $customerRestoreService)
+    {
+        $auth = Auth::user();
+        $user = User::withTrashed()->findOrFail($id);
+
+        $result = $customerRestoreService->restoreCustomer($user, $auth);
+
+        if ($request->ajax()) {
+            return response()->json($result);
+        }
+
+        if ($result['message'] === 'success') {
+            return redirect()->route('operator.customer.index')
+                ->with('success', '顧客情報を復元しました。');
+        } else {
+            return redirect()->route('operator.customer.show', $id)
+                ->with('error', '顧客情報の復元に失敗しました。');
+        }
+    } 
+
 }

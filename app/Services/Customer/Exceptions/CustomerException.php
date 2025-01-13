@@ -36,6 +36,11 @@ class CustomerException extends Exception
         return new self("Customer import failed: {$reason}");
     }
 
+    public static function restoreFailed(int $id, string $reason): self
+    {
+        return new self("Failed to restore customer {$id}: {$reason}");
+    }
+
     public static function invalidSearchCriteria(string $reason): self
     {
         return new self("Invalid search criteria: {$reason}");

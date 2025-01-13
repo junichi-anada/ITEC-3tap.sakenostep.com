@@ -28,6 +28,11 @@ import {
     makeLineMessageFailModal,
 } from "../../modal/operator/customer/line-message.js";
 import { validateCustomerForm } from "../../validation/customer.js";
+import {
+    makeCustomerRestoreConfirmModal,
+    makeCustomerRestoreSuccessModal,
+    makeCustomerRestoreFailModal,
+} from "../../modal/operator/customer/restore.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     // 登録ボタンクリック → 登録確認モーダル表示
@@ -115,21 +120,35 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // 復元ボタンクリック → 復元確認モーダル表示
+    const customerRestoreButton = document.getElementById("customer_restore");
+    if (customerRestoreButton) {
+        customerRestoreButton.addEventListener("click", function () {
+            makeCustomerRestoreConfirmModal();
+        });
+    }
+
     // 処理ボタンをクリックされた時の処理
     const customerExec = document.getElementById("execModal");
     if (customerExec) {
         customerExec.addEventListener("click", function () {
-            if (document.getElementById("execMode").textContent == "regist") {
-                registCustomer();
-            }
-            if (document.getElementById("execMode").textContent == "update") {
-                updateCustomer();
-            }
-            if (document.getElementById("execMode").textContent == "delete") {
-                deleteCustomer();
-            }
-            if (document.getElementById("execMode").textContent == "import") {
-                uploadCustomer();
+            const execMode = document.getElementById("execMode").textContent;
+            switch (execMode) {
+                case "regist":
+                    registCustomer();
+                    break;
+                case "update":
+                    updateCustomer();
+                    break;
+                case "delete":
+                    deleteCustomer();
+                    break;
+                case "import":
+                    uploadCustomer();
+                    break;
+                case "restore":
+                    restoreCustomer();
+                    break;
             }
         });
     }
@@ -399,6 +418,64 @@ document.addEventListener("DOMContentLoaded", function () {
             makeCustomerImportFailModal(
                 error.message || "アップロード中にエラーが発生しました"
             );
+        }
+    }
+
+    /**
+     * restoreCustomer
+     * 顧客データを復元
+     * 送信先: /operator/customer/{customerCode}/restore
+     *
+     * @return void
+     */
+    async function restoreCustomer() {
+        const customerForm = document.getElementById("customer_form");
+        const formData = new FormData(customerForm);
+        const csrfToken = formData.get("_token");
+        const userId = document.getElementById("user_id").value;
+
+        // デバッグ用のログ出力
+        // console.log('Restore URL:', `/operator/customer/${userId}/restore`);
+        // console.log('CSRF Token:', csrfToken);
+        // console.log('User ID:', userId);
+
+        try {
+            // ajax送信
+            const response = await fetch(`/operator/customer/${userId}/restore`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest",
+                    Accept: "application/json",
+                    // セッションクッキーを含める
+                    credentials: 'same-origin'
+                },
+                // 空のJSONボディを送信
+                body: JSON.stringify({})
+            });
+
+            // レスポンスの詳細をログ出力
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                console.error('Error data:', errorData);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.message === "success") {
+                makeCustomerRestoreSuccessModal();
+            } else {
+                console.error("Restore failed:", data.message);
+                makeCustomerRestoreFailModal();
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            makeCustomerRestoreFailModal();
         }
     }
 });

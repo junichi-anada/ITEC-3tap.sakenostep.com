@@ -15,8 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LineUser extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'site_id',
@@ -31,16 +30,18 @@ class LineUser extends Model
         'unfollowed_at'
     ];
 
-    protected $casts = [
-        'is_linked' => 'boolean',
-        'followed_at' => 'datetime',
-        'unfollowed_at' => 'datetime'
+    protected $dates = [
+        'followed_at',
+        'unfollowed_at',
+        'created_at',
+        'updated_at',
+        'deleted_at'
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-
     /**
-     * サイトとのリレーション
+     * �イトとのリレーション
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function site()
     {
@@ -49,6 +50,8 @@ class LineUser extends Model
 
     /**
      * ユーザーとのリレーション
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
     {
@@ -56,52 +59,44 @@ class LineUser extends Model
     }
 
     /**
-     * LINE認証情報とのリレーション
+     * アカウント連携を完了する
+     *
+     * @param string $lineUserId
+     * @return bool
      */
-    public function authenticateOauth()
+    public function completeLink(string $lineUserId): bool
     {
-        return $this->hasOne(AuthenticateOauth::class, 'entity_id')
-            ->where('entity_type', self::class);
+        return $this->update([
+            'line_user_id' => $lineUserId,
+            'is_linked' => true,
+            'nonce' => null,  // nonceは使用後にクリア
+            'followed_at' => now()
+        ]);
     }
 
     /**
-     * nonceを生成して保存
+     * アカウント連携を解除する
+     *
+     * @return bool
      */
-    public function generateNonce(): string
+    public function unlink(): bool
+    {
+        return $this->update([
+            'is_linked' => false,
+            'followed_at' => null,
+            'unfollowed_at' => now()
+        ]);
+    }
+
+    /**
+     * 新しいnonceを生成する
+     *
+     * @return string
+     */
+    public function refreshNonce(): string
     {
         $nonce = bin2hex(random_bytes(16));
         $this->update(['nonce' => $nonce]);
         return $nonce;
-    }
-
-    /**
-     * nonceを検証
-     */
-    public function verifyNonce(string $nonce): bool
-    {
-        return $this->nonce === $nonce;
-    }
-
-    /**
-     * ユーザーとの連携を行う
-     */
-    public function linkWithUser(User $user): bool
-    {
-        return $this->update([
-            'user_id' => $user->id,
-            'is_linked' => true,
-            'nonce' => null
-        ]);
-    }
-
-    /**
-     * ユーザーとの連携を解除
-     */
-    public function unlinkUser(): bool
-    {
-        return $this->update([
-            'user_id' => null,
-            'is_linked' => false
-        ]);
     }
 }

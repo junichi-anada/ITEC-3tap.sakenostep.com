@@ -3,85 +3,192 @@
 namespace App\Services\Item;
 
 use App\Models\Item;
-use App\Models\ItemCategory;
 use App\Models\ImportTask;
 use App\Models\ImportTaskRecord;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\File;
+use App\Models\ItemCategory;
+use App\Jobs\ProcessItemImport;
 
 class ItemImportService
 {
     /**
      * 一度に処理する行数
      */
-    const CHUNK_SIZE = 1;
+    const BATCH_SIZE = 100;
 
     /**
-     * インポートタスクを作成する
+     * インポートタスクを取得
      *
-     * @param string $filePath アップロードされたファイルのパス
+     * @param string $taskCode タスクコード
+     * @return ImportTask|null
+     */
+    public function getImportTask(string $taskCode): ?ImportTask
+    {
+        try {
+            $task = ImportTask::where('task_code', $taskCode)
+                ->where('data_type', ImportTask::DATA_TYPE_ITEM)
+                ->first();
+
+            if (!$task) {
+                Log::warning('Import task not found', [
+                    'task_code' => $taskCode,
+                    'data_type' => ImportTask::DATA_TYPE_ITEM
+                ]);
+                return null;
+            }
+
+            return $task;
+        } catch (\Exception $e) {
+            Log::error('Failed to get import task', [
+                'task_code' => $taskCode,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * インポートタスクを作成
+     *
+     * @param string $filePath アップロードされたファイルの一時パス
      * @param int $siteId サイトID
-     * @param string $loginCode ログインコード
+     * @param string $importedBy インポート実行者
      * @return ImportTask
      */
-    public function createImportTask($filePath, $siteId, $loginCode)
+    public function createImportTask(string $filePath, int $siteId, string $importedBy): ImportTask
     {
-        return DB::transaction(function () use ($filePath, $siteId, $loginCode) {
-            return ImportTask::create([
-                'task_code' => 'IMP' . Str::random(10),
-                'file_path' => $filePath,
-                'status' => 'pending',
+        try {
+            DB::beginTransaction();
+
+            // ファイルを保存し、フルパスを取得
+            $storagePath = Storage::disk('local')->putFile(
+                'imports/items',
+                new File($filePath)
+            );
+
+            if (!$storagePath) {
+                throw new \Exception('ファイルの保存に失敗しました。');
+            }
+
+            // フルパスを取得
+            $fullPath = Storage::disk('local')->path($storagePath);
+
+            if (!file_exists($fullPath)) {
+                throw new \Exception('保存したファイルが見つかりません。');
+            }
+
+            // ヘッダー情報を取得して検証
+            $headers = $this->getHeadersFromFile($fullPath);
+            if (empty($headers)) {
+                throw new \Exception('ヘッダー情報の取得に失敗しました。');
+            }
+
+            // インポートタスクを作成
+            $task = ImportTask::create([
+                'task_code' => 'ITEM_' . strtoupper(Str::random(10)),
                 'site_id' => $siteId,
                 'data_type' => ImportTask::DATA_TYPE_ITEM,
+                'file_path' => $fullPath,
+                'status' => ImportTask::STATUS_PENDING,
+                'imported_by' => $importedBy,
+                'uploaded_at' => now(),
                 'total_records' => 0,
                 'processed_records' => 0,
                 'success_records' => 0,
                 'error_records' => 0,
-                'error_message' => null,
-                'uploaded_at' => now(),
-                'imported_by' => $loginCode,
             ]);
-        });
+
+            // CSVファイルの場合は、ここで初期データを作成
+            $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+            if (in_array($extension, ['csv', 'txt'])) {
+                $this->processCsvFile($task, 0);
+            } else {
+                $this->processExcelFile($task, 0);
+            }
+
+            DB::commit();
+            
+            Log::info('インポートタスクを作成しました', [
+                'task_code' => $task->task_code,
+                'site_id' => $task->site_id,
+                'data_type' => $task->data_type,
+                'file_path' => $fullPath
+            ]);
+            
+            return $task;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('インポートタスクの作成に失敗しました', [
+                'error' => $e->getMessage(),
+                'file_path' => $filePath
+            ]);
+            throw $e;
+        }
     }
 
     /**
      * ファイルを読み込んでデータを処理する
      *
      * @param ImportTask $task インポートタスク
+     * @param int $startRow 開始行番号（失敗時の再開用）
      * @return void
      */
-    public function processFile(ImportTask $task)
+    public function processFile(ImportTask $task, int $startRow = 0)
     {
         try {
-            Log::info('インポートファイルの処理を開始します', ['task_code' => $task->task_code]);
-            set_time_limit(300);
-
-            $extension = pathinfo($task->file_path, PATHINFO_EXTENSION);
-
-            if (in_array($extension, ['csv', 'txt'])) {
-                $this->processCsvFile($task);
-            } else {
-                $this->processExcelFile($task);
-            }
-
-            if ($task->error_records > 0) {
-                $task->status = 'completed_with_errors';
-            } else {
-                $task->status = 'completed';
-            }
-            $task->imported_at = now();
-            $task->save();
-
-            Log::info('インポートファイルの処理が完了しました', [
+            Log::info('インポートファイルの処理を開始します', [
                 'task_code' => $task->task_code,
-                'status' => $task->status,
-                'total_records' => $task->total_records,
-                'success_records' => $task->success_records,
-                'error_records' => $task->error_records
+                'start_row' => $startRow
             ]);
+
+            // バッチサイズ分のレコードを取得して処理
+            $records = ImportTaskRecord::where('import_task_id', $task->id)
+                ->where('row_number', '>=', $startRow)
+                ->where('row_number', '<', $startRow + self::BATCH_SIZE)
+                ->orderBy('row_number')
+                ->get();
+
+            if ($records->isEmpty()) {
+                // 全ての処理が完了した場合
+                $this->checkTaskCompletion($task);
+                return;
+            }
+
+            foreach ($records as $record) {
+                try {
+                    $this->processRecord($task, $record);
+                } catch (\Exception $e) {
+                    $record->update([
+                        'status' => ImportTaskRecord::STATUS_FAILED,
+                        'error_message' => $e->getMessage()
+                    ]);
+                    $task->increment('error_records');
+                    Log::error('レコード処理エラー: ' . $e->getMessage(), [
+                        'task_code' => $task->task_code,
+                        'row_number' => $record->row_number
+                    ]);
+                }
+            }
+
+            // 次のバッチがあるかチェック
+            $nextBatchExists = ImportTaskRecord::where('import_task_id', $task->id)
+                ->where('row_number', '>=', $startRow + self::BATCH_SIZE)
+                ->exists();
+
+            if ($nextBatchExists) {
+                // 次のバッチを処理するジョブをディスパッチ
+                ProcessItemImport::dispatch($task, $startRow + self::BATCH_SIZE, self::BATCH_SIZE)
+                    ->delay(now()->addSeconds(1));
+            } else {
+                // 全ての処理が完了した場合
+                $this->checkTaskCompletion($task);
+            }
 
         } catch (\Exception $e) {
             Log::error('インポートエラー: ' . $e->getMessage(), [
@@ -89,202 +196,59 @@ class ItemImportService
                 'file_path' => $task->file_path,
                 'error' => $e->getMessage()
             ]);
-            $task->status = 'failed';
-            $task->error_message = $e->getMessage();
-            $task->save();
             throw $e;
         }
     }
 
     /**
-     * CSVファイルを処理する
+     * ファイルからヘッダー情報を取得
      *
-     * @param ImportTask $task インポートタスク
-     * @return void
+     * @param string $filePath フルパス
+     * @return array
+     * @throws \Exception
      */
-    private function processCsvFile(ImportTask $task)
-    {
-        if (!file_exists($task->file_path)) {
-            throw new \Exception('ファイルが見つかりません: ' . $task->file_path);
-        }
-
-        $handle = fopen($task->file_path, 'r');
-        if ($handle === false) {
-            throw new \Exception('ファイルを開けません: ' . $task->file_path);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $headers = fgetcsv($handle);
-            if ($headers === false) {
-                throw new \Exception('ヘッダー行を読み取れません');
-            }
-
-            // ヘッダーの位置を特定
-            $columns = $this->mapHeaders($headers);
-
-            // 総行数をカウント（ヘッダー行を除く）
-            $lines = file($task->file_path);
-            $totalRows = count($lines) - 1;
-
-            Log::info('CSVファイルの行数を取得しました', [
-                'task_code' => $task->task_code,
-                'total_rows' => $totalRows
-            ]);
-
-            $task->total_records = $totalRows;
-            $task->save();
-
-            // ファイルポインタを先頭に戻し、ヘッダー行をスキップ
-            rewind($handle);
-            fgetcsv($handle);
-
-            // インポートタスクレコードを作成
-            $rowNumber = 2;
-            while (($data = fgetcsv($handle)) !== false) {
-                ImportTaskRecord::create([
-                    'import_task_id' => $task->id,
-                    'row_number' => $rowNumber,
-                    'status' => ImportTaskRecord::STATUS_PENDING,
-                    'data' => json_encode($data),
-                ]);
-                $rowNumber++;
-            }
-
-            DB::commit();
-
-            // レコードを処理（未処理のレコードのみ）
-            ImportTaskRecord::where('import_task_id', $task->id)
-                ->where('status', ImportTaskRecord::STATUS_PENDING)
-                ->orderBy('row_number')
-                ->chunk(self::CHUNK_SIZE, function ($records) use ($task, $columns) {
-                    foreach ($records as $record) {
-                        try {
-                            $this->processRecord($record, $columns, $task);
-                        } catch (\Exception $e) {
-                            $this->handleRecordError($record, $task, $e);
-                        }
-                    }
-                });
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        } finally {
-            fclose($handle);
-        }
-    }
-
-    /**
-     * Excelファイルを処理する
-     *
-     * @param ImportTask $task インポートタスク
-     * @return void
-     */
-    private function processExcelFile(ImportTask $task)
+    private function getHeadersFromFile(string $filePath)
     {
         try {
-            DB::beginTransaction();
-
-            $spreadsheet = IOFactory::load($task->file_path);
-            $worksheet = $spreadsheet->getActiveSheet();
-            $headers = $worksheet->getRowIterator(1)->current();
-
-            // ヘッダーの位置を特定
-            $headerRow = [];
-            foreach ($headers->getCellIterator() as $cell) {
-                $headerRow[] = $cell->getValue();
+            if (!file_exists($filePath)) {
+                throw new \Exception("ファイルが見つかりません: {$filePath}");
             }
-            $columns = $this->mapHeaders($headerRow);
 
-            // 総行数を取得（ヘッダー行を除く）
-            $totalRows = $worksheet->getHighestRow() - 1;
+            $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
-            $task->total_records = $totalRows;
-            $task->save();
-
-            // インポートタスクレコードを作成
-            $rowNumber = 2;
-            foreach ($worksheet->getRowIterator(2) as $row) {
-                $rowData = [];
-                foreach ($row->getCellIterator() as $cell) {
-                    $rowData[] = $cell->getValue();
+            if (in_array($extension, ['csv', 'txt'])) {
+                if (!($handle = fopen($filePath, 'r'))) {
+                    throw new \Exception("ファイルを開けません: {$filePath}");
                 }
-
-                ImportTaskRecord::create([
-                    'import_task_id' => $task->id,
-                    'row_number' => $rowNumber,
-                    'status' => ImportTaskRecord::STATUS_PENDING,
-                    'data' => json_encode($rowData),
-                ]);
-                $rowNumber++;
+                $headers = fgetcsv($handle);
+                fclose($handle);
+                return $headers;
             }
 
-            DB::commit();
-
-            // レコードを処理（未処理のレコードのみ）
-            ImportTaskRecord::where('import_task_id', $task->id)
-                ->where('status', ImportTaskRecord::STATUS_PENDING)
-                ->orderBy('row_number')
-                ->chunk(self::CHUNK_SIZE, function ($records) use ($task, $columns) {
-                    foreach ($records as $record) {
-                        try {
-                            $this->processRecord($record, $columns, $task);
-                        } catch (\Exception $e) {
-                            $this->handleRecordError($record, $task, $e);
-                        }
-                    }
-                });
+            // Excel形式の場合
+            $spreadsheet = IOFactory::load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $headers = [];
+            foreach ($worksheet->getRowIterator(1, 1) as $row) {
+                foreach ($row->getCellIterator() as $cell) {
+                    $headers[] = $cell->getValue();
+                }
+            }
+            return $headers;
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            throw new \Exception('Excelファイルの処理中にエラーが発生しました: ' . $e->getMessage());
+            Log::error('ヘッダー情報の取得に失敗しました', [
+                'file_path' => $filePath,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 
     /**
-     * レコードのエラーを処理する
+     * ヘッダーをマッピング
      *
-     * @param ImportTaskRecord $record
-     * @param ImportTask $task
-     * @param \Exception $e
-     * @return void
-     */
-    private function handleRecordError($record, $task, $e)
-    {
-        try {
-            DB::beginTransaction();
-
-            $record->status = ImportTaskRecord::STATUS_FAILED;
-            $record->error_message = $e->getMessage();
-            $record->processed_at = now();
-            $record->save();
-
-            $task->increment('processed_records');
-            $task->increment('error_records');
-
-            DB::commit();
-
-            Log::error('レコードの処理中にエラーが発生しました', [
-                'task_code' => $task->task_code,
-                'row_number' => $record->row_number,
-                'error' => $e->getMessage()
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('エラー処理中に例外が発生しました', [
-                'task_code' => $task->task_code,
-                'row_number' => $record->row_number,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * ヘッダーの位置をマッピングする
-     *
-     * @param array $headers ヘッダー行
+     * @param array $headers
      * @return array
      */
     private function mapHeaders($headers)
@@ -294,194 +258,300 @@ class ItemImportService
             $header = trim($header);
             switch ($header) {
                 case '商品コード':
-                    $columns['item_code'] = $index;
-                    break;
-                case '部門':
-                    $columns['department'] = $index;
+                    $columns['code'] = $index;
                     break;
                 case '商品名':
                     $columns['name'] = $index;
                     break;
-                case '容量':
-                    $columns['capacity'] = $index;
-                    break;
-                case 'ケース入数':
-                    $columns['quantity_per_unit'] = $index;
-                    break;
-                case 'バラJANコード':
-                    $columns['jan_code'] = $index;
-                    break;
-                case '単価':
-                    $columns['unit_price'] = $index;
+                case '部門':
+                    $columns['department'] = $index;
                     break;
             }
         }
 
         // 必須カラムの存在チェック
-        $requiredColumns = ['item_code', 'name', 'department'];
-        foreach ($requiredColumns as $column) {
-            if (!isset($columns[$column])) {
-                throw new \Exception("必須カラム（{$column}）が見つかりません");
-            }
+        if (!isset($columns['code']) || !isset($columns['name'])) {
+            throw new \Exception('必須カラム（商品コード、商品名）が見つかりません');
         }
 
         return $columns;
     }
 
     /**
-     * 半角カタカナを全角カタカナに変換する
+     * レコードを処理する
      *
-     * @param string $str 変換対象の文字列
-     * @return string 変換後の文字列
+     * @param ImportTask $task
+     * @param ImportTaskRecord $record
+     * @throws \Exception
      */
-    private function convertHankakuKana($str)
+    private function processRecord(ImportTask $task, ImportTaskRecord $record): void
     {
-        return mb_convert_kana($str, 'KV');
-    }
-
-    /**
-     * 部門情報を処理する
-     *
-     * @param string $department 部門情報（例: "001:食品"）
-     * @param int $siteId サイトID
-     * @return int カテゴリID
-     */
-    private function processDepartment($department, $siteId)
-    {
-        $parts = explode(':', $department);
-        if (count($parts) !== 2) {
-            throw new \Exception('部門の形式が不正です。（例: 001:食品）');
-        }
-
-        $categoryCode = str_pad(trim($parts[0]), 3, '0', STR_PAD_LEFT);
-        $categoryName = trim($parts[1]);
-
-        // カテゴリの検索または作成
-        $category = ItemCategory::firstOrCreate(
-            [
-                'site_id' => $siteId,
-                'category_code' => $categoryCode,
-            ],
-            [
-                'name' => $categoryName,
-                'is_published' => true,
-            ]
-        );
-
-        return $category->id;
-    }
-
-    /**
-     * 1行のデータを処理する
-     *
-     * @param ImportTaskRecord $record インポートタスクレコード
-     * @param array $columns カラムのマッピング
-     * @param ImportTask $task インポートタスク
-     * @return void
-     */
-    private function processRecord($record, $columns, $task)
-    {
-        DB::beginTransaction();
         try {
-            $record->status = ImportTaskRecord::STATUS_PROCESSING;
-            $record->save();
+            DB::beginTransaction();
 
             $data = json_decode($record->data, true);
-            if (!is_array($data)) {
-                throw new \Exception('データの形式が不正です');
+            
+            // CSVデータから各フィールドを取得
+            $itemCode = $data[0] ?? '';  // 商品コード
+            $departmentData = $data[1] ?? '';  // 部門
+            $itemName = $data[2] ?? '';  // 商品名
+            $capacity = $data[3] ?? '';  // 容量
+            $quantityPerUnit = $data[4] ?? '';  // ケース入数
+            $janCode = $data[5] ?? '';  // バラJANコード
+
+            // 部門コードから数値部分のみを抽出
+            $departmentCode = explode(':', $departmentData)[0] ?? '';
+
+            // 部門コードからカテゴリIDを取得
+            $category = ItemCategory::where('site_id', $task->site_id)
+                ->where('category_code', $departmentCode)
+                ->first();
+
+            if (!$category) {
+                throw new \Exception("部門コード '{$departmentCode}' に対応するカテゴリが見つかりません。");
             }
 
-            // データの取得と整形
-            $itemCode = isset($columns['item_code']) ? trim($data[$columns['item_code']]) : '';
-            $department = isset($columns['department']) ? trim($data[$columns['department']]) : '';
-            $name = isset($columns['name']) ? $this->convertHankakuKana(trim($data[$columns['name']])) : '';
-            $capacity = isset($columns['capacity']) ? (float)str_replace(',', '', trim($data[$columns['capacity']])) : null;
-            $quantityPerUnit = isset($columns['quantity_per_unit']) ? (int)trim($data[$columns['quantity_per_unit']]) : null;
-            $janCode = isset($columns['jan_code']) ? trim($data[$columns['jan_code']]) : null;
-            $unitPrice = isset($columns['unit_price']) ? (float)str_replace(',', '', trim($data[$columns['unit_price']])) : 0;
+            // 商品を作成または更新
+            $item = Item::updateOrCreate(
+                [
+                    'site_id' => $task->site_id,
+                    'item_code' => $itemCode,
+                ],
+                [
+                    'category_id' => $category->id,
+                    'name' => $itemName,
+                    'capacity' => $capacity,  // 容量を追加
+                    'quantity_per_unit' => $quantityPerUnit,  // ケース入数を追加
+                    'jan_code' => $janCode,  // JANコードを追加
+                ]
+            );
 
-            // バリデーション
-            $errors = [];
-            if (empty($itemCode)) $errors[] = '商品コードは必須です';
-            if (empty($name)) $errors[] = '商品名は必須です';
-            if (empty($department)) $errors[] = '部門は必須です';
-            if ($janCode && strlen($janCode) > 13) $errors[] = 'バラJANコードは13文字以内で入力してください';
-
-            if (!empty($errors)) {
-                throw new \Exception(implode(', ', $errors));
-            }
-
-            // JANコードの重複チェック
-            if ($janCode) {
-                $existingItem = Item::where('jan_code', $janCode)
-                    ->where('site_id', $task->site_id)
-                    ->where('item_code', '!=', $itemCode)
-                    ->first();
-
-                if ($existingItem) {
-                    throw new \Exception("JANコード '{$janCode}' は既に商品コード '{$existingItem->item_code}' で使用されています");
-                }
-            }
-
-            // 部門情報の処理
-            $categoryId = $this->processDepartment($department, $task->site_id);
-
-            // 商品の作成または更新
-            $item = Item::firstOrNew([
-                'site_id' => $task->site_id,
-                'item_code' => $itemCode
-            ]);
-
-            $item->fill([
-                'category_id' => $categoryId,
-                'name' => $name,
-                'capacity' => $capacity,
-                'quantity_per_unit' => $quantityPerUnit,
-                'jan_code' => $janCode,
-                'unit_price' => $unitPrice,
-                'from_source' => 'IMPORT',
-                'published_at' => now(), // インポート時の時間を設定
-            ]);
-            $item->save();
-
+            // レコードのステータスを更新
             $record->status = ImportTaskRecord::STATUS_COMPLETED;
             $record->processed_at = now();
             $record->save();
 
+            DB::commit();
+
+            // タスクの進捗を更新
             $task->increment('processed_records');
             $task->increment('success_records');
 
-            DB::commit();
-
-            // 1秒間のスリープを追加
-            sleep(1);
-
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // エラー情報を記録
+            $record->status = ImportTaskRecord::STATUS_FAILED;
+            $record->error_message = $e->getMessage();
+            $record->save();
+            
+            // タスクの進捗を更新（エラーとして）
+            $task->increment('processed_records');
+            $task->increment('error_records');
+
+            Log::error('レコード処理エラー: ' . $e->getMessage(), [
+                'task_code' => $task->task_code,
+                'row_number' => $record->row_number,
+                'data' => $data
+            ]);
+
             throw $e;
         }
     }
 
     /**
-     * インポートタスクの状態を取得
+     * タスクの完了状態をチェック
+     *
+     * @param ImportTask $task
+     * @return void
+     */
+    private function checkTaskCompletion(ImportTask $task)
+    {
+        $pendingCount = ImportTaskRecord::where('import_task_id', $task->id)
+            ->where('status', ImportTaskRecord::STATUS_PENDING)
+            ->count();
+
+        if ($pendingCount === 0) {
+            $task->update([
+                'status' => ImportTask::STATUS_COMPLETED,
+                'imported_at' => now()
+            ]);
+        }
+    }
+
+    /**
+     * タスクの状態を取得
      *
      * @param string $taskCode タスクコード
      * @return array|null
      */
-    public function getTaskStatus($taskCode)
+    public function getTaskStatus(string $taskCode): ?array
     {
         $task = ImportTask::where('task_code', $taskCode)->first();
         if (!$task) {
             return null;
         }
 
+        // 最新の10件のレコードを取得
         $records = ImportTaskRecord::where('import_task_id', $task->id)
-            ->orderBy('row_number')
-            ->get();
+            ->orderBy('row_number', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($record) {
+                $data = json_decode($record->data, true);
+                
+                return [
+                    'rowNumber' => $record->row_number,
+                    'itemCode' => $data[0] ?? '',
+                    'itemName' => $data[2] ?? '',
+                    'categoryName' => $this->extractCategoryName($data[1] ?? ''),
+                    'status' => $record->status,
+                    'statusLabel' => $this->getStatusLabel($record->status),
+                    'statusClass' => $this->getStatusClass($record->status),
+                    'processedAt' => $record->processed_at?->format('Y-m-d H:i:s'),
+                    'errorMessage' => $record->error_message
+                ];
+            });
 
         return [
-            'task' => $task,
+            'task' => [
+                'status' => $task->status,
+                'totalRecords' => $task->total_records,
+                'processedRecords' => $task->processed_records,
+                'successRecords' => $task->success_records,
+                'errorRecords' => $task->error_records,
+                'progress' => $task->total_records > 0 
+                    ? round(($task->processed_records / $task->total_records) * 100, 1) 
+                    : 0,
+                'isCompleted' => $task->isCompleted(),
+            ],
             'records' => $records
         ];
+    }
+
+    /**
+     * 部門情報からカテゴリ名を抽出
+     */
+    private function extractCategoryName(?string $department): string
+    {
+        if (empty($department)) {
+            return '';
+        }
+
+        $parts = explode(':', $department);
+        return trim($parts[1] ?? '');
+    }
+
+    /**
+     * ステータスラベルを取得
+     */
+    private function getStatusLabel(string $status): string
+    {
+        return match($status) {
+            'pending' => '待機中',
+            'processing' => '処理中',
+            'completed' => '完了',
+            'failed' => 'エラー',
+            default => '不明'
+        };
+    }
+
+    /**
+     * ステータスクラスを取得
+     */
+    private function getStatusClass(string $status): string
+    {
+        return match($status) {
+            'pending' => 'bg-gray-100 text-gray-800',
+            'processing' => 'bg-blue-100 text-blue-800',
+            'completed' => 'bg-green-100 text-green-800',
+            'failed' => 'bg-red-100 text-red-800',
+            default => 'bg-gray-100 text-gray-800'
+        };
+    }
+
+    /**
+     * CSVファイルを処理する
+     *
+     * @param ImportTask $task インポートタスク
+     * @param int $startRow 開始行番号
+     * @return void
+     */
+    private function processCsvFile(ImportTask $task, int $startRow)
+    {
+        $handle = fopen($task->file_path, 'r');
+        if ($handle === false) {
+            throw new \Exception('ファイルを開けませんでした。');
+        }
+
+        try {
+            // ヘッダー行をスキップ
+            fgetcsv($handle);
+            $rowNumber = 1;
+            $totalRecords = 0;
+
+            while (($data = fgetcsv($handle)) !== false) {
+                ImportTaskRecord::create([
+                    'import_task_id' => $task->id,
+                    'row_number' => $rowNumber,
+                    'status' => ImportTaskRecord::STATUS_PENDING,
+                    'data' => json_encode($data),
+                ]);
+                $rowNumber++;
+                $totalRecords++;
+            }
+
+            // タスクの総レコード数を更新
+            $task->update(['total_records' => $totalRecords]);
+
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Excelファイルを処理する
+     *
+     * @param ImportTask $task インポートタスク
+     * @param int $startRow 開始行番号
+     * @return void
+     */
+    private function processExcelFile(ImportTask $task, int $startRow)
+    {
+        $spreadsheet = IOFactory::load($task->file_path);
+        $worksheet = $spreadsheet->getActiveSheet();
+        $rowIterator = $worksheet->getRowIterator();
+
+        // ヘッダー行をスキップ
+        $rowIterator->next();
+        $rowNumber = 1;
+        $totalRecords = 0;
+
+        while ($rowIterator->valid()) {
+            $row = $rowIterator->current();
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(false);
+
+            $rowData = [];
+            foreach ($cellIterator as $cell) {
+                $rowData[] = $cell->getValue();
+            }
+
+            if (!empty(array_filter($rowData))) {
+                ImportTaskRecord::create([
+                    'import_task_id' => $task->id,
+                    'row_number' => $rowNumber,
+                    'status' => ImportTaskRecord::STATUS_PENDING,
+                    'data' => json_encode($rowData),
+                ]);
+                $totalRecords++;
+            }
+
+            $rowNumber++;
+            $rowIterator->next();
+        }
+
+        // タスクの総レコード数を更新
+        $task->update(['total_records' => $totalRecords]);
     }
 }

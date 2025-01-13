@@ -27,15 +27,25 @@ class LineAccountLinkService
     public function generateLinkUrl(Site $site, string $lineUserId): string
     {
         try {
+            // LineUserモデルを取得または作成
             $lineUser = LineUser::firstOrCreate(
-                ['site_id' => $site->id, 'line_user_id' => $lineUserId],
-                ['display_name' => '未設定']
+                [
+                    'site_id' => $site->id,
+                    'line_user_id' => $lineUserId
+                ],
+                [
+                    'display_name' => '未設定',
+                    'is_linked' => false
+                ]
             );
 
+            // nonceを生成
             $nonce = $lineUser->generateNonce();
-            
+
             // LINE Login用のチャネルIDを取得
-            $authProvider = AuthProvider::where('provider_name', 'line')->first();
+            $authProvider = AuthProvider::where('provider_name', 'line')
+                ->first();
+            
             $siteAuthProvider = $site->siteAuthProviders()
                 ->where('auth_provider_id', $authProvider->id)
                 ->first();
@@ -45,16 +55,10 @@ class LineAccountLinkService
             }
 
             // アカウント連携URLを生成
-            $params = http_build_query([
-                'response_type' => 'code',
-                'client_id' => $siteAuthProvider->client_id,
-                'redirect_uri' => route('line.callback'),
-                'state' => $nonce,
-                'scope' => 'profile',
-                'bot_prompt' => 'aggressive'
+            return route('line.account.link', [
+                'site_code' => $site->site_code,
+                'nonce' => $nonce
             ]);
-
-            return "https://access.line.me/oauth2/v2.1/authorize?{$params}";
 
         } catch (\Exception $e) {
             Log::error('アカウント連携URL生成エラー: ' . $e->getMessage());

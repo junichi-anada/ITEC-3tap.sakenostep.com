@@ -97,16 +97,18 @@ export function makeCustomerImportModal() {
         });
     }
 
-    // インポートハンドラーの初期化
+    // インポートハンドラーの初期化を確実に行う
+    if (window.customerImportHandler) {
+        window.customerImportHandler = null;
+    }
+    
     import("../../../ajax/operator/customer/import-handler.js")
         .then((module) => {
-            new module.CustomerImportHandler();
+            window.customerImportHandler = new module.CustomerImportHandler();
         })
         .catch((error) => {
-            console.error(
-                "インポートハンドラーの読み込みに失敗しました:",
-                error
-            );
+            console.error("インポートハンドラーの読み込みに失敗しました:", error);
+            makeCustomerImportFailModal("インポート処理の初期化に失敗しました。");
         });
 }
 

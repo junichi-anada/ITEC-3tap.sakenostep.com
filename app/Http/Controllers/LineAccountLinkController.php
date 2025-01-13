@@ -2,73 +2,106 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Messaging\LineAccountLinkService;
+use App\Models\Site;
+use App\Models\LineUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class LineAccountLinkController extends Controller
 {
-    private LineAccountLinkService $lineAccountLinkService;
-
-    public function __construct(LineAccountLinkService $lineAccountLinkService)
-    {
-        $this->lineAccountLinkService = $lineAccountLinkService;
-    }
-
     /**
-     * LINE連携コールバック
+     * アカウント連携フォームを表示
+     *
+     * @param Request $request
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function callback(Request $request)
+    public function showLinkForm(Request $request)
     {
         try {
-            $code = $request->input('code');
-            $state = $request->input('state');
-            $error = $request->input('error');
-            $errorDescription = $request->input('error_description');
+            // パラメータの検証
+            $siteCode = $request->query('site_code');
+            $nonce = $request->query('nonce');
+            $linkToken = $request->query('link_token');
 
-            if ($error) {
-                Log::error('LINE連携エラー: ' . $errorDescription);
-                return redirect()->route('line.error')
-                    ->with('error', 'LINE連携に失敗しました');
+            if (!$siteCode || !$nonce || !$linkToken) {
+                throw new \Exception('必要なパラメータが不足しています');
             }
 
-            $result = $this->lineAccountLinkService->handleCallback($code, $state);
+            // サイトの取得
+            $site = Site::where('site_code', $siteCode)->firstOrFail();
+            
+            // LineUserの検証
+            $lineUser = LineUser::where('nonce', $nonce)
+                ->where('site_id', $site->id)
+                ->whereNull('deleted_at')
+                ->firstOrFail();
 
-            if ($result) {
-                return redirect()->route('line.success')
-                    ->with('success', 'LINE連携が完了しました');
-            }
-
-            return redirect()->route('line.error')
-                ->with('error', 'LINE連携に失敗しました');
+            return view('customer.line.account.link-form', [
+                'site' => $site,
+                'nonce' => $nonce,
+                'link_token' => $linkToken
+            ]);
 
         } catch (\Exception $e) {
-            Log::error('LINE連携コールバックエラー: ' . $e->getMessage());
-            return redirect()->route('line.error')
-                ->with('error', 'LINE連携処理でエラーが発生しました');
+            Log::error('アカウント連携フォーム表示エラー: ' . $e->getMessage());
+            return redirect()->route('line.account.error')
+                ->with('error', 'アカウント連携に失敗しました');
         }
     }
 
     /**
-     * アカウント連携解除
+     * アカウント連携処理を実行
+     *
+     * @param string $site_code
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function unlink(Request $request)
+    public function processLink($site_code, Request $request)
     {
         try {
-            $site = $request->user()->site;
-            $lineUserId = $request->input('line_user_id');
+            Log::info('アカウント連携処理開始', [
+                'site_code' => $site_code,
+                'request' => $request->all()
+            ]);
 
-            $result = $this->lineAccountLinkService->unlinkAccount($site, $lineUserId);
+            // サイト情報の取得
+            $site = Site::where('site_code', $site_code)->firstOrFail();
 
-            if ($result) {
-                return response()->json(['message' => 'アカウント連携を解除しました']);
+            // パラメータの検証
+            $nonce = $request->input('nonce');
+            $linkToken = $request->input('link_token');
+            if (!$nonce || !$linkToken) {
+                throw new \Exception('必要なパラメータが不足しています');
             }
 
-            return response()->json(['error' => 'アカウント連携の解除に失敗しました'], 400);
+            // LineUserの取得と検証
+            $lineUser = LineUser::where('nonce', $nonce)
+                ->where('site_id', $site->id)
+                ->whereNull('deleted_at')
+                ->firstOrFail();
+
+            // ユーザー認証
+            if (!Auth::attempt([
+                'login_code' => $request->input('login_code'),
+                'password' => $request->input('password'),
+                'site_id' => $site->id
+            ])) {
+                throw new \Exception('認証に失敗しました');
+            }
+
+            // LINEのアカウント連携画面にリダイレクト
+            return redirect()->away(
+                "https://access.line.me/dialog/bot/accountLink?linkToken={$linkToken}&nonce={$nonce}"
+            );
 
         } catch (\Exception $e) {
-            Log::error('LINE連携解除エラー: ' . $e->getMessage());
-            return response()->json(['error' => 'アカウント連携の解除に失敗しました'], 500);
+            Log::error('アカウント連携処理エラー: ' . $e->getMessage(), [
+                'site_code' => $site_code,
+                'request' => $request->all()
+            ]);
+            return redirect()->route('line.account.error')
+                ->with('error', 'アカウント連携に失敗しました');
         }
     }
 }

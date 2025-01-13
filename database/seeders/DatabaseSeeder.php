@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             OperatorSeeder::class,
             UserSeeder::class,
             AuthenticateSeeder::class,
+            ItemCategorySeeder::class,
             // ItemSeeder::class,
             LineAuthProviderSeeder::class,
         ]);

@@ -25,7 +25,7 @@ class CustomerImportController extends Controller
             ->where('site_id', $auth->site_id)
             ->firstOrFail();
 
-        return view('operator.customer.import-progress', [
+        return view('operator.customer.import.progress', [
             'operator' => $operator,
             'task' => $task
         ]);
