@@ -2,21 +2,27 @@
 
 namespace App\View\Components\Operator\Widgets\Order;
 
-use App\Services\Order\Analytics\MonthlyOrderAnalytics;
-use Carbon\Carbon;
 use Illuminate\View\Component;
+use App\Services\Order\Analytics\OrderAnalyticsService;
+use Carbon\Carbon;
 
 class MonthlyCountComponent extends Component
 {
-    public int $count;
     public int $month;
+    public int $count;
 
-    public function __construct(MonthlyOrderAnalytics $analytics)
+    /**
+     * コンポーネントを作成
+     */
+    public function __construct(OrderAnalyticsService $orderAnalyticsService)
     {
-        $this->count = $analytics->getMonthlyOrderCount();
         $this->month = Carbon::now()->month;
+        $this->count = $orderAnalyticsService->getMonthlyOrderCount();
     }
 
+    /**
+     * コンポーネントを描画
+     */
     public function render()
     {
         return view('components.operator.widgets.order.monthly-count-component');
