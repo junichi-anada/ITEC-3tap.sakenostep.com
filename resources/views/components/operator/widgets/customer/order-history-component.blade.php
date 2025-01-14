@@ -28,7 +28,7 @@
                                     {{ $order->created_at->format('Y/m/d') }}
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap font-medium">
-                                    {{ $order->code }}
+                                    {{ $order->order_code }}
                                 </td>
                                 <td class="px-4 py-3 text-sm whitespace-nowrap">
                                     @if($order->is_exported)
