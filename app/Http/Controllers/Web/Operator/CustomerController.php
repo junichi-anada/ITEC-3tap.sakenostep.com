@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class CustomerController extends Controller
 {
@@ -252,6 +253,12 @@ class CustomerController extends Controller
      */
     public function sendLineMessage(Request $request)
     {
+        Log::info('LINE message request received', [
+            'user_code' => $request->user_code,
+            'timestamp' => now(),
+            'request_id' => uniqid()  // リクエストを識別するためのユニークID
+        ]);
+        
         // バリデーション
         $validator = validator($request->all(), [
             'user_code' => 'required|string',

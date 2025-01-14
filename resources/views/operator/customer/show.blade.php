@@ -23,11 +23,10 @@
                                 <x-operator.widgets.customer.order-history-component
                                     :user="$user" />
                             </div>
-                            {{-- LINEメッセージ送信コンポーネント --}}
-                            <div class="flex-grow-[1] min-h-0">
-                                <x-operator.widgets.customer.line-message-form-component
-                                    :line-user="$lineUser" />
-                            </div>
+                            {{-- LINEメッセージフォームは1回だけ表示されることを確認 --}}
+                            @once
+                                <x-operator.widgets.customer.line-message-form-component :lineUser="$lineUser" />
+                            @endonce
                         </div>
                     </div>
                 </div>
