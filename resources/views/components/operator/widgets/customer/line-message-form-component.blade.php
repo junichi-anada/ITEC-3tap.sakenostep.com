@@ -47,17 +47,44 @@
             const handlerId = `_${eventType}Handler`;
             if (!element[handlerId]) {
                 element[handlerId] = true;
-                element.addEventListener(eventType, handler);
+                const wrappedHandler = async function(event) {
+                    // イベントの伝播を停止
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    console.log('Handler execution started', {
+                        timestamp: new Date().toISOString(),
+                        elementId: element.id,
+                        handlerId: handlerId
+                    });
+
+                    await handler.call(this, event);
+
+                    console.log('Handler execution completed', {
+                        timestamp: new Date().toISOString(),
+                        elementId: element.id,
+                        handlerId: handlerId
+                    });
+                };
+                
+                element.addEventListener(eventType, wrappedHandler);
                 console.log(`Event listener '${eventType}' added to element`, {
                     elementId: element.id,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    handlerId: handlerId
+                });
+            } else {
+                console.log(`Event listener '${eventType}' already exists`, {
+                    elementId: element.id,
+                    timestamp: new Date().toISOString(),
+                    handlerId: handlerId
                 });
             }
         }
 
         const sendButton = document.getElementById('send_line_message');
         if (sendButton) {
-            addEventListenerOnce(sendButton, 'click', async function() {
+            addEventListenerOnce(sendButton, 'click', async function(event) {
                 // クリックイベントのデバッグログ
                 console.log('LINE message button clicked', {
                     timestamp: new Date().toISOString(),
