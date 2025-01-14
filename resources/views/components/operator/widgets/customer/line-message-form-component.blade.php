@@ -42,12 +42,28 @@
     <script type="module">
         import { makeLineMessageSuccessModal, makeLineMessageFailModal } from "/js/modal/operator/customer/line-message.js";
 
+        // イベントリスナーを安全に1回だけ登録するためのユーティリティ関数
+        function addEventListenerOnce(element, eventType, handler) {
+            const handlerId = `_${eventType}Handler`;
+            if (!element[handlerId]) {
+                element[handlerId] = true;
+                element.addEventListener(eventType, handler);
+                console.log(`Event listener '${eventType}' added to element`, {
+                    elementId: element.id,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
         const sendButton = document.getElementById('send_line_message');
-        const oldListener = sendButton.getAttribute('data-has-listener');
-        
-        if (!oldListener) {
-            sendButton.setAttribute('data-has-listener', 'true');
-            sendButton.addEventListener('click', async function() {
+        if (sendButton) {
+            addEventListenerOnce(sendButton, 'click', async function() {
+                // クリックイベントのデバッグログ
+                console.log('LINE message button clicked', {
+                    timestamp: new Date().toISOString(),
+                    buttonId: this.id
+                });
+
                 const message = document.getElementById('line_message').value;
                 if (!message.trim()) {
                     makeLineMessageFailModal('メッセージを入力してください。');
@@ -90,11 +106,5 @@
                 }
             });
         }
-
-        // デバッグ用のログ出力
-        console.log('LINE message form component initialized', {
-            timestamp: new Date().toISOString(),
-            componentId: Math.random().toString(36).substr(2, 9)
-        });
     </script>
 @endif
