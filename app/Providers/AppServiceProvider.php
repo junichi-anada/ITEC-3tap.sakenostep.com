@@ -78,5 +78,8 @@ class AppServiceProvider extends ServiceProvider
             // Notification::route('mail', 'admin@example.com')
             //     ->notify(new JobFailedNotification($event));
         });
+
+        Blade::component('operator-monthly-count', MonthlyCountComponent::class);
+        Blade::component('operator-today-count', TodayCountComponent::class);
     }
 }

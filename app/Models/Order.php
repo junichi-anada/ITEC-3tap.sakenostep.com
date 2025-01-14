@@ -97,4 +97,37 @@ class Order extends Model
     {
         return $this->hasMany(OrderDetail::class);
     }
+
+    /**
+     * 今月の注文のスコープ
+     */
+    public function scopeThisMonth($query)
+    {
+        return $query->whereYear('created_at', now()->year)
+                     ->whereMonth('created_at', now()->month);
+    }
+
+    /**
+     * 本日の注文のスコープ
+     */
+    public function scopeToday($query)
+    {
+        return $query->whereDate('created_at', now()->toDateString());
+    }
+
+    /**
+     * CSV未書出の注文のスコープ
+     */
+    public function scopeNotExported($query)
+    {
+        return $query->whereNull('exported_at');
+    }
+
+    /**
+     * CSV書出済の注文のスコ�
+     */
+    public function scopeExported($query)
+    {
+        return $query->whereNotNull('exported_at');
+    }
 }
