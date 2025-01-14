@@ -75,51 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // LINEメッセージ送信ボタンクリック
-    const sendLineMessageButton = document.getElementById("send_line_message");
-    if (sendLineMessageButton) {
-        sendLineMessageButton.addEventListener("click", async function () {
-            const message = document.getElementById("line_message").value;
-            if (!message.trim()) {
-                makeLineMessageFailModal("メッセージを入力してください。");
-                return;
-            }
-
-            const userCode = document.querySelector(
-                'input[name="user_code"]'
-            ).value;
-            const token = document.querySelector('input[name="_token"]').value;
-
-            try {
-                const response = await fetch("/operator/customer/line/send", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": token,
-                    },
-                    body: JSON.stringify({
-                        user_code: userCode,
-                        message: message,
-                    }),
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    makeLineMessageSuccessModal();
-                    document.getElementById("line_message").value = "";
-                } else {
-                    makeLineMessageFailModal(
-                        data.message || "メッセージの送信に失敗しました。"
-                    );
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                makeLineMessageFailModal("エラーが発生しました。");
-            }
-        });
-    }
-
     // 復元ボタンクリック → 復元確認モーダル表示
     const customerRestoreButton = document.getElementById("customer_restore");
     if (customerRestoreButton) {

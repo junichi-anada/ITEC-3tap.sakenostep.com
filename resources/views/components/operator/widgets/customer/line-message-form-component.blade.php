@@ -91,7 +91,7 @@
             });
         }
 
-        // コンポーネントの初期化�にログを出力
+        // デバッグ用のログ出力
         console.log('LINE message form component initialized', {
             timestamp: new Date().toISOString(),
             componentId: Math.random().toString(36).substr(2, 9)
