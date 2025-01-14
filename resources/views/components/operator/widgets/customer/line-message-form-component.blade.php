@@ -42,40 +42,53 @@
     <script type="module">
         import { makeLineMessageSuccessModal, makeLineMessageFailModal } from "/js/modal/operator/customer/line-message.js";
 
-        document.getElementById('send_line_message').addEventListener('click', function() {
-            const message = document.getElementById('line_message').value;
-            if (!message.trim()) {
-                makeLineMessageFailModal('メッセージを入力してください。');
-                return;
-            }
-
-            const userCode = document.querySelector('input[name="user_code"]').value;
-            const token = document.querySelector('input[name="_token"]').value;
-
-            fetch('/operator/customer/line/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token
-                },
-                body: JSON.stringify({
-                    user_code: userCode,
-                    message: message
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    makeLineMessageSuccessModal();
-                    document.getElementById('line_message').value = '';
-                } else {
-                    makeLineMessageFailModal(data.message || 'メッセージの送信に失敗しました。');
+        const sendButton = document.getElementById('send_line_message');
+        const oldListener = sendButton.getAttribute('data-has-listener');
+        
+        if (!oldListener) {
+            sendButton.setAttribute('data-has-listener', 'true');
+            sendButton.addEventListener('click', async function() {
+                const message = document.getElementById('line_message').value;
+                if (!message.trim()) {
+                    makeLineMessageFailModal('メッセージを入力してください。');
+                    return;
                 }
-            })
-            .catch(error => {
-                makeLineMessageFailModal('エラーが発生しました。');
-                console.error('Error:', error);
+
+                sendButton.disabled = true;
+                sendButton.classList.add('opacity-50');
+
+                try {
+                    const userCode = document.querySelector('input[name="user_code"]').value;
+                    const token = document.querySelector('input[name="_token"]').value;
+
+                    const response = await fetch('/operator/customer/line/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token
+                        },
+                        body: JSON.stringify({
+                            user_code: userCode,
+                            message: message
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        makeLineMessageSuccessModal();
+                        document.getElementById('line_message').value = '';
+                    } else {
+                        makeLineMessageFailModal(data.message || 'メッセージの送信に失敗しました。');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    makeLineMessageFailModal('エラーが発生しました。');
+                } finally {
+                    sendButton.disabled = false;
+                    sendButton.classList.remove('opacity-50');
+                }
             });
-        });
+        }
     </script>
 @endif
