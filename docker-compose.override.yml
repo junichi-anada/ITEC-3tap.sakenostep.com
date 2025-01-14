@@ -1,8 +1,8 @@
-services:
-  ngrok:
-    image: wernight/ngrok
-    command: ngrok http laravel.test:8000
-    depends_on:
-      - laravel.test
-    ports:
-      - "4040:4040" # ngrokのWebインターフェース用
+# services:
+#   ngrok:
+#     image: wernight/ngrok
+#     command: ngrok http laravel.test:8000
+#     depends_on:
+#       - laravel.test
+#     ports:
+#       - "4040:4040" # ngrokのWebインターフェース用
