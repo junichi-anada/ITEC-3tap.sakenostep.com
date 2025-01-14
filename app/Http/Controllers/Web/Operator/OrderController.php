@@ -11,6 +11,8 @@ use App\Services\Order\Queries\GetOrderListQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\StreamedResponse;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -117,40 +119,76 @@ class OrderController extends Controller
     }
 
     /**
-     * 注文データをCSVファイルとして出力（非同期処理開始）
+     * 注文データをCSVファイルとして出力
+     *
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
-    public function export(Request $request)
+    public function export()
     {
-        $validator = Validator::make($request->all(), [
-            'order_number' => 'nullable|string|max:100',
-            'customer_name' => 'nullable|string|max:100',
-            'phone' => 'nullable|string|max:20',
-            'order_date_from' => 'nullable|date',
-            'order_date_to' => 'nullable|date|after_or_equal:order_date_from',
-            'csv_export_status' => 'nullable|in:exported,not_exported',
-        ]);
+        try {
+            // 未出力の注文を取得
+            $orders = Order::with(['orderDetails' => function($query) {
+                $query->whereNull('deleted_at');
+            }])
+            ->whereNull('exported_at')
+            ->get();
 
-        if ($validator->fails()) {
+            // CSVファイル名を生成
+            $filename = now()->format('YmdHi') . '.csv';
+
+            $response = new StreamedResponse(function() use ($orders) {
+                $handle = fopen('php://output', 'w');
+                
+                // BOMを付与
+                fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+                // ヘッダー行を書き込み
+                fputcsv($handle, [
+                    '注文番号',
+                    '注文日時',
+                    '顧客名',
+                    '商品コード',
+                    '商品名',
+                    '数量',
+                    // 必要に応じて他のカラムを追加
+                ]);
+
+                // データ行を書き込み
+                foreach ($orders as $order) {
+                    foreach ($order->orderDetails as $detail) {
+                        fputcsv($handle, [
+                            $order->order_number,
+                            $order->created_at->format('Y-m-d H:i:s'),
+                            $order->customer->name,
+                            $detail->item->item_code,
+                            $detail->item->name,
+                            $detail->quantity,
+                            // 必要に応じて他のカラムを追加
+                        ]);
+                    }
+                }
+
+                fclose($handle);
+            });
+
+            // 出力が完了した注文のexported_atを更新
+            $orders->each(function ($order) {
+                $order->exported_at = now();
+                $order->save();
+            });
+
+            $response->headers->set('Content-Type', 'text/csv');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+            return $response;
+
+        } catch (\Exception $e) {
+            Log::error('CSV export failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $taskCode = $this->orderExportService->startExport($request->all());
-
-        if (!$taskCode) {
-            return response()->json([
-                'success' => false,
-                'message' => $this->orderExportService->getError()
+                'message' => 'CSV出力に失敗しました。'
             ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'taskCode' => $taskCode,
-            'message' => 'CSV出力処理を開始しました。'
-        ]);
     }
 
     /**
