@@ -117,7 +117,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     /**
      * 管理者用のルーティング
      */
-    Route::prefix('operator')->group(function () {
+    Route::prefix('operator')->middleware(['auth:operator'])->group(function () {
         Route::get('/dashboard', [OperatorDashboardController::class, 'index'])->name('operator.dashboard');
 
         /**
