@@ -56,8 +56,8 @@
                                 @foreach ($order->orderDetails as $detail)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $detail->item->code }}
-                                            <input type="hidden" name="details[{{ $loop->index }}][item_code]" value="{{ $detail->item->code }}">
+                                            {{ $detail->item->item_code }}
+                                            <input type="hidden" name="details[{{ $loop->index }}][item_code]" value="{{ $detail->item->item_code }}">
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ $detail->item->name }}
