@@ -7,7 +7,7 @@
 
             <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-1">
                 <label for="order_number" class="w-full md:w-[8vw]">注文番号</label>
-                <input type="text" name="order_number" id="order_number" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5" value="{{ $order->order_number }}" readonly>
+                <input type="text" name="order_number" id="order_number" class="w-full md:max-w-[20vw] border border-gray-300 rounded-md py-1 pl-0.5" value="{{ $order->order_code }}" readonly>
             </div>
 
             <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-1">
