@@ -12,9 +12,7 @@
             <p class="mt-2 text-sm text-right">{{ \Carbon\Carbon::now()->format('Y年n月j日') }}現在</p>
         </div>
         <div class="flex flex-col gap-y-3">
-            @if (empty($popularItems))
-                <p>人気商品はありません。</p>
-            @else
+            @if(!empty($popularItems) && count($popularItems) > 0)
                 @for ($i = 1; $i <= 5; $i++)
                     @php
                         $popularItem = $popularItems[$i - 1];
@@ -38,6 +36,10 @@
                         </a>
                     </div>
                 @endfor
+            @else
+                <div class="text-gray-500 text-center py-4">
+                    ランキングデータがありません
+                </div>
             @endif
         </div>
     </div>
