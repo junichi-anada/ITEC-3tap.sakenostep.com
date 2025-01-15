@@ -64,18 +64,36 @@ class HandleTextMessageAction
      */
     private function handleMessageContent(string $text, string $replyToken): void
     {
-        // ここでメッセージの内容に応じた処理を実装
-        // 現在はエコーボットとして実装
-        $replyMessage = "受信したメッセージ: {$text}";
+        try {
+            Log::debug('Preparing to send LINE message', [
+                'reply_token' => $replyToken,
+                'access_token_exists' => !empty($this->messagingApi->getConfig()->getAccessToken()),
+            ]);
 
-        $textMessage = (new TextMessage())
-            ->setType(MessageType::TEXT)
-            ->setText($replyMessage);
+            $textMessage = new TextMessage([
+                'type' => MessageType::TEXT,
+                'text' => "受信したメッセージ: {$text}"
+            ]);
 
-        $request = (new ReplyMessageRequest())
-            ->setReplyToken($replyToken)
-            ->setMessages([$textMessage]);
+            $request = new ReplyMessageRequest([
+                'replyToken' => $replyToken,
+                'messages' => [$textMessage]
+            ]);
 
-        $this->messagingApi->replyMessage($request);
+            $response = $this->messagingApi->replyMessage($request);
+            
+            Log::info('LINE message sent successfully', [
+                'replyToken' => $replyToken,
+                'response' => $response
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('LINE message send failed', [
+                'replyToken' => $replyToken,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 }

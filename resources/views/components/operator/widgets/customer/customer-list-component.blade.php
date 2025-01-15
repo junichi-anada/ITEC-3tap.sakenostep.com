@@ -27,7 +27,7 @@
                     <div class="flex flex-col h-[calc(100vh-20rem)]">
                         @foreach ($customers as $customer)
                             <a href="{{ route('operator.customer.show', ['id' => $customer->id]) }}">
-                                <div class="flex hover:bg-[#F4CF41] hover:bg-opacity-40 cursor-pointer">
+                                <div class="flex hover:bg-[#F4CF41] hover:bg-opacity-40 cursor-pointer h-[3.75em]">
                                     <div class="text-center px-3 py-3 flex-1 text-sm">{{ $customer->login_code }}</div>
                                     <div class="text-center px-3 py-3 flex-1 text-sm">{{ $customer->name }}</div>
                                     <div class="text-center px-3 py-3 flex-1 text-sm">

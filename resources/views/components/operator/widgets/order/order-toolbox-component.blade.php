@@ -19,8 +19,14 @@
                         CSV書出
                     </button>
                 </div>
-                <p class="text-sm text-gray-600">※検索条件に該当する注文データをCSVファイルとして書き出します</p>
+                <p class="text-sm text-gray-600">※未書出の注文データをCSVファイルとして書き出します</p>
             </div>
         </div>
     </div>
 </div>
+
+<!-- モーダル用の非表示要素 -->
+<div id="execMode" class="hidden"></div>
+
+<!-- 共通モーダル -->
+@include('operator.layouts.widgets.modal')

@@ -10,8 +10,6 @@ import {
 
 import {
     makeOrderExportConfirmModal,
-    makeOrderExportSuccessModal,
-    makeOrderExportFailModal,
 } from "../../modal/operator/order/export.js";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -31,19 +29,27 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 処理ボタンをクリックされた時の処理
+    // 実行ボタンのイベントリスナー
     const execModal = document.getElementById("execModal");
     if (execModal) {
-        execModal.addEventListener("click", function () {
-            const execMode = document.getElementById("execMode").textContent;
-            if (execMode === "update") {
-                updateOrder();
-            }
-            if (execMode === "export") {
-                exportOrderCsv();
+        execModal.addEventListener("click", async () => {
+            const execMode = document.getElementById("execMode");
+            if (execMode && execMode.textContent === "export") {
+                if (window.orderExportHandler) {
+                    await window.orderExportHandler.handleExport();
+                }
             }
         });
     }
+
+    // エクスポートハンドラーの初期化（即時実行）
+    import("./order/order-export-handler.js")
+        .then((module) => {
+            window.orderExportHandler = new module.OrderExportHandler();
+        })
+        .catch((error) => {
+            console.error("エクスポートハンドラーの読み込みに失敗しました:", error);
+        });
 
     /**
      * 注文情報を更新
@@ -96,59 +102,6 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Error:", error);
             makeOrderUpdateFailModal();
-        }
-    }
-
-    /**
-     * 注文データをCSV出力
-     */
-    async function exportOrderCsv() {
-        try {
-            // 検索フォームのデータを取得
-            const searchForm = document.getElementById("order_search_form");
-            const formData = new FormData(searchForm);
-            const searchParams = new URLSearchParams(formData);
-
-            // CSRFトークンを取得
-            const token = document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content");
-
-            // Ajax送信
-            const response = await fetch(
-                `/operator/order/export?${searchParams.toString()}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "X-CSRF-TOKEN": token,
-                        "X-Requested-With": "XMLHttpRequest",
-                        Accept: "application/json",
-                    },
-                }
-            );
-
-            // CSVファイルをダウンロード
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-
-            // ファイル名を年月日_order.csvの形式に変更
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, "0");
-            const day = String(today.getDate()).padStart(2, "0");
-            a.download = `${year}${month}${day}_order.csv`;
-
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-
-            makeOrderExportSuccessModal();
-        } catch (error) {
-            console.error("Error:", error);
-            makeOrderExportFailModal();
         }
     }
 });

@@ -15,10 +15,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-use App\Services\Order\OrderService as OrderService;
-use App\Services\OrderDetail\OrderDetailService as OrderDetailService;
-use App\Services\Item\ItemService as ItemService;
+use App\Services\Order\OrderService;
+use App\Services\OrderDetail\OrderDetailService;
+use App\Services\Item\ItemService;
 use App\Services\OrderDetail\DTOs\OrderDetailData;
+use App\Services\Messaging\LineMessagingService;
 
 class OrderController extends BaseAjaxController
 {
@@ -34,15 +35,18 @@ class OrderController extends BaseAjaxController
     private OrderDetailService $orderDetailService;
     private OrderService $orderService;
     private ItemService $itemService;
+    private LineMessagingService $lineMessagingService;
 
     public function __construct(
         OrderDetailService $orderDetailService,
         OrderService $orderService,
         ItemService $itemService,
+        LineMessagingService $lineMessagingService
     ) {
         $this->orderDetailService = $orderDetailService;
         $this->orderService = $orderService;
         $this->itemService = $itemService;
+        $this->lineMessagingService = $lineMessagingService;
     }
 
     /**
@@ -73,10 +77,57 @@ class OrderController extends BaseAjaxController
 
             $orderDetail = $this->orderDetailService->addOrderDetail($orderDetailData);
 
-            return $this->jsonResponse(self::SUCCESS_MESSAGE, ['detail_code' => $orderDetail->detail_code], 201);
+            // LINE通知の送信
+            if ($auth->line_user_id) {
+                try {
+                    // メッセージテンプレートの作成
+                    $message = "ご注文ありがとうございます。\n"
+                        . "注文番号：{$orderDetail->order_code}\n"
+                        . "合計金額：" . number_format($orderDetail->total_price) . "円\n"
+                        . "\n注文の詳細はこちらから確認できます。\n"
+                        . url("/customer/order/{$orderDetail->order_code}");
+
+                    // LineMessagingServiceを使用してメッセージを送信
+                    $result = $this->lineMessagingService->pushMessage($auth->line_user_id, $message);
+                    
+                    if ($result) {
+                        Log::info('LINE通知送信成功', [
+                            'user_id' => $auth->id,
+                            'line_user_id' => $auth->line_user_id,
+                            'order_code' => $orderDetail->order_code
+                        ]);
+                    } else {
+                        throw new \Exception('LINE通知の送信に失敗しました');
+                    }
+
+                } catch (\Exception $e) {
+                    // LINE送信失敗のログを記録するが、注文処理は継続
+                    Log::error('LINE通知の送信に失敗しました', [
+                        'user_id' => $auth->id,
+                        'line_user_id' => $auth->line_user_id,
+                        'order_code' => $orderDetail->order_code,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
+            return $this->jsonResponse(
+                self::SUCCESS_MESSAGE, 
+                ['detail_code' => $orderDetail->detail_code]
+            );
+
         } catch (\Exception $e) {
-            Log::error('Unexpected error: ' . $e->getMessage(), ['exception' => $e]);
-            return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['error' => $e->getMessage()], 500);
+            Log::error('注文処理エラー', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+            return $this->jsonResponse(
+                self::UNEXPECTED_ERROR_MESSAGE, 
+                ['error' => $e->getMessage()], 
+                500
+            );
         }
     }
 
@@ -164,6 +215,13 @@ class OrderController extends BaseAjaxController
     public function order()
     {
         $auth = $this->getAuthenticatedUser();
+        
+        // デバッグログを追加
+        Log::debug('User authentication info', [
+            'user_id' => $auth->id,
+            'line_user_id' => $auth->line_user_id ?? null,
+            'has_line' => !empty($auth->line_user_id)
+        ]);
 
         try {
             $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
@@ -176,10 +234,64 @@ class OrderController extends BaseAjaxController
                 return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
             }
 
-            return $this->jsonResponse(self::ORDER_SUCCESS_MESSAGE, ['order_code' => $updatedOrder->order_code]);
+            // LINE連携している場合はLINE通知を送信
+            if ($auth->line_user_id) {
+                try {
+                    // メッセージテンプレートの作成
+                    $message = "ご注文ありがとうございます。\n"
+                        . "注文番号：{$updatedOrder->order_code}\n"
+                        // . "合計金額：" . number_format($updatedOrder->total_price) . "円\n"
+                        . "\n注文の詳細はこちらから確認できます。\n"
+                        . url("/order");
+                        // . url("/order/{$updatedOrder->order_code}");
+
+                    Log::debug('LINE通知送信準備', [
+                        'user_id' => $auth->id,
+                        'line_user_id' => $auth->line_user_id,
+                        'message' => $message
+                    ]);
+
+                    // LineMessagingServiceを使用してメッセージを送信
+                    $result = $this->lineMessagingService->pushMessage($auth->line_user_id, $message);
+                    
+                    if ($result) {
+                        Log::info('LINE通知送信成功', [
+                            'user_id' => $auth->id,
+                            'line_user_id' => $auth->line_user_id,
+                            'order_code' => $updatedOrder->order_code
+                        ]);
+                    } else {
+                        throw new \Exception('LINE通知の送信に失敗しました');
+                    }
+
+                } catch (\Exception $e) {
+                    // LINE送信失敗のログを記録するが、注文処理は継続
+                    Log::error('LINE通知の送信に失敗しました', [
+                        'user_id' => $auth->id,
+                        'line_user_id' => $auth->line_user_id,
+                        'order_code' => $updatedOrder->order_code,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
+            return $this->jsonResponse(
+                self::ORDER_SUCCESS_MESSAGE, 
+                ['order_code' => $updatedOrder->order_code]
+            );
+
         } catch (\Exception $e) {
-            Log::error('Unexpected error: ' . $e->getMessage(), ['exception' => $e]);
-            return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['error' => $e->getMessage()], 500);
+            Log::error('注文処理エラー', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => ['user_id' => $auth->id]
+            ]);
+            return $this->jsonResponse(
+                self::UNEXPECTED_ERROR_MESSAGE, 
+                ['error' => $e->getMessage()], 
+                500
+            );
         }
     }
 }

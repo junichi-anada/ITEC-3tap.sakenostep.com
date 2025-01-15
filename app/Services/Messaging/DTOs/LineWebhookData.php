@@ -9,15 +9,23 @@ class LineWebhookData
     public function __construct(
         public readonly string $signature,
         public readonly string $content,
-        public readonly array $events
+        public readonly array $events = []
     ) {}
 
     public static function fromRequest(Request $request): self
     {
+        $signature = $request->header('X-Line-Signature');
+        if (empty($signature)) {
+            throw LineMessagingException::invalidSignature('Signature header is missing');
+        }
+
+        $content = $request->getContent();
+        $events = json_decode($content, true)['events'] ?? [];
+
         return new self(
-            signature: $request->header('X-Line-Signature'),
-            content: $request->getContent(),
-            events: json_decode($request->getContent(), true)['events'] ?? []
+            content: $content,
+            signature: $signature,
+            events: $events
         );
     }
 

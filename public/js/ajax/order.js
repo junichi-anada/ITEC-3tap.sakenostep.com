@@ -184,14 +184,13 @@ document.addEventListener("DOMContentLoaded", function () {
             })
                 .then((response) => response.json())
                 .then((data) => {
-                    // alert(data.message);
+                    // 注文完了モーダルを表示（注文番号を渡す）
+                    makeOrderSuccessModal(data.order_code);
                 })
                 .catch((error) => {
                     console.error("エラー:", error);
+                    makeOrderFailModal();
                 });
-
-            // 注文完了モーダルを表示
-            makeOrderSuccessModal();
         });
     }
 

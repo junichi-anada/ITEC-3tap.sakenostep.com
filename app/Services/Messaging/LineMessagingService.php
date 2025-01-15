@@ -38,7 +38,35 @@ final class LineMessagingService implements LineMessagingServiceInterface
         private HandleWebhookAction $handleWebhookAction,
         private PushMessageAction $pushMessageAction,
         private MulticastMessageAction $multicastMessageAction
-    ) {}
+    ) {
+        // アクセストークンの設定を確実に行う
+        $token = config('services.line.channel_access_token');
+        if (empty($token)) {
+            throw new \RuntimeException('LINE Channel Access Token is not configured');
+        }
+        
+        // 新しいConfigurationインスタンスを作成
+        $config = new \LINE\Clients\MessagingApi\Configuration();
+        $config->setAccessToken($token);
+        
+        // 新しいMessagingApiApiインスタンスを作成
+        $this->messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
+            client: new \GuzzleHttp\Client([
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token
+                ]
+            ]),
+            config: $config
+        );
+        
+        Log::info('LINE Messaging API Configuration', [
+            'token_exists' => !empty($token),
+            'token_length' => strlen($token),
+            'headers' => [
+                'Authorization' => 'Bearer ' . substr($token, 0, 10) . '...'
+            ]
+        ]);
+    }
 
     /**
      * Webhookからのリクエストを処理する
