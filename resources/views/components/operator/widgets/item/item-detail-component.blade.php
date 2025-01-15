@@ -27,7 +27,7 @@
             </div>
 
             <input type="hidden" id="item_id" value="{{ $item->id }}">
-            <input type="hidden" name="unit_id" id="unit_id" value="0">
+            <input type="hidden" name="unit_id" id="unit_id" value="1">
 
             <div class="flex flex-col md:flex-row md:justify-start text-sm gap-y-1">
                 <label for="item_code" class="w-full md:w-[8vw]">商品コード</label>

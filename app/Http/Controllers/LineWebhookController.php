@@ -291,9 +291,17 @@ class LineWebhookController extends Controller
     private function accountLinkSend(string $userId, string $replyToken)
     {
         try {
+            // MessagingApiApiのインスタンスを作成
+            $client = new \GuzzleHttp\Client();
+            $config = new \LINE\Clients\MessagingApi\Configuration();
+            $config->setAccessToken(config('services.line.channel_access_token'));
+            $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
+                client: $client,
+                config: $config
+            );
+
             // リンクトークンを取得
             $linkToken = $this->lineMessagingService->issueLinkToken($userId);
-            
             if (!$linkToken) {
                 throw new \Exception('リンクトークンの取得に失敗しました');
             }
@@ -365,12 +373,20 @@ class LineWebhookController extends Controller
                 'messages' => [$templateMessage, $textMessage]
             ]);
 
-            $this->lineMessagingService->replyMessage($request);
+            // メッセージ送信時にMessagingApiApiを使用
+            $response = $messagingApi->replyMessage($request);
+            
+            Log::info('アカウント連携メッセージ送信完了', [
+                'user_id' => $userId,
+                'link_token' => $linkToken,
+                'response' => $response
+            ]);
 
         } catch (\Exception $e) {
             Log::error('アカウント連携URL送信エラー: ' . $e->getMessage(), [
                 'user_id' => $userId,
-                'replyToken' => $replyToken
+                'replyToken' => $replyToken,
+                'trace' => $e->getTraceAsString()
             ]);
             throw $e;
         }
@@ -384,31 +400,41 @@ class LineWebhookController extends Controller
      */
     private function accountLinkThanks(string $replyToken)
     {
-        $client = new \GuzzleHttp\Client();
-        $config = new \LINE\Clients\MessagingApi\Configuration();
-        $config->setAccessToken(config('services.line.channel_token'));
-        $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
-            client: $client,
-            config: $config,
-        );
-
-        // メッセージを作成
-        $message = new \LINE\Clients\MessagingApi\Model\TextMessage([
-            'type' => 'text',
-            'text' => "連携が完了しました。\n" . self::LOGIN_GUIDE_MESSAGE . url('/customer')
-        ]);
-
-        // リプライメッセージリクエストを作成
-        $request = new \LINE\Clients\MessagingApi\Model\ReplyMessageRequest([
-            'replyToken' => $replyToken,
-            'messages' => [$message]
-        ]);
-
-        // メッセージを送信
         try {
+            $client = new \GuzzleHttp\Client();
+            $config = new \LINE\Clients\MessagingApi\Configuration();
+            // channel_tokenではなくchannel_access_tokenを使用
+            $config->setAccessToken(config('services.line.channel_access_token'));
+            $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
+                client: $client,
+                config: $config
+            );
+
+            // メッセージを作成
+            $message = new \LINE\Clients\MessagingApi\Model\TextMessage([
+                'type' => 'text',
+                'text' => "連携が完了しました。\n" . self::LOGIN_GUIDE_MESSAGE . url('/customer')
+            ]);
+
+            // リプライメッセージリクエストを作成
+            $request = new \LINE\Clients\MessagingApi\Model\ReplyMessageRequest([
+                'replyToken' => $replyToken,
+                'messages' => [$message]
+            ]);
+
+            // メッセージを送信
             $response = $messagingApi->replyMessage($request);
+            
+            Log::info('連携完了メッセージ送信成功', [
+                'reply_token' => $replyToken,
+                'response' => $response
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('LINE返信エラー: ' . $e->getMessage());
+            Log::error('LINE返信エラー: ' . $e->getMessage(), [
+                'reply_token' => $replyToken,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -420,31 +446,41 @@ class LineWebhookController extends Controller
      */
     private function mypageLinkSend(string $replyToken)
     {
-        $client = new \GuzzleHttp\Client();
-        $config = new \LINE\Clients\MessagingApi\Configuration();
-        $config->setAccessToken(config('services.line.channel_token'));
-        $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
-            client: $client,
-            config: $config,
-        );
-
-        // メッセージを作成
-        $message = new \LINE\Clients\MessagingApi\Model\TextMessage([
-            'type' => 'text',
-            'text' => "LINE連携は完了しております。\n" . self::LOGIN_GUIDE_MESSAGE . url('/customer')
-        ]);
-
-        // リプライメッセージリクエストを作成
-        $request = new \LINE\Clients\MessagingApi\Model\ReplyMessageRequest([
-            'replyToken' => $replyToken,
-            'messages' => [$message]
-        ]);
-
-        // メッセージを送信
         try {
+            $client = new \GuzzleHttp\Client();
+            $config = new \LINE\Clients\MessagingApi\Configuration();
+            // channel_tokenではなくchannel_access_tokenを使用
+            $config->setAccessToken(config('services.line.channel_access_token'));
+            $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
+                client: $client,
+                config: $config
+            );
+
+            // メッセージを作成
+            $message = new \LINE\Clients\MessagingApi\Model\TextMessage([
+                'type' => 'text',
+                'text' => "LINE連携は完了しております。\n" . self::LOGIN_GUIDE_MESSAGE . url('/customer')
+            ]);
+
+            // リプライメッセージリクエストを作成
+            $request = new \LINE\Clients\MessagingApi\Model\ReplyMessageRequest([
+                'replyToken' => $replyToken,
+                'messages' => [$message]
+            ]);
+
+            // メッセージを送信
             $response = $messagingApi->replyMessage($request);
+            
+            Log::info('マイページリンク送信成功', [
+                'reply_token' => $replyToken,
+                'response' => $response
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('LINE返信エラー: ' . $e->getMessage());
+            Log::error('LINE返信エラー: ' . $e->getMessage(), [
+                'reply_token' => $replyToken,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 

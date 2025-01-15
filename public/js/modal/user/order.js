@@ -35,13 +35,18 @@ export function makeOrderConfirmModal() {
     }
 }
 
-// 注文データ送信完了モーダルの表示
-export function makeOrderSuccessModal() {
+/**
+ * 注文データ送信完了モーダルの表示
+ * @param {string} orderCode - 注文番号
+ */
+export function makeOrderSuccessModal(orderCode) {
     const orderSuccessModal = document.getElementById("modal");
     if (orderSuccessModal) {
         document.getElementById("modalTitle").textContent = "注文完了";
         document.getElementById("modalContent").innerHTML =
-            "注文を送信しました。<br>ご注文ありがとうございました。";
+            `注文を送信しました。<br>
+            注文番号：${orderCode}<br>
+            ご注文ありがとうございました。`;
         document.getElementById("execModal").style.display = "none";
         document.getElementById("cancelModal").textContent = "閉じる";
 

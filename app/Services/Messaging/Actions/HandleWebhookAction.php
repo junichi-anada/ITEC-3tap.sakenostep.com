@@ -18,12 +18,18 @@ class HandleWebhookAction
 
     public function __construct(
         private MessagingApiApi $messagingApi,
-        private HandleFollowEventAction $handleFollowEventAction,
-        private HandleTextMessageAction $handleTextMessageAction
-    ) {}
+        private HandleTextMessageAction $handleTextMessageAction,
+        private HandleFollowEventAction $handleFollowEventAction
+    ) {
+        // MessagingApiApiの設定を確認
+        $config = $this->messagingApi->getConfig();
+        if (!$config->getAccessToken()) {
+            $config->setAccessToken(config('services.line.channel_access_token'));
+        }
+    }
 
     /**
-     * Webhookを処理する
+     * Webhookからのリクエストを処理する
      *
      * @param LineWebhookData $data
      * @return void
@@ -33,11 +39,17 @@ class HandleWebhookAction
     {
         $this->tryCatchWrapper(
             function () use ($data) {
-                Log::info('Processing webhook', ['events' => $data->events]);
+                // 署名の検証
+                $channelSecret = config('services.line.channel_secret');
+                $signature = $data->signature;
+                $content = $data->content;
 
-                // 署名を検証
-                $parser = new EventRequestParser(config('services.line.channel_secret'));
-                $events = $parser->parseEventRequest($data->content, $data->signature, true);
+                if (!$this->validateSignature($channelSecret, $signature, $content)) {
+                    throw LineMessagingException::invalidSignature($signature);
+                }
+
+                // イベントをパース
+                $events = $this->parseEvents($data->content);
 
                 foreach ($events as $event) {
                     $this->handleEvent($event);
@@ -46,6 +58,37 @@ class HandleWebhookAction
             'Webhookの処理に失敗しました',
             $data->toArray()
         );
+    }
+
+    /**
+     * 署名を検証する
+     *
+     * @param string $channelSecret
+     * @param string $signature
+     * @param string $content
+     * @return bool
+     */
+    private function validateSignature(string $channelSecret, string $signature, string $content): bool
+    {
+        $hash = hash_hmac('sha256', $content, $channelSecret, true);
+        $expectedSignature = base64_encode($hash);
+        return hash_equals($expectedSignature, $signature);
+    }
+
+    /**
+     * イベントをパースする
+     *
+     * @param string $content
+     * @return array
+     */
+    private function parseEvents(string $content): array
+    {
+        try {
+            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            return $data['events'] ?? [];
+        } catch (\JsonException $e) {
+            throw LineMessagingException::webhookProcessingFailed('Invalid JSON format: ' . $e->getMessage());
+        }
     }
 
     /**

@@ -19,7 +19,7 @@
                     <div class="text-center p-4 flex-1 font-bold">顧客名</div>
                     <div class="text-center p-4 flex-1 font-bold">電話番号</div>
                     <div class="text-center p-4 w-1/4 font-bold">住所</div>
-                    <div class="text-center p-4 flex-1 font-bold">注文状況</div>
+                    <!-- <div class="text-center p-4 flex-1 font-bold">注文状況</div> -->
                     <div class="text-center p-4 flex-1 font-bold">CSV書出</div>
                 </div>
                 @if ($orders->count() > 0)
@@ -44,7 +44,7 @@
                                         </div>
                                     </div>
                                     <div class="text-center p-4 w-1/4 text-sm break-words">{{ optional($order->customer)->address ?? '未設定' }}</div>
-                                    <div class="text-center p-4 flex-1 text-sm">
+                                    <!-- <div class="text-center p-4 flex-1 text-sm">
                                         @if ($order->status === '処理済')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 {{ $order->status }}
@@ -54,7 +54,7 @@
                                                 {{ $order->status }}
                                             </span>
                                         @endif
-                                    </div>
+                                    </div> -->
                                     <div class="text-center p-4 flex-1 text-sm">
                                         @if ($order->exported_at)
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

@@ -51,6 +51,18 @@ abstract class BaseAjaxController extends BaseController
      */
     protected function getAuthenticatedUser(): Authenticate
     {
-        return Auth::user();
+        $auth = Auth::user();
+        
+        // LINE連携情報を取得
+        $lineUser = \App\Models\LineUser::where('user_id', $auth->id)
+            ->where('is_linked', true)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if ($lineUser) {
+            $auth->line_user_id = $lineUser->line_user_id;
+        }
+
+        return $auth;
     }
 }

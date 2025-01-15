@@ -11,8 +11,9 @@ use App\Services\Order\Queries\GetOrderListQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\StreamedResponse;
 use Illuminate\Support\Facades\Log;
+use App\Models\Order;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderController extends Controller
 {
@@ -123,18 +124,47 @@ class OrderController extends Controller
      *
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
-    public function export()
+    public function export(Request $request)
     {
         try {
             // 未出力の注文を取得
             $orders = Order::with(['orderDetails' => function($query) {
                 $query->whereNull('deleted_at');
-            }])
+            }, 'orderDetails.item', 'customer'])
+            ->whereNotNull('ordered_at')
             ->whereNull('exported_at')
             ->get();
 
+            if ($orders->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '出力対象の注文データが存在しません。'
+                ], 404);
+            }
+
+            // リレーションチェック
+            foreach ($orders as $order) {
+                if (!$order->customer) {
+                    Log::error("Customer not found for order ID: {$order->id}");
+                    return response()->json([
+                        'success' => false,
+                        'message' => "注文ID: {$order->id} の顧客情報が見つかりません。"
+                    ], 404);
+                }
+
+                foreach ($order->orderDetails as $detail) {
+                    if (!$detail->item) {
+                        Log::error("Item not found for order detail ID: {$detail->id}");
+                        return response()->json([
+                            'success' => false,
+                            'message' => "注文ID: {$order->id} の商品情報が見つかりません。"
+                        ], 404);
+                    }
+                }
+            }
+
             // CSVファイル名を生成
-            $filename = now()->format('YmdHi') . '.csv';
+            $filename = now()->format('YmdHi') . '_order.csv';
 
             $response = new StreamedResponse(function() use ($orders) {
                 $handle = fopen('php://output', 'w');
@@ -144,27 +174,46 @@ class OrderController extends Controller
 
                 // ヘッダー行を書き込み
                 fputcsv($handle, [
-                    '注文番号',
-                    '注文日時',
-                    '顧客名',
+                    '取引先区分',
+                    '伝票日付',
+                    '取引先コード',
+                    '納品先コード',
+                    '伝票行番区分',
                     '商品コード',
-                    '商品名',
+                    'JANコード',
+                    'ケース／バラ',
                     '数量',
-                    // 必要に応じて他のカラムを追加
+                    '税区分',
+                    '単価',
+                    '金額',
+                    '相手先伝票番号',
+                    '相手先商品コード'
                 ]);
 
                 // データ行を書き込み
                 foreach ($orders as $order) {
                     foreach ($order->orderDetails as $detail) {
-                        fputcsv($handle, [
-                            $order->order_number,
-                            $order->created_at->format('Y-m-d H:i:s'),
-                            $order->customer->name,
-                            $detail->item->item_code,
-                            $detail->item->name,
-                            $detail->quantity,
-                            // 必要に応じて他のカラムを追加
-                        ]);
+                        try {
+                            fputcsv($handle, [
+                                '1',  // 取引先区分（固定値）
+                                $order->ordered_at->format('Ymd'),  // 伝票日付
+                                $order->customer->user_code,  // 取引先コード
+                                '1',  // 納品先コード（固定値）
+                                '1',  // 伝票行番区分（固定値）
+                                $detail->item->item_code,  // 商品コード
+                                $detail->item->jan_code ?? '',  // JANコード
+                                ($detail->item->quantity_per_unit == 0 ? '0' : '1'),  // ケース／バラ
+                                $detail->volume,  // 数量
+                                '',  // 税区分（空白）
+                                '',  // 単価（空白）
+                                '',  // 金額（空白）
+                                $order->order_code,  // 相手先伝票番号
+                                $detail->item->item_code  // 相手先商品コード
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error("CSV write error for order ID: {$order->id}, detail ID: {$detail->id}");
+                            throw new \Exception("CSV書き出し中にエラーが発生しました。注文ID: {$order->id}");
+                        }
                     }
                 }
 
@@ -173,8 +222,12 @@ class OrderController extends Controller
 
             // 出力が完了した注文のexported_atを更新
             $orders->each(function ($order) {
-                $order->exported_at = now();
-                $order->save();
+                try {
+                    $order->exported_at = now();
+                    $order->save();
+                } catch (\Exception $e) {
+                    Log::error("Failed to update exported_at for order ID: {$order->id}");
+                }
             });
 
             $response->headers->set('Content-Type', 'text/csv');
@@ -186,7 +239,7 @@ class OrderController extends Controller
             Log::error('CSV export failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'CSV出力に失敗しました。'
+                'message' => 'CSV出力に失敗しました。' . $e->getMessage()
             ], 500);
         }
     }

@@ -1,5 +1,5 @@
 /**
- * 注文データCSV書出�ーダル関連の処理
+ * 注文データCSV書出モーダル関連の処理
  */
 
 // モーダル関連の要素
@@ -10,14 +10,33 @@ const execModal = document.getElementById("execModal");
 const cancelModal = document.getElementById("cancelModal");
 const execMode = document.getElementById("execMode");
 
+// モーダルを非表示
+function hideModal() {
+    modal.classList.add("hidden");
+    execModal.classList.remove("hidden");
+}
+
+// モーダルのキャンセルボタンクリックイベント
+cancelModal?.addEventListener("click", function () {
+    hideModal();
+});
+
+// 各モーダル表示関数をエクスポート
+export {
+    makeOrderExportConfirmModal,
+    makeOrderExportProcessingModal,
+    makeOrderExportSuccessModal,
+    makeOrderExportFailModal,
+};
+
 /**
  * CSV書出確認モーダルの表示
  */
-export function makeOrderExportConfirmModal() {
+function makeOrderExportConfirmModal() {
     modalTitle.textContent = "CSV書出の確認";
     modalBody.innerHTML = `
         <div class="text-center">
-            <p class="mb-4">未出力の注文データをCSVファイルとして書き出します。</p>
+            <p class="mb-4">未書出の注文データをCSVファイルとして書き出します。</p>
             <p class="text-sm text-gray-500">※書き出し完了後、自動的にダウンロードが開始されます。</p>
         </div>
     `;
@@ -30,7 +49,7 @@ export function makeOrderExportConfirmModal() {
 /**
  * CSV書出処理中モーダルの表示
  */
-export function makeOrderExportProcessingModal() {
+function makeOrderExportProcessingModal() {
     modalTitle.textContent = "CSV書出中";
     modalBody.innerHTML = `
         <div class="flex flex-col items-center">
@@ -47,7 +66,7 @@ export function makeOrderExportProcessingModal() {
 /**
  * CSV書出完了モーダルの表示
  */
-export function makeOrderExportSuccessModal() {
+function makeOrderExportSuccessModal() {
     modalTitle.textContent = "CSV書出完了";
     modalBody.innerHTML = `
         <div class="text-center">
@@ -67,7 +86,7 @@ export function makeOrderExportSuccessModal() {
 /**
  * CSV書出失敗モーダルの表示
  */
-export function makeOrderExportFailModal(message = "CSV書出処理に失敗しました。") {
+function makeOrderExportFailModal(message = "CSV書出処理に失敗しました。") {
     modalTitle.textContent = "エラー";
     modalBody.innerHTML = `
         <div class="text-center">
@@ -76,15 +95,4 @@ export function makeOrderExportFailModal(message = "CSV書出処理に失敗し�
     `;
     execModal.classList.add("hidden");
     cancelModal.textContent = "閉じる";
-}
-
-// モーダルのキャンセルボタンクリックイベント
-cancelModal?.addEventListener("click", function () {
-    hideModal();
-});
-
-// モーダルを非表示
-function hideModal() {
-    modal.classList.add("hidden");
-    execModal.classList.remove("hidden");
 }

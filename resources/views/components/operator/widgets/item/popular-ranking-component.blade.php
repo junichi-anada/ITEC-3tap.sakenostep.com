@@ -13,29 +13,29 @@
         </div>
         <div class="flex flex-col gap-y-3">
             @if(!empty($popularItems) && count($popularItems) > 0)
-                @for ($i = 1; $i <= 5; $i++)
-                    @php
-                        $popularItem = $popularItems[$i - 1];
-                    @endphp
-
-                    @if ($i == count($popularItems))
+                @foreach($popularItems as $index => $popularItem)
+                    @if($index >= 5)
+                        @break
+                    @endif
+                    
+                    @if ($index == count($popularItems) - 1)
                     <div class="flex items-center justify-between">
                     @else
                     <div class="flex items-center justify-between border-b border-b-[#a6a6a6] pb-2">
                     @endif
                         <a href="{{ route('operator.item.show', ['id' => $popularItem->id]) }}" class="flex items-center justify-start gap-x-3 w-full">
-                            @if ($i == 1)
+                            @if ($index == 0)
                                 <span class="material-symbols-outlined text-2xl text-[#d29e44]">looks_one</span>
-                            @elseif ($i == 2)
+                            @elseif ($index == 1)
                                 <span class="material-symbols-outlined text-2xl text-[#d29e44]">looks_two</span>
-                            @elseif ($i == 3)
+                            @elseif ($index == 2)
                                 <span class="material-symbols-outlined text-2xl text-[#d29e44]">looks_3</span>
                             @endif
                             <span class="text-sm">{{ $popularItem->name }}</span>
                             <span class="material-symbols-outlined text-2xl ml-auto">chevron_right</span>
                         </a>
                     </div>
-                @endfor
+                @endforeach
             @else
                 <div class="text-gray-500 text-center py-4">
                     ランキングデータがありません
