@@ -36,6 +36,30 @@ class OrderExportService
     }
 
     /**
+     * JANコードを13桁に整形する
+     *
+     * @param string|null $janCode
+     * @return string
+     */
+    private function formatJanCode(?string $janCode): string
+    {
+        if (empty($janCode)) {
+            return str_pad('', 13, '0');
+        }
+
+        // 数値以外の文字を除去
+        $numbers = preg_replace('/[^0-9]/', '', $janCode);
+
+        // 13桁未満の場合は左側を0で埋める
+        if (strlen($numbers) < 13) {
+            return str_pad($numbers, 13, '0', STR_PAD_LEFT);
+        }
+
+        // 13桁を超える場合は左から13桁を使用
+        return substr($numbers, 0, 13);
+    }
+
+    /**
      * 注文データをCSVファイルとして出力
      *
      * @param Collection $orders
@@ -97,7 +121,7 @@ class OrderExportService
                             '1', // 納品先コード: 1固定
                             '1', // 伝票行番区分: 1固定
                             $item->item_code, // 商品コード
-                            $item->jan_code ?? '', // JANコード
+                            $this->formatJanCode($item->jan_code), // JANコード（13桁に整形）
                             $caseBaraType, // ケース／バラ
                             $detail->volume, // 数量
                             '', // 税区分
