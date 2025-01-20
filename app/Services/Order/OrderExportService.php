@@ -80,25 +80,6 @@ class OrderExportService
                 // BOMを付与
                 fwrite($file, "\xEF\xBB\xBF");
 
-                // ヘッダー行
-                fputcsv($file, [
-                    '取引先区分',
-                    '伝票日付',
-                    '取引先コード',
-                    '納品先コード',
-                    '伝票行番区分',
-                    '商品コード',
-                    'JANコード',
-                    'ケース／バラ',
-                    '数量',
-                    '税区分',
-                    '単価',
-                    '金額',
-                    '相手先伝票番号',
-                    '相手先商品コード',
-                    '相手先商品名'
-                ]);
-
                 // データ行
                 foreach ($orders as $order) {
                     foreach ($order->orderDetails as $detail) {
