@@ -173,27 +173,43 @@ class OrderController extends Controller
                 fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
                 // ヘッダー行を書き込み
-                fputcsv($handle, [
-                    '取引先区分',
-                    '伝票日付',
-                    '取引先コード',
-                    '納品先コード',
-                    '伝票行番区分',
-                    '商品コード',
-                    'JANコード',
-                    'ケース／バラ',
-                    '数量',
-                    '税区分',
-                    '単価',
-                    '金額',
-                    '相手先伝票番号',
-                    '相手先商品コード'
-                ]);
+                // fputcsv($handle, [
+                //     '取引先区分',
+                //     '伝票日付',
+                //     '取引先コード',
+                //     '納品先コード',
+                //     '伝票行番区分',
+                //     '商品コード',
+                //     'JANコード',
+                //     'ケース／バラ',
+                //     '数量',
+                //     '税区分',
+                //     '単価',
+                //     '金額',
+                //     '相手先伝票番号',
+                //     '相手先商品コード'
+                // ]);
 
                 // データ行を書き込み
                 foreach ($orders as $order) {
                     foreach ($order->orderDetails as $detail) {
                         try {
+                            // JANコードを13桁に整形
+                            $janCode = $detail->item->jan_code;
+                            if (empty($janCode)) {
+                                $janCode = str_pad('', 13, '0');
+                            } else {
+                                // 数値以外の文字を除去
+                                $numbers = preg_replace('/[^0-9]/', '', $janCode);
+                                // 13桁未満の場合は左側を0で埋める
+                                if (strlen($numbers) < 13) {
+                                    $janCode = str_pad($numbers, 13, '0', STR_PAD_LEFT);
+                                } else {
+                                    // 13桁を超える場合は左から13桁を使用
+                                    $janCode = substr($numbers, 0, 13);
+                                }
+                            }
+
                             fputcsv($handle, [
                                 '1',  // 取引先区分（固定値）
                                 $order->ordered_at->format('Ymd'),  // 伝票日付
@@ -201,7 +217,7 @@ class OrderController extends Controller
                                 '1',  // 納品先コード（固定値）
                                 '1',  // 伝票行番区分（固定値）
                                 $detail->item->item_code,  // 商品コード
-                                $detail->item->jan_code ?? '',  // JANコード
+                                $janCode,  // JANコード（13桁に整形）
                                 ($detail->item->quantity_per_unit == 0 ? '0' : '1'),  // ケース／バラ
                                 $detail->volume,  // 数量
                                 '',  // 税区分（空白）

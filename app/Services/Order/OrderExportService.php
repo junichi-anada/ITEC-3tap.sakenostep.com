@@ -36,40 +36,6 @@ class OrderExportService
     }
 
     /**
-     * JANコードを13桁に整形する
-     *
-     * @param string|null $janCode
-     * @return string
-     */
-    private function formatJanCode(?string $janCode): string
-    {
-        // デバッグログを追加
-        Log::debug('Original JAN code: ' . ($janCode ?? 'null'));
-
-        if (empty($janCode)) {
-            $result = str_pad('', 13, '0');
-            Log::debug('Formatted empty JAN code: ' . $result);
-            return $result;
-        }
-
-        // 数値以外の文字を除去
-        $numbers = preg_replace('/[^0-9]/', '', $janCode);
-        Log::debug('After removing non-numeric: ' . $numbers);
-
-        // 13桁未満の場合は左側を0で埋める
-        if (strlen($numbers) < 13) {
-            $result = str_pad($numbers, 13, '0', STR_PAD_LEFT);
-            Log::debug('After padding < 13: ' . $result);
-            return $result;
-        }
-
-        // 13桁を超える場合は左から13桁を使用
-        $result = substr($numbers, 0, 13);
-        Log::debug('Final formatted JAN code: ' . $result);
-        return $result;
-    }
-
-    /**
      * 注文データをCSVファイルとして出力
      *
      * @param Collection $orders
@@ -89,6 +55,25 @@ class OrderExportService
 
                 // BOMを付与
                 fwrite($file, "\xEF\xBB\xBF");
+
+                // ヘッダー行
+                fputcsv($file, [
+                    '取引先区分',
+                    '伝票日付',
+                    '取引先コード',
+                    '納品先コード',
+                    '伝票行番区分',
+                    '商品コード',
+                    'JANコード',
+                    'ケース／バラ',
+                    '数量',
+                    '税区分',
+                    '単価',
+                    '金額',
+                    '相手先伝票番号',
+                    '相手先商品コード',
+                    '相手先商品名'
+                ]);
 
                 // データ行
                 foreach ($orders as $order) {
@@ -112,7 +97,7 @@ class OrderExportService
                             '1', // 納品先コード: 1固定
                             '1', // 伝票行番区分: 1固定
                             $item->item_code, // 商品コード
-                            $this->formatJanCode($item->jan_code), // JANコード（13桁に整形）
+                            $item->jan_code ?? '', // JANコード
                             $caseBaraType, // ケース／バラ
                             $detail->volume, // 数量
                             '', // 税区分
