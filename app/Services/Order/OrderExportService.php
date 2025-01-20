@@ -43,20 +43,30 @@ class OrderExportService
      */
     private function formatJanCode(?string $janCode): string
     {
+        // デバッグログを追加
+        Log::debug('Original JAN code: ' . ($janCode ?? 'null'));
+
         if (empty($janCode)) {
-            return str_pad('', 13, '0');
+            $result = str_pad('', 13, '0');
+            Log::debug('Formatted empty JAN code: ' . $result);
+            return $result;
         }
 
         // 数値以外の文字を除去
         $numbers = preg_replace('/[^0-9]/', '', $janCode);
+        Log::debug('After removing non-numeric: ' . $numbers);
 
         // 13桁未満の場合は左側を0で埋める
         if (strlen($numbers) < 13) {
-            return str_pad($numbers, 13, '0', STR_PAD_LEFT);
+            $result = str_pad($numbers, 13, '0', STR_PAD_LEFT);
+            Log::debug('After padding < 13: ' . $result);
+            return $result;
         }
 
         // 13桁を超える場合は左から13桁を使用
-        return substr($numbers, 0, 13);
+        $result = substr($numbers, 0, 13);
+        Log::debug('Final formatted JAN code: ' . $result);
+        return $result;
     }
 
     /**
