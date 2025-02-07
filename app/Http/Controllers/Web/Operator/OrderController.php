@@ -196,19 +196,19 @@ class OrderController extends Controller
                         try {
                             // JANコードを13桁に整形
                             $janCode = $detail->item->jan_code;
-                            if (empty($janCode)) {
-                                $janCode = str_pad('', 13, '0');
-                            } else {
-                                // 数値以外の文字を除去
-                                $numbers = preg_replace('/[^0-9]/', '', $janCode);
-                                // 13桁未満の場合は左側を0で埋める
-                                if (strlen($numbers) < 13) {
-                                    $janCode = str_pad($numbers, 13, '0', STR_PAD_LEFT);
-                                } else {
-                                    // 13桁を超える場合は左から13桁を使用
-                                    $janCode = substr($numbers, 0, 13);
-                                }
-                            }
+                            // if (empty($janCode)) {
+                            //     $janCode = str_pad('', 13, '0');
+                            // } else {
+                            //     // 数値以外の文字を除去
+                            //     $numbers = preg_replace('/[^0-9]/', '', $janCode);
+                            //     // 13桁未満の場合は左側を0で埋める
+                            //     if (strlen($numbers) < 13) {
+                            //         $janCode = str_pad($numbers, 13, '0', STR_PAD_LEFT);
+                            //     } else {
+                            //         // 13桁を超える場合は左から13桁を使用
+                            //         $janCode = substr($numbers, 0, 13);
+                            //     }
+                            // }
 
                             fputcsv($handle, [
                                 '1',  // 取引先区分（固定値）
@@ -224,7 +224,8 @@ class OrderController extends Controller
                                 '',  // 単価（空白）
                                 '',  // 金額（空白）
                                 $order->order_code,  // 相手先伝票番号
-                                $detail->item->item_code  // 相手先商品コード
+                                $detail->item->item_code,  // 相手先商品コード
+                                $detail->item->name        //商品名を追加
                             ]);
                         } catch (\Exception $e) {
                             Log::error("CSV write error for order ID: {$order->id}, detail ID: {$detail->id}");
