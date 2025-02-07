@@ -52,30 +52,28 @@ class Order extends Model
 
     /**
      * 注文番号を生成する
-     * フォーマット: p + YYYYMMDDHHmm + _XX（XXは連番2桁）
+     * フォーマット: [年(2桁)][月(2桁)][日(2桁)]+[ランダム数字(6桁)]
+     * 注文番号の重複がないことを保証します
      *
      * @return string
      */
     public static function generateOrderCode()
     {
         $now = Carbon::now();
-        $datePrefix = 'p' . $now->format('YmdHi');
+        $datePrefix = $now->format('ymd'); // 年(2桁)月日
 
-        // 同じ時間（分）の最後の注文番号を取得
-        $lastOrder = self::where('order_code', 'LIKE', $datePrefix . '_%')
-            ->orderBy('order_code', 'desc')
-            ->first();
+        do {
+            // 6桁のランダム数字を生成
+            $randomNumber = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            
+            // 注文番号を組み立て
+            $orderCode = $datePrefix . $randomNumber;
 
-        if ($lastOrder) {
-            // 最後の注文番号から連番を取得して+1
-            $lastNumber = intval(substr($lastOrder->order_code, -2));
-            $newNumber = str_pad($lastNumber + 1, 2, '0', STR_PAD_LEFT);
-        } else {
-            // その時間の最初の注文
-            $newNumber = '01';
-        }
+            // 重複チェック
+            $exists = self::where('order_code', $orderCode)->exists();
+        } while ($exists); // 重複がある場合は再生成
 
-        return $datePrefix . '_' . $newNumber;
+        return $orderCode;
     }
 
     public function site()
