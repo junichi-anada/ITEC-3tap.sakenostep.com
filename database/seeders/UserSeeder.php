@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
     {
         // 実データの挿入
         User::create([
-            'user_code' => 'USER-UUID-1234-5678',
+            'user_code' => '99001',
             'site_id' => 1,  // site_id = 1 固定
             'name' => 'Itec Anada',
             'postal_code' => '020-0838',
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::create([
-            'user_code' => 'USER-UUID-5678-1234',
+            'user_code' => '99002',
             'site_id' => 1,  // site_id = 1 固定
             'name' => 'Itec User',
             'postal_code' => '020-0000',
@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::create([
-            'user_code' => 'USER-UUID-1256-3478',
+            'user_code' => '99003',
             'site_id' => 1,  // site_id = 1 固定
             'name' => 'Step User',
             'postal_code' => '020-0000',
@@ -49,6 +49,6 @@ class UserSeeder extends Seeder
         ]);
 
         // ランダムなサンプルデータを挿入（例: 10件）
-        User::factory()->count(10)->create();
+        // User::factory()->count(10)->create();
     }
 }

@@ -87,8 +87,9 @@ class OrderExportService
                         $caseBaraType = $item->quantity_per_unit > 0 ? '1' : '0';
 
                         // 取引先コードの生成
-                        $loginCode = $order->user->authenticates->first()->login_code ?? '';
-                        $customerCode = $this->generateCustomerCode($loginCode);
+                        // $loginCode = $order->user->authenticates->first()->login_code ?? '';
+                        // $customerCode = $this->generateCustomerCode($loginCode);
+                        $customerCode = $order->user->user_code;
 
                         fputcsv($file, [
                             '1', // 取引先区分: 1固定
