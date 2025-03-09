@@ -169,11 +169,11 @@ class OrderController extends Controller
             $response = new StreamedResponse(function() use ($orders) {
                 $handle = fopen('php://output', 'w');
                 
-                // BOMを付与
-                fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+                // SJISで出力する（BOMは不要）
 
                 // ヘッダー行を書き込み
-                // fputcsv($handle, [
+                // SJISエンコードしたヘッダー行も必要であれば以下のコメントを外して使用
+                // $header = [
                 //     '取引先区分',
                 //     '伝票日付',
                 //     '取引先コード',
@@ -187,8 +187,13 @@ class OrderController extends Controller
                 //     '単価',
                 //     '金額',
                 //     '相手先伝票番号',
-                //     '相手先商品コード'
-                // ]);
+                //     '相手先商品コード',
+                //     '相手先商品名',
+                //     '' // 最後にカンマを追加
+                // ];
+                // fputcsv($handle, array_map(function($value) {
+                //     return mb_convert_encoding($value, 'SJIS', 'UTF-8');
+                // }, $header));
 
                 // データ行を書き込み
                 foreach ($orders as $order) {
@@ -210,7 +215,7 @@ class OrderController extends Controller
                             //     }
                             // }
 
-                            fputcsv($handle, [
+                            $row = [
                                 '1',  // 取引先区分（固定値）
                                 $order->ordered_at->format('Ymd'),  // 伝票日付
                                 $order->customer->user_code,  // 取引先コード
@@ -225,8 +230,14 @@ class OrderController extends Controller
                                 '',  // 金額（空白）
                                 $order->order_code,  // 相手先伝票番号
                                 $detail->item->item_code,  // 相手先商品コード
-                                $detail->item->name        //商品名を追加
-                            ]);
+                                $detail->item->name,       // 相手先商品名
+                                ''  // 最後にカンマを追加
+                            ];
+                            
+                            // SJISで出力
+                            fputcsv($handle, array_map(function($value) {
+                                return mb_convert_encoding($value, 'SJIS', 'UTF-8');
+                            }, $row));
                         } catch (\Exception $e) {
                             Log::error("CSV write error for order ID: {$order->id}, detail ID: {$detail->id}");
                             throw new \Exception("CSV書き出し中にエラーが発生しました。注文ID: {$order->id}");

@@ -53,11 +53,10 @@ class OrderExportService
             $callback = function() use ($orders) {
                 $file = fopen('php://output', 'w');
 
-                // BOMを付与
-                fwrite($file, "\xEF\xBB\xBF");
+                // SJISで出力（BOMは不要）
 
                 // ヘッダー行
-                fputcsv($file, [
+                $header = [
                     '取引先区分',
                     '伝票日付',
                     '取引先コード',
@@ -72,8 +71,12 @@ class OrderExportService
                     '金額',
                     '相手先伝票番号',
                     '相手先商品コード',
-                    '相手先商品名'
-                ]);
+                    '相手先商品名',
+                ];
+                // SJISに変換して書き込み
+                fputcsv($file, array_map(function($value) {
+                    return mb_convert_encoding($value, 'SJIS', 'UTF-8');
+                }, $header));
 
                 // データ行
                 foreach ($orders as $order) {
@@ -91,7 +94,7 @@ class OrderExportService
                         // $customerCode = $this->generateCustomerCode($loginCode);
                         $customerCode = $order->user->user_code;
 
-                        fputcsv($file, [
+                        $row = [
                             '1', // 取引先区分: 1固定
                             $order->ordered_at->format('Ymd'), // 伝票日付
                             $customerCode, // 取引先コード
@@ -106,8 +109,14 @@ class OrderExportService
                             '', // 金額
                             $order->order_code, // 相手先伝票番号
                             $item->item_code, // 相手先商品コード
-                            $itemName // 相手先商品名
-                        ]);
+                            $itemName, // 相手先商品名
+                            '' // 最後にカンマを追加
+                        ];
+                        
+                        // SJISに変換して書き込み
+                        fputcsv($file, array_map(function($value) {
+                            return mb_convert_encoding($value, 'SJIS', 'UTF-8');
+                        }, $row));
                     }
                 }
 
