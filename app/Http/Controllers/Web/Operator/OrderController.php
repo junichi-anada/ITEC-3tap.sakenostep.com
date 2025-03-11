@@ -248,15 +248,28 @@ class OrderController extends Controller
                 fclose($handle);
             });
 
-            // 出力が完了した注文のexported_atを更新
-            $orders->each(function ($order) {
-                try {
+            // 出力前に注文のexported_atを更新（トランザクション処理を追加）
+            try {
+                \DB::beginTransaction();
+                
+                foreach ($orders as $order) {
                     $order->exported_at = now();
                     $order->save();
-                } catch (\Exception $e) {
-                    Log::error("Failed to update exported_at for order ID: {$order->id}");
+                    
+                    // 更新が成功したことをログに記録
+                    Log::info("Updated exported_at for order ID: {$order->id}");
                 }
-            });
+                
+                \DB::commit();
+                Log::info("Successfully updated exported_at for all orders: " . $orders->count() . " orders");
+            } catch (\Exception $e) {
+                \DB::rollBack();
+                Log::error("Failed to update exported_at for orders: " . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'CSV出力処理中にエラーが発生しました。管理者にお問い合わせください。'
+                ], 500);
+            }
 
             $response->headers->set('Content-Type', 'text/csv');
             $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');

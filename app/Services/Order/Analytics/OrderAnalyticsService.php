@@ -49,7 +49,13 @@ class OrderAnalyticsService
     public function getTodayNotExportedCount(): int
     {
         return $this->executeWithErrorHandling(
-            fn () => Order::today()->notExported()->count(),
+            function () {
+                // クエリビルダーを直接使用して、キャッシュの問題を回避
+                return Order::whereDate('created_at', now()->toDateString())
+                    ->whereNotNull('ordered_at')
+                    ->whereNull('exported_at')
+                    ->count();
+            },
             '本日のCSV未書出注文数の取得に失敗しました'
         );
     }
@@ -62,7 +68,13 @@ class OrderAnalyticsService
     public function getTodayExportedCount(): int
     {
         return $this->executeWithErrorHandling(
-            fn () => Order::today()->exported()->count(),
+            function () {
+                // クエリビルダーを直接使用して、キャッシュの問題を回避
+                return Order::whereDate('created_at', now()->toDateString())
+                    ->whereNotNull('ordered_at')
+                    ->whereNotNull('exported_at')
+                    ->count();
+            },
             '本日のCSV書出済注文数の取得に失敗しました'
         );
     }
@@ -87,4 +99,4 @@ class OrderAnalyticsService
             return 0;
         }
     }
-} 
+}

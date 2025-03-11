@@ -40,7 +40,7 @@ class Order extends Model
         'deleted_at' => 'datetime',
     ];
 
-    protected $appends = ['status'];
+    protected $appends = ['status', 'is_exported'];
 
     public function getStatusAttribute()
     {
@@ -48,6 +48,16 @@ class Order extends Model
             return '処理済';
         }
         return '未処理';
+    }
+
+    /**
+     * エクスポート済みかどうかを判定するアクセサ
+     *
+     * @return bool
+     */
+    public function getIsExportedAttribute()
+    {
+        return $this->exported_at !== null;
     }
 
     /**

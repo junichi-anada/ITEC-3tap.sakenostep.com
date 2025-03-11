@@ -30,6 +30,24 @@
             </p>
             <div class="flex justify-between">
                 <div class="flex gap-x-4">
+                    {{-- 注文リストへの追加ボタン --}}
+                    <button class="border-2 border-[#00D41C] px-1.5 add-to-order"
+                            data-item-code="{{ $orderDetail->item->item_code ?? '' }}"
+                            data-item-id="{{ $orderDetail->item_id }}">
+                        <div class="flex items-center gap-x-1 py-0.5">
+                            <span class="material-symbols-outlined text-[#00D41C] text-3xl">add_shopping_cart</span>
+                            <span class="text-xs">注文</span>
+                        </div>
+                    </button>
+                    {{-- 注文リストから削除ボタン（最初は非表示） --}}
+                    <button class="border-2 border-[#00D41C] bg-[#00D41C] px-1.5 del-to-order hidden"
+                            data-item-code="{{ $orderDetail->item->item_code ?? '' }}"
+                            data-item-id="{{ $orderDetail->item_id }}">
+                        <div class="flex items-center gap-x-1 py-0.5">
+                            <span class="material-symbols-outlined text-white text-3xl">check</span>
+                            <span class="text-xs text-white">追加済み</span>
+                        </div>
+                    </button>
                 </div>
                 <div class="flex items-center">
                     <div class="border px-1.5 py-0.5 border-r-0 text-lg volume-minus">－</div>
@@ -63,4 +81,42 @@
 @section('js')
 <script src="{{ asset('js/volume.js') }}"></script>
 <script type="module" src="{{ asset('js/ajax/order.js') }}"></script>
+<script>
+// ページ読み込み時に実行
+document.addEventListener('DOMContentLoaded', function() {
+    // 注文リストの状態を確認し、すでに追加済みの商品のボタン状態を更新
+    checkCartItems();
+    
+    // 注文リストに含まれる商品を確認する関数
+    async function checkCartItems() {
+        try {
+            const response = await fetch('/order/items');
+            if (!response.ok) {
+                throw new Error('注文リスト情報の取得に失敗しました');
+            }
+            const data = await response.json();
+            
+            // 注文リストに含まれる商品のボタン表示を切り替える
+            if (data && data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    // 商品IDに基づいてボタンを検索
+                    const addButtons = document.querySelectorAll(`.add-to-order[data-item-id="${item.item_id}"]`);
+                    const delButtons = document.querySelectorAll(`.del-to-order[data-item-id="${item.item_id}"]`);
+                    
+                    // ボタンの表示状態を切り替え
+                    addButtons.forEach(button => {
+                        button.classList.add('hidden');
+                    });
+                    
+                    delButtons.forEach(button => {
+                        button.classList.remove('hidden');
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('注文リスト状態確認エラー:', error);
+        }
+    }
+});
+</script>
 @endsection

@@ -9,7 +9,7 @@
 <!-- //hamberger menu -->
 
 <!-- nav -->
-<div class="bg-[#F4CF41] absolute px-5 py-2 top-0 transition-all ease-linear -translate-x-full"
+<div class="bg-[#F4CF41] absolute px-5 py-2 top-0 transition-all ease-linear -translate-x-full" style="width: 100%; z-index: 10;"
     id="menu">
     <div>
         <div class="w-[22px] ml-auto">
@@ -27,19 +27,24 @@
         </li>
         {{-- categoriesが空の場合 --}}
         @if (empty($categories))
-            <li class="text-lg font-bold">カテゴリがありません。</li>
+            <ul>
+                <li class="text-lg font-bold">カテゴリがありません。</li>
+            </ul>
         @elseif (count($categories) === 0)
-            <li class="text-lg font-bold">カテゴリがありません。</li>
+            <ul>
+                <li class="text-lg font-bold">カテゴリがありません。</li>
+            </ul>
         @else
-            @foreach($categories as $category)
-            {{-- category --}}
-            <li class="indent-2 border-b border-gray-400 pb-1">
-                <a href="{{ route('user.category.item.list', ['code' => $category->category_code]) }}" class="inline-block w-full">
-                    <span class="text-sm">{{ $category->name }}</span>
-                </a>
-            </li>
-            {{-- //category --}}
-            @endforeach
+            <ul class="flex flex-row" style="flex-wrap: wrap;gap: 0.25em 0.5em">
+                @foreach($categories as $category)
+                <!-- liを1行2列で表現する。 -->
+                <li class="border-b border-gray-400 pb-1 px-1" style="width: calc(50% - 0.25em);">
+                    <a href="{{ route('user.category.item.list', ['code' => $category->category_code]) }}" class="inline-block w-full">
+                        <span class="text-sm">{{ $category->name }}</span>
+                    </a>
+                </li>
+                @endforeach
+            </ul>
         @endif
     </ul>
 

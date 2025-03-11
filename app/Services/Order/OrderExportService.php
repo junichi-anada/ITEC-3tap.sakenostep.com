@@ -123,18 +123,59 @@ class OrderExportService
                 fclose($file);
             };
 
-            // CSV出力日時を更新
-            $orders->each(function ($order) {
-                $order->exported_at = now();
-                $order->save();
-            });
+            // CSV出力日時を更新（トランザクション処理を追加）
+            try {
+                \DB::beginTransaction();
+                
+                foreach ($orders as $order) {
+                    $order->exported_at = now();
+                    $order->save();
+                    Log::info("Updated exported_at for order ID: {$order->id} in OrderExportService");
+                }
+                
+                \DB::commit();
+                Log::info("Successfully updated exported_at for all orders in OrderExportService: " . $orders->count() . " orders");
+            } catch (Exception $e) {
+                \DB::rollBack();
+                Log::error("Failed to update exported_at in OrderExportService: " . $e->getMessage());
+                $this->setError('CSV出力処理中にエラーが発生しました。管理者にお問い合わせください。');
+                return null;
+            }
 
             return new StreamedResponse($callback, 200, $headers);
 
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error('CSV export failed: ' . $e->getMessage());
             $this->setError('CSVの書き出しに失敗しました。');
             return null;
+        }
+    }
+
+    /**
+     * 注文をCSV出力済みとしてマークする
+     *
+     * @param int $id 注文ID
+     * @return bool
+     */
+    public function markAsExported(int $id): bool
+    {
+        try {
+            // トランザクション処理を追加
+            \DB::beginTransaction();
+            
+            $order = Order::findOrFail($id);
+            $order->exported_at = now();
+            $order->save();
+            
+            \DB::commit();
+            
+            Log::info("Order ID: {$id} was marked as exported manually");
+            return true;
+        } catch (Exception $e) {
+            \DB::rollBack();
+            Log::error("Failed to mark order as exported. Order ID: {$id}, Error: " . $e->getMessage());
+            $this->setError('CSV出力済みとしてマークできませんでした。');
+            return false;
         }
     }
 }

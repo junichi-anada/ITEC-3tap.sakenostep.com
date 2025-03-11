@@ -122,10 +122,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const delAllOrderButton = document.getElementById("del-all-order");
     if (delAllOrderButton) {
         delAllOrderButton.addEventListener("click", function () {
-            //CSRFトークン取得
-            const csrfToken = document.querySelector(
-                'input[name="_token"]'
-            ).value;
+            // CSRFトークンを取得（メタタグまたはinput要素から）
+            let csrfToken = '';
+            const metaToken = document.querySelector('meta[name="csrf-token"]');
+            const inputToken = document.querySelector('input[name="_token"]');
+            
+            if (metaToken) {
+                csrfToken = metaToken.getAttribute('content');
+            } else if (inputToken) {
+                csrfToken = inputToken.value;
+            } else {
+                console.error("CSRFトークンが見つかりません");
+                alert("エラーが発生しました。ページをリロードしてください。");
+                return;
+            }
+
+            // 確認ダイアログを表示
+            if (!confirm("注文リストのアイテムをすべて削除しますか？")) {
+                return;
+            }
 
             fetch("/order/removeAll", {
                 method: "DELETE",
@@ -133,19 +148,25 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": csrfToken,
                 },
-                body: JSON.stringify({
-                    // site_id: siteId,
-                }),
+                body: JSON.stringify({}),
             })
-                .then((response) => response.json())
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('サーバーエラー: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then((data) => {
-                    // alert(data.message);
+                    console.log('削除成功:', data.message);
+                    // 成功したらページをリロード
+                    location.reload();
                 })
                 .catch((error) => {
                     console.error("エラー:", error);
+                    alert("削除に失敗しました。ページをリロードして再試行してください。");
+                    // エラー時もページをリロードする選択肢もある
+                    // location.reload();
                 });
-            // ページをリロードする
-            location.reload();
         });
     }
 
