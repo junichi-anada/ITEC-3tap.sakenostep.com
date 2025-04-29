@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Authenticate;
 use App\Models\LineUser;
 use App\Models\Operator;
-use App\Models\Order;
+use App\Models\Order; // 念のため確認、なければ追加
 use App\Models\User;
 use App\Services\Customer\Queries\GetCustomerListQuery;
 use App\Services\Customer\CustomerRegistrationService;
@@ -137,7 +137,12 @@ class CustomerController extends Controller
         // LINE連携情報を取得
         $lineUser = LineUser::where('user_id', $user->id)->first();
 
-        return view('operator.customer.show', compact('operator', 'user', 'authenticate', 'lineUser'));
+        // 顧客の注文履歴を取得（作成日時の降順、ページネーション付き）
+        $orders = Order::where('user_id', $user->id)
+                       ->orderBy('created_at', 'desc')
+                       ->paginate(10); // 1ページあたり10件表示
+
+        return view('operator.customer.show', compact('operator', 'user', 'authenticate', 'lineUser', 'orders'));
     }
 
     /**
