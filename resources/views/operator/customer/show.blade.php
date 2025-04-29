@@ -21,9 +21,10 @@
                             {{-- 注文履歴コンポーネント --}}
                             <div class="flex-grow-[2] min-h-0">
                                 <x-operator.widgets.customer.order-history-component
-                                    :user="$user" />
+                                    :user="$user"
+                                    :orders="$orders" /> {{-- $orders をコンポーネントに渡す --}}
                             </div>
-                            {{-- LINEメッセージフォーム�ンポーネント --}}
+                            {{-- LINEメッセージフォームンポーネント --}}
                             @once
                                 <div class="flex-grow-[1] min-h-0">
                                     <x-operator.widgets.customer.line-message-form-component
