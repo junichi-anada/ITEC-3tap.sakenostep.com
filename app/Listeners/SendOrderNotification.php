@@ -63,9 +63,7 @@ class SendOrderNotification // Potentially implements ShouldQueue later
     {
         // Check if the email is not empty, is a valid email format,
         // and is not the default fallback email address.
-        $fallbackEmail = config('mail.from.address', 'your-default-fallback-email@example.com'); // Default fallback from general mail config
-        // More specific fallback for operator_notification_address if defined differently,
-        // but we used 'your-default-fallback-email@example.com' in its definition.
+        // $fallbackEmail variable was unused.
         $operatorConfigFallback = self::DEFAULT_FALLBACK_EMAIL;
 
         return !empty($email) &&
