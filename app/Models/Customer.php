@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory; // 追加
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
 class Customer extends Model
 {
+    use HasFactory; // 追加
+
     /**
      * 日付として扱うカラム
      *
@@ -24,4 +27,4 @@ class Customer extends Model
     {
         return $this->first_login_at ? $this->first_login_at->format('Y-m-d') : '';
     }
-} 
+}

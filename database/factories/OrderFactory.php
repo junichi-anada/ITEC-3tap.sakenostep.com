@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Customer; // User を Customer に変更
 use App\Models\Order;
 use App\Models\Site;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -42,7 +42,7 @@ class OrderFactory extends Factory
         return [
             'order_code' => $this->faker->unique()->regexify('ORD[0-9]{6}'), // 例: ORD123456
             'site_id' => Site::factory(), // 関連するサイト
-            'user_id' => User::factory(), // 注文したユーザー
+            'user_id' => Customer::factory(), // 注文したユーザー (Customer)
             'total_price' => $this->faker->randomFloat(2, 1000, 50000), // 合計金額
             'tax' => $this->faker->randomFloat(2, 50, 5000), // 税金
             'postage' => $this->faker->randomFloat(2, 100, 2000), // 送料

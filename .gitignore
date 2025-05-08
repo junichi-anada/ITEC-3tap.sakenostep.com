@@ -24,3 +24,5 @@ yarn-error.log
 /.specification
 .doc/
 3tap-system-sakenostep_機能一覧.md
+/.clinerules
+/memory-bank

@@ -22,7 +22,7 @@
                 </div>
             </div>
         @else
-            <div class="bg-yellow-50 border border-yellow-200 rounded p-4">
+            <!-- <div class="bg-yellow-50 border border-yellow-200 rounded p-4">
                 <p class="text-yellow-700">
                     Debug Info:<br>
                     lineUser: {{ $lineUser ? 'exists' : 'null' }}<br>
@@ -30,7 +30,7 @@
                         is_linked: {{ $lineUser->is_linked ? 'true' : 'false' }}
                     @endif
                 </p>
-            </div>
+            </div> -->
             <div class="bg-gray-50 border border-gray-200 rounded p-4">
                 <p class="text-gray-700">このユーザーはLINEと連携されていません。</p>
             </div>
