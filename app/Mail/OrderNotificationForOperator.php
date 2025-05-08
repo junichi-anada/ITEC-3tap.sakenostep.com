@@ -68,7 +68,7 @@ class OrderNotificationForOperator extends Mailable implements ShouldQueue
             // However, it's good practice for it to reflect the intended recipient if known.
             // Since the recipient is specified in the listener using Mail::to(),
             // specifying it here is redundant and potentially confusing. Removing it.
-            subject: sprintf('【%s】新規注文のお知らせ (注文ID: %s)', $siteName, $this->order->id),
+            subject: sprintf('【%s】新規注文のお知らせ (注文コード: %s)', $siteName, $this->order->order_code),
         );
     }
 
