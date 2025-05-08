@@ -36,7 +36,7 @@
                                             出力済
                                         </span>
                                     @else
-                                        <a href="{{ route('operator.order.show', ['id' => $order->id]) }}" class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-150">
+                                        <a href="{{ route('operator.order.show', ['id' => $order->id]) }}" class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500" aria-label="注文 {{ $order->order_code }} の詳細を表示">
                                             未出力
                                         </a>
                                     @endif
