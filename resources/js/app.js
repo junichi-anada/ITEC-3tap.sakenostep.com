@@ -8,12 +8,12 @@ flatpickr.localize(Japanese); // デフォルトを日本語に設定
 document.addEventListener("DOMContentLoaded", function () {
     function initializeFlatpickr(element, fromInputId, toInputId) {
         if (!element) {
-            console.error(
-                "Element for Flatpickr not found:",
-                element,
-                fromInputId,
-                toInputId
-            );
+            console.error(`Element for Flatpickr not found. Details:`, {
+                // element: element, // element is null/undefined here, so logging it directly isn't very helpful.
+                // Logging the IDs is more useful for identifying which Flatpickr instance failed.
+                fromInputId: fromInputId,
+                toInputId: toInputId,
+            });
             return;
         }
         flatpickr(element, {
