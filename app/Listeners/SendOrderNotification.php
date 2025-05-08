@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Mail;
 
 class SendOrderNotification // Potentially implements ShouldQueue later
 {
+    private const DEFAULT_FALLBACK_EMAIL = 'your-default-fallback-email@example.com';
+
     /**
      * Create the event listener.
      */
@@ -34,11 +36,31 @@ class SendOrderNotification // Potentially implements ShouldQueue later
         }
 
         // Send email to operators
-        $operators = Operator::all(); // Consider filtering later
-        foreach ($operators as $operator) {
-            if ($operator->email) {
-                Mail::to($operator->email)->send(new OrderNotificationForOperator($order));
-            }
+        $operatorEmail = config('mail.operator_notification_address');
+
+        if ($this->isValidOperatorEmail($operatorEmail)) {
+            Mail::to($operatorEmail)->send(new OrderNotificationForOperator($order));
+        } else {
+            // Keep error log as error level
+            \Log::error('[SendOrderNotification] Operator notification email is not configured, invalid, or is the default fallback. Email not sent. Value: \'' . $operatorEmail . '\'');
         }
+    }
+
+    /**
+     * Validate the operator email address.
+     *
+     * @param string|null $email
+     * @return boolean
+     */
+    private function isValidOperatorEmail(?string $email): bool
+    {
+        // Check if the email is not empty, is a valid email format,
+        // and is not the default fallback email address.
+        // $fallbackEmail variable was unused.
+        $operatorConfigFallback = self::DEFAULT_FALLBACK_EMAIL;
+
+        return !empty($email) &&
+               filter_var($email, FILTER_VALIDATE_EMAIL) &&
+               $email !== $operatorConfigFallback;
     }
 }
