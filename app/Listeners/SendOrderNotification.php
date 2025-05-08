@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Mail;
 
 class SendOrderNotification // Potentially implements ShouldQueue later
 {
+    private const DEFAULT_FALLBACK_EMAIL = 'your-default-fallback-email@example.com';
+
     /**
      * Create the event listener.
      */
@@ -64,7 +66,7 @@ class SendOrderNotification // Potentially implements ShouldQueue later
         $fallbackEmail = config('mail.from.address', 'your-default-fallback-email@example.com'); // Default fallback from general mail config
         // More specific fallback for operator_notification_address if defined differently,
         // but we used 'your-default-fallback-email@example.com' in its definition.
-        $operatorConfigFallback = 'your-default-fallback-email@example.com';
+        $operatorConfigFallback = self::DEFAULT_FALLBACK_EMAIL;
 
         return !empty($email) &&
                filter_var($email, FILTER_VALIDATE_EMAIL) &&
