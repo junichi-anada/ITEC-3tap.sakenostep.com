@@ -72,4 +72,11 @@ document.addEventListener("DOMContentLoaded", function () {
         "last_login_date_to"
     );
     initializeFlatpickr(orderDateRangeEl, "order_date_from", "order_date_to");
+
+    const publishedAtRangeEl = document.querySelector("#published_at_range");
+    initializeFlatpickr(
+        publishedAtRangeEl,
+        "published_at_from",
+        "published_at_to"
+    );
 });

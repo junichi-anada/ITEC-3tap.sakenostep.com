@@ -26,11 +26,11 @@
                 </select>
             </div>
             <div class="flex flex-col text-sm gap-y-1 md:flex-row md:items-center">
-                <label for="published_at" class="w-full md:w-1/3">公開日時</label>
-                <div class="flex gap-x-1 items-center">
-                    <input type="date" name="published_at_from" id="published_at_from" class="flex-shrink border border-gray-300 rounded-md py-1 pl-0.5" value="{{ old('published_at_from', request('published_at_from')) }}">
-                    <p>～</p>
-                    <input type="date" name="published_at_to" id="published_at_to" class="flex-shrink border border-gray-300 rounded-md py-1 pl-0.5" value="{{ old('published_at_to', request('published_at_to')) }}">
+                <label for="published_at_range" class="w-full md:w-1/3">公開日時</label>
+                <div class="flex-grow">
+                    <input type="text" id="published_at_range" class="w-full border border-gray-300 rounded-md py-1 pl-0.5" placeholder="YYYY/MM/DD - YYYY/MM/DD">
+                    <input type="hidden" name="published_at_from" id="published_at_from" value="{{ old('published_at_from', request('published_at_from')) }}">
+                    <input type="hidden" name="published_at_to" id="published_at_to" value="{{ old('published_at_to', request('published_at_to')) }}">
                 </div>
             </div>
             <div class="flex flex-col text-sm gap-y-1 md:flex-row">
