@@ -27,28 +27,29 @@ class SendOrderNotification // Potentially implements ShouldQueue later
      */
     public function handle(OrderCreated $event): void
     {
-        \Log::info('[SendOrderNotification] Handle method called.');
+        \Log::debug('[SendOrderNotification] Handle method called.'); // Changed to debug level
         $order = $event->order;
         $customer = $order->customer; // Assuming relation exists
 
         // Send email to customer
         if ($customer && $customer->email) {
-            \Log::info('[SendOrderNotification] Attempting to send email to customer: ' . $customer->email);
+            \Log::debug('[SendOrderNotification] Attempting to send email to customer: ' . $customer->email); // Changed to debug level
             Mail::to($customer->email)->send(new OrderCompletedForCustomer($order));
-            \Log::info('[SendOrderNotification] Email to customer sent (or queued).');
+            \Log::debug('[SendOrderNotification] Email to customer sent (or queued).'); // Changed to debug level
         } else {
-            \Log::info('[SendOrderNotification] Customer email not found or customer does not exist. Skipping customer email.');
+            \Log::debug('[SendOrderNotification] Customer email not found or customer does not exist. Skipping customer email.'); // Changed to debug level
         }
 
         // Send email to operators
         $operatorEmail = config('mail.operator_notification_address');
-        \Log::info('[SendOrderNotification] Operator notification email from config: \'' . $operatorEmail . '\'');
+        \Log::debug('[SendOrderNotification] Operator notification email from config: \'' . $operatorEmail . '\''); // Changed to debug level
 
         if ($this->isValidOperatorEmail($operatorEmail)) {
-            \Log::info('[SendOrderNotification] Attempting to send email to operator: ' . $operatorEmail);
+            \Log::debug('[SendOrderNotification] Attempting to send email to operator: ' . $operatorEmail); // Changed to debug level
             Mail::to($operatorEmail)->send(new OrderNotificationForOperator($order));
-            \Log::info('[SendOrderNotification] Email to operator sent (or queued).');
+            \Log::debug('[SendOrderNotification] Email to operator sent (or queued).'); // Changed to debug level
         } else {
+            // Keep error log as error level
             \Log::error('[SendOrderNotification] Operator notification email is not configured, invalid, or is the default fallback. Email not sent. Value: \'' . $operatorEmail . '\'');
         }
     }
