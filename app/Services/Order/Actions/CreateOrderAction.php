@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Order\Actions;
 
 use App\Models\Order;
-use App\Events\OrderCreated; // ★ 追加
+use App\Events\OrderCreated;
 use App\Repositories\Order\OrderRepository;
 use App\Services\Order\DTOs\OrderData;
 use App\Services\Order\Exceptions\OrderException;
