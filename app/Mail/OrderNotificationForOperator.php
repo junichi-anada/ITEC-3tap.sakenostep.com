@@ -37,19 +37,40 @@ class OrderNotificationForOperator extends Mailable implements ShouldQueue
     {
         // TODO: Get site name dynamically
         $siteName = $this->order->site->name ?? config('app.name');
-        $operatorEmail = config('mail.operator_notification_email');
+        $operatorEmail = config('mail.operator_notification_address'); // Use the new config key
 
+        // The listener now handles the check for a missing operatorEmail,
+        // so this Mailable assumes $operatorEmail will be valid if it reaches here.
+        // However, as a safeguard or for direct Mailable usage, keeping a check can be useful.
         if (!$operatorEmail) {
-            // Log an error or handle the missing configuration appropriately
-            \Log::error('Operator notification email address is not configured.');
-            // Optionally, prevent sending the email if the address is missing
-            // throw new \Exception('Operator notification email address is not configured.');
-            $operatorEmail = 'default-operator@example.com'; // Fallback or error handling
+            // This case should ideally not be reached if the listener checks first.
+            // If it is, it means the Mailable is used directly without proper config.
+            \Log::critical('OrderNotificationForOperator Mailable called directly without operator_notification_address configured.');
+            // Fallback to a clearly identifiable non-production address or throw an exception
+            // For now, let's assume the listener's check is primary.
+            // If we want to ensure this Mailable is self-contained for direct use,
+            // we might throw an exception or use a very specific non-deliverable address.
+            // For this flow, we rely on the listener to not send if config is missing.
+            // Thus, $operatorEmail should be populated.
         }
 
+        // If $operatorEmail could still be null/empty here and we must send *something*
+        // or prevent error, a more robust fallback or exception is needed.
+        // Given the listener change, we expect $operatorEmail to be valid.
+        // If not, Mail::to() in the listener would have already skipped sending.
+        // So, the `to` field here is more of a confirmation if the Mailable itself
+        // were to define its recipient independently, which we are moving away from
+        // for the primary recipient.
+        // For clarity and to rely on the listener's Mail::to(), we can remove the `to` from here
+        // or ensure it matches. Let's keep it for now, assuming it will match.
 
         return new Envelope(
-            to: [new Address($operatorEmail)],
+            // The `to` here will be overridden by Mail::to() in the listener.
+            // If Mail::to() was not used, this `to` would be the recipient.
+            // Since we *are* using Mail::to() in the listener with the correct address,
+            // this `to` field in the Mailable's envelope is less critical for the primary recipient.
+            // However, it's good practice for it to reflect the intended recipient if known.
+            to: $operatorEmail ? [new Address($operatorEmail)] : [], // Ensure $operatorEmail is not empty
             subject: sprintf('【%s】新規注文のお知らせ (注文ID: %s)', $siteName, $this->order->id),
         );
     }

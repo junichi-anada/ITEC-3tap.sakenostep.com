@@ -108,6 +108,18 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Operator Notification Email Address
+    |--------------------------------------------------------------------------
+    |
+    | This address is used to send notifications to the operator when new
+    | orders are created. It's configured via the .env file.
+    |
+    */
+
+    'operator_notification_address' => env('OPERATOR_NOTIFICATION_EMAIL', 'your-default-fallback-email@example.com'),
+
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),

@@ -25,20 +25,29 @@ class SendOrderNotification // Potentially implements ShouldQueue later
      */
     public function handle(OrderCreated $event): void
     {
+        \Log::info('[SendOrderNotification] Handle method called.');
         $order = $event->order;
         $customer = $order->customer; // Assuming relation exists
 
         // Send email to customer
         if ($customer && $customer->email) {
+            \Log::info('[SendOrderNotification] Attempting to send email to customer: ' . $customer->email);
             Mail::to($customer->email)->send(new OrderCompletedForCustomer($order));
+            \Log::info('[SendOrderNotification] Email to customer sent (or queued).');
+        } else {
+            \Log::info('[SendOrderNotification] Customer email not found or customer does not exist. Skipping customer email.');
         }
 
         // Send email to operators
-        $operators = Operator::all(); // Consider filtering later
-        foreach ($operators as $operator) {
-            if ($operator->email) {
-                Mail::to($operator->email)->send(new OrderNotificationForOperator($order));
-            }
+        $operatorEmail = config('mail.operator_notification_address');
+        \Log::info('[SendOrderNotification] Operator notification email from config: \'' . $operatorEmail . '\'');
+
+        if ($operatorEmail && filter_var($operatorEmail, FILTER_VALIDATE_EMAIL) && $operatorEmail !== 'your-default-fallback-email@example.com') {
+            \Log::info('[SendOrderNotification] Attempting to send email to operator: ' . $operatorEmail);
+            Mail::to($operatorEmail)->send(new OrderNotificationForOperator($order));
+            \Log::info('[SendOrderNotification] Email to operator sent (or queued).');
+        } else {
+            \Log::error('[SendOrderNotification] Operator notification email is not configured, invalid, or is the default fallback. Email not sent. Value: \'' . $operatorEmail . '\'');
         }
     }
 }
