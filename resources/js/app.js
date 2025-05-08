@@ -31,8 +31,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         "Y-m-d"
                     );
                     toEl.value = instance.formatDate(selectedDates[1], "Y-m-d");
-                } else if (selectedDates.length === 0) {
-                    // 日付選択がクリアされた場合
+                } else {
+                    // 日付が2つ選択されていない場合 (0個または1個の場合) はクリアする
                     fromEl.value = "";
                     toEl.value = "";
                 }
