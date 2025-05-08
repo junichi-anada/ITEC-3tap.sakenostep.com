@@ -66,8 +66,8 @@ class OrderNotificationForOperator extends Mailable implements ShouldQueue
             // Since we *are* using Mail::to() in the listener with the correct address,
             // this `to` field in the Mailable's envelope is less critical for the primary recipient.
             // However, it's good practice for it to reflect the intended recipient if known.
-            // Since we throw an exception if $operatorEmail is missing, the ternary check is redundant.
-            to: [new Address($operatorEmail)], // $operatorEmail is guaranteed to be valid here
+            // Since the recipient is specified in the listener using Mail::to(),
+            // specifying it here is redundant and potentially confusing. Removing it.
             subject: sprintf('【%s】新規注文のお知らせ (注文ID: %s)', $siteName, $this->order->id),
         );
     }
