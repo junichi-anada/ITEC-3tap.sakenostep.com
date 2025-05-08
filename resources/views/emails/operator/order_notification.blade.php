@@ -18,7 +18,12 @@
 | :----- | :---: | :--: | :--: |
 @if($order->orderDetails && $order->orderDetails->count() > 0)
 @foreach($order->orderDetails as $detail)
-| {{ $detail->item_name ?? ($detail->item->name ?? 'N/A') }} | ¥{{ number_format($detail->price_at_ordering ?? ($detail->item->price ?? 0)) }} | {{ $detail->quantity ?? 'N/A' }} | ¥{{ number_format(($detail->price_at_ordering ?? ($detail->item->price ?? 0)) * ($detail->quantity ?? 0)) }} |
+@php
+    $price = $detail->price_at_ordering ?? ($detail->item->price ?? 0);
+    $quantity = $detail->quantity ?? 0;
+    $subtotal = $price * $quantity;
+@endphp
+| {{ $detail->item_name ?? ($detail->item->name ?? 'N/A') }} | ¥{{ number_format($price) }} | {{ $quantity }} | ¥{{ number_format($subtotal) }} |
 @endforeach
 @else
 | 商品情報がありません | - | - | - |

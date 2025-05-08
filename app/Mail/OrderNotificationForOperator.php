@@ -42,20 +42,16 @@ class OrderNotificationForOperator extends Mailable implements ShouldQueue
         // The listener now handles the check for a missing operatorEmail,
         // so this Mailable assumes $operatorEmail will be valid if it reaches here.
         // However, as a safeguard or for direct Mailable usage, keeping a check can be useful.
+        // If the listener didn't catch the missing config, throw an exception here.
         if (!$operatorEmail) {
             // This case should ideally not be reached if the listener checks first.
-            // If it is, it means the Mailable is used directly without proper config.
-            \Log::critical('OrderNotificationForOperator Mailable called directly without operator_notification_address configured.');
-            // Fallback to a clearly identifiable non-production address or throw an exception
-            // For now, let's assume the listener's check is primary.
-            // If we want to ensure this Mailable is self-contained for direct use,
-            // we might throw an exception or use a very specific non-deliverable address.
-            // For this flow, we rely on the listener to not send if config is missing.
-            // Thus, $operatorEmail should be populated.
+            // Throwing an exception ensures misconfiguration doesn't lead to silent failure.
+            throw new \RuntimeException('OrderNotificationForOperator Mailable requires a valid operator_notification_address to be configured.');
         }
 
-        // If $operatorEmail could still be null/empty here and we must send *something*
-        // or prevent error, a more robust fallback or exception is needed.
+        // If $operatorEmail could still be null/empty here (e.g., empty string from config),
+        // the Address constructor might fail or lead to issues.
+        // The listener's isValidOperatorEmail should prevent this, but adding robustness here is possible.
         // Given the listener change, we expect $operatorEmail to be valid.
         // If not, Mail::to() in the listener would have already skipped sending.
         // So, the `to` field here is more of a confirmation if the Mailable itself
