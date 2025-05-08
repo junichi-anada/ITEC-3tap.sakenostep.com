@@ -30,7 +30,7 @@ class OrderHistoryComponent extends Component
             ->whereNotNull('ordered_at') // ordered_atがNullではないものに限定
             ->with(['orderDetails.item']) // 注文詳細と商品情報を一緒に取得
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
     }
 
     /**
