@@ -41,6 +41,7 @@ return [
         'callback_url' => env('LINE_CALLBACK_URL'),
         'provider_id' => env('LINE_PROVIDER_ID', 1),
         'site_id' => env('LINE_SITE_ID', 1),
+        'url' => env('LINE_URL'),
     ],
 
 ];

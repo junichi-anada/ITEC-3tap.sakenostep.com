@@ -13,9 +13,11 @@
     id="menu">
     <div>
         <div class="w-[22px] ml-auto">
-            <a href="https://lin.ee/3tlOo9K" target="_blank">
+            @if(config('services.line.url'))
+            <a href="{{ config('services.line.url') }}" target="_blank" rel="noopener noreferrer">
                 <img src="{{ asset('image/user/mymenu/svg/line.svg') }}" alt="LINE">
             </a>
+            @endif
         </div>
     </div>
     <ul class="flex flex-col gap-y-1 pb-3">
@@ -67,4 +69,3 @@
 
 <!-- Script -->
 <script src="{{ asset('js/menu.js') }}"></script>
-
