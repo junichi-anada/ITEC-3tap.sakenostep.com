@@ -30,6 +30,7 @@ class ItemUpdateService
                     Rule::unique('items')->ignore($itemId)
                 ],
                 'category_id' => ['required', 'exists:item_categories,id'],
+                'unit_id' => ['required', 'exists:item_units,id'],
                 'name' => ['required', 'string', 'max:64'],
                 'description' => ['nullable', 'string'],
                 'is_recommended' => ['nullable', 'in:0,1'],
@@ -42,6 +43,8 @@ class ItemUpdateService
                 'item_code.unique' => 'この商品コードは既に使用されています。',
                 'category_id.required' => 'カテゴリーは必須です。',
                 'category_id.exists' => '選択されたカテゴリーは存在しません。',
+                'unit_id.required' => '単位は必須です。',
+                'unit_id.exists' => '選択された単位は存在しません。',
                 'name.required' => '商品名は必須です。',
                 'name.max' => '商品名は64文字以内で入力してください。',
                 'is_recommended.in' => 'おすすめフラグの値が不正です。',
