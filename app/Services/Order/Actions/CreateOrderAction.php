@@ -44,7 +44,7 @@ final class CreateOrderAction
             }
 
             // 注文作成イベントを発行
-            OrderCreated::dispatch($order); // ★ 追加
+            OrderCreated::dispatch($order);
 
             return $order;
         } catch (\Exception $e) {
