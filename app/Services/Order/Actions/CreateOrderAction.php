@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Order\Actions;
 
 use App\Models\Order;
+use App\Events\OrderCreated;
 use App\Repositories\Order\OrderRepository;
 use App\Services\Order\DTOs\OrderData;
 use App\Services\Order\Exceptions\OrderException;
@@ -41,6 +42,9 @@ final class CreateOrderAction
             if (!empty($data->items)) {
                 $this->createOrderDetails($order, $data->items);
             }
+
+            // 注文作成イベントを発行
+            OrderCreated::dispatch($order);
 
             return $order;
         } catch (\Exception $e) {
