@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const lastLoginDateRangeEl = document.querySelector(
         "#last_login_date_range"
     );
+    const orderDateRangeEl = document.querySelector("#order_date_range");
 
     initializeFlatpickr(
         firstLoginDateRangeEl,
@@ -70,4 +71,5 @@ document.addEventListener("DOMContentLoaded", function () {
         "last_login_date_from",
         "last_login_date_to"
     );
+    initializeFlatpickr(orderDateRangeEl, "order_date_from", "order_date_to");
 });
