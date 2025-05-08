@@ -23,19 +23,19 @@
                 <input type="text" name="customer_phone" id="phone" class="flex-grow border border-gray-300 rounded-md py-1 pl-0.5" placeholder="電話番号" value="{{ old('customer_phone', request('customer_phone')) }}">
             </div>
             <div class="flex flex-col text-sm gap-y-1 md:flex-row md:items-center">
-                <label for="first_login_date" class="w-full md:w-1/3">初回利用日</label>
-                <div class="flex gap-x-1 items-center">
-                    <input type="date" name="first_login_date_from" id="first_login_date_from" class="flex-shrink border border-gray-300 rounded-md py-1 pl-0.5" value="{{ old('first_login_date_from', request('first_login_date_from')) }}">
-                    <p>～</p>
-                    <input type="date" name="first_login_date_to" id="first_login_date_to" class="flex-shrink border border-gray-300 rounded-md py-1 pl-0.5" value="{{ old('first_login_date_to', request('first_login_date_to')) }}">
+                <label for="first_login_date_range" class="w-full md:w-1/3">初回利用日</label>
+                <div class="flex-grow">
+                    <input type="text" id="first_login_date_range" class="w-full border border-gray-300 rounded-md py-1 pl-0.5 flatpickr-range" placeholder="YYYY-MM-DD から YYYY-MM-DD">
+                    <input type="hidden" name="first_login_date_from" id="first_login_date_from" value="{{ old('first_login_date_from', request('first_login_date_from')) }}">
+                    <input type="hidden" name="first_login_date_to" id="first_login_date_to" value="{{ old('first_login_date_to', request('first_login_date_to')) }}">
                 </div>
             </div>
             <div class="flex flex-col text-sm gap-y-1 md:flex-row md:items-center">
-                <label for="last_login_date" class="w-full md:w-1/3">最終利用日</label>
-                <div class="flex gap-x-1 items-center">
-                    <input type="date" name="last_login_date_from" id="last_login_date_from" class="flex-shrink border border-gray-300 rounded-md py-1 pl-0.5" value="{{ old('last_login_date_from', request('last_login_date_from')) }}">
-                    <p>～</p>
-                    <input type="date" name="last_login_date_to" id="last_login_date_to" class="flex-shrink border border-gray-300 rounded-md py-1 pl-0.5" value="{{ old('last_login_date_to', request('last_login_date_to')) }}">
+                <label for="last_login_date_range" class="w-full md:w-1/3">最終利用日</label>
+                <div class="flex-grow">
+                    <input type="text" id="last_login_date_range" class="w-full border border-gray-300 rounded-md py-1 pl-0.5 flatpickr-range" placeholder="YYYY-MM-DD から YYYY-MM-DD">
+                    <input type="hidden" name="last_login_date_from" id="last_login_date_from" value="{{ old('last_login_date_from', request('last_login_date_from')) }}">
+                    <input type="hidden" name="last_login_date_to" id="last_login_date_to" value="{{ old('last_login_date_to', request('last_login_date_to')) }}">
                 </div>
             </div>
             <div class="flex justify-center">

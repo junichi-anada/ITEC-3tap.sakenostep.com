@@ -1,3 +1,7 @@
+@import "flatpickr/dist/flatpickr.min.css";
+/* 必要であれば、レンジ選択時のスタイル調整用CSSも追加 */
+/* @import "flatpickr/dist/themes/material_blue.css"; など */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
