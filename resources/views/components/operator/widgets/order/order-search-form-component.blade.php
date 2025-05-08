@@ -29,7 +29,7 @@
             <div class="flex flex-col text-sm gap-y-1 md:flex-row md:items-center">
                 <label for="order_date_range" class="w-full md:w-1/3">注文日</label>
                 <div class="flex-grow">
-                    <input type="text" id="order_date_range" class="w-full border border-gray-300 rounded-md py-1 pl-0.5 flatpickr-range" placeholder="YYYY-MM-DD から YYYY-MM-DD">
+                    <input type="text" id="order_date_range" class="w-full border border-gray-300 rounded-md py-1 pl-0.5 flatpickr-range" placeholder="YYYY-MM-DD から YYYY-MM-DD" aria-label="注文日 範囲選択">
                     <input type="hidden" name="order_date_from" id="order_date_from" value="{{ old('order_date_from', request('order_date_from')) }}">
                     <input type="hidden" name="order_date_to" id="order_date_to" value="{{ old('order_date_to', request('order_date_to')) }}">
                 </div>
