@@ -78,6 +78,9 @@ class OrderController extends BaseAjaxController
             $orderDetail = $this->orderDetailService->addOrderDetail($orderDetailData);
 
             // LINE通知の送信処理をコメントアウト
+            // 依頼主の指示により、注文ボタン（カート追加時）のLINE通知は現在不要なためコメントアウトしています。 (2025-05-09 Cline)
+            // 将来的にこの通知を再開する場合は、以下のブロックのコメントアウトを解除してください。
+            // もしこの機能が恒久的に不要と判断された場合は、このブロック全体を削除することを検討してください。
             // if ($auth->line_user_id) {
             //     try {
             //         // メッセージテンプレートの作成
