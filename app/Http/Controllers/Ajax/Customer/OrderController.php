@@ -104,7 +104,7 @@ class OrderController extends BaseAjaxController
 
                 } catch (\Exception $e) {
                     // LINE送信失敗のログを記録するが、注文処理は継続
-                    Log::error('LINE通知の送信に失敗しました (カート追加時)', [
+                    Log::error('LINE通知の送信に失敗しました: ' . $e->getMessage(), [
                         'user_id' => $auth->id,
                         'line_user_id' => $auth->line_user_id,
                         'order_code' => $orderDetail->order_code,
