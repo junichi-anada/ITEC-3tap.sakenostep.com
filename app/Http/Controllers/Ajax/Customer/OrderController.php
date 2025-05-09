@@ -79,7 +79,8 @@ class OrderController extends BaseAjaxController
 
             // LINE通知の送信処理 (フィーチャーフラグにより制御)
             // 注文ボタン（カート追加時）のLINE通知は config('features.enable_line_notification', false) で制御します。
-            if (config('features.enable_line_notification', false) && $auth->line_user_id) {
+            $isLineNotificationEnabled = config('features.enable_line_notification', false);
+            if ($isLineNotificationEnabled && $auth->line_user_id) {
                 try {
                     // メッセージテンプレートの作成
                     $message = "ご注文ありがとうございます。\n"
