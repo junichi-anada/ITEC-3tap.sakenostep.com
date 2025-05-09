@@ -123,12 +123,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (delAllOrderButton) {
         delAllOrderButton.addEventListener("click", function () {
             // CSRFトークンを取得（メタタグまたはinput要素から）
-            let csrfToken = '';
+            let csrfToken = "";
             const metaToken = document.querySelector('meta[name="csrf-token"]');
             const inputToken = document.querySelector('input[name="_token"]');
-            
+
             if (metaToken) {
-                csrfToken = metaToken.getAttribute('content');
+                csrfToken = metaToken.getAttribute("content");
             } else if (inputToken) {
                 csrfToken = inputToken.value;
             } else {
@@ -152,18 +152,20 @@ document.addEventListener("DOMContentLoaded", function () {
             })
                 .then((response) => {
                     if (!response.ok) {
-                        throw new Error('サーバーエラー: ' + response.status);
+                        throw new Error("サーバーエラー: " + response.status);
                     }
                     return response.json();
                 })
                 .then((data) => {
-                    console.log('削除成功:', data.message);
+                    console.log("削除成功:", data.message);
                     // 成功したらページをリロード
                     location.reload();
                 })
                 .catch((error) => {
                     console.error("エラー:", error);
-                    alert("削除に失敗しました。ページをリロードして再試行してください。");
+                    alert(
+                        "削除に失敗しました。ページをリロードして再試行してください。"
+                    );
                     // エラー時もページをリロードする選択肢もある
                     // location.reload();
                 });
@@ -191,6 +193,57 @@ document.addEventListener("DOMContentLoaded", function () {
             // 注文確認モーダルを非表示にする。
             document.getElementById("modal").classList.add("hidden");
 
+            // 注文リストから全商品のitem_codeとvolumeを収集
+            const collectedItems = [];
+            const itemContainers = document.querySelectorAll(
+                "div.flex.flex-col.gap-y-4.border-b.pb-3"
+            );
+
+            itemContainers.forEach((container) => {
+                const itemCodeButton =
+                    container.querySelector(".del-to-order") ||
+                    container.querySelector(".add-to-order");
+                const inputField = container.querySelector(
+                    'input[name="volume"].volume-input'
+                );
+
+                if (itemCodeButton && inputField) {
+                    const itemCode =
+                        itemCodeButton.getAttribute("data-item-code");
+                    const volume = parseInt(inputField.value, 10);
+
+                    if (itemCode && !isNaN(volume) && volume >= 1) {
+                        collectedItems.push({
+                            item_code: itemCode,
+                            volume: volume,
+                        });
+                    } else {
+                        console.warn(
+                            `[execModal] Invalid data for item in container:`,
+                            container,
+                            `itemCode: ${itemCode}, volume: ${inputField.value}`
+                        );
+                    }
+                } else {
+                    console.warn(
+                        "[execModal] Could not find item_code button or volume input in container:",
+                        container
+                    );
+                }
+            });
+
+            console.log(
+                "[execModal] Collected items for order:",
+                collectedItems
+            );
+
+            if (collectedItems.length === 0) {
+                // 注文するアイテムがない場合（既にカートが空になっているなど）
+                // alert("注文する商品がありません。"); // 必要に応じてメッセージ表示
+                makeOrderFailModal("注文する商品がありません。"); // 失敗モーダル表示
+                return;
+            }
+
             //CSRFトークン取得
             const csrfToken = document.querySelector(
                 'input[name="_token"]'
@@ -202,15 +255,59 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": csrfToken,
                 },
+                body: JSON.stringify({ items: collectedItems }), // 収集した商品情報を送信
             })
-                .then((response) => response.json())
+                .then((response) => {
+                    if (!response.ok) {
+                        // エラーレスポンスの場合は、レスポンスボディを読んでエラーメッセージを表示試行
+                        return response
+                            .json()
+                            .then((errData) => {
+                                throw {
+                                    status: response.status,
+                                    data: errData,
+                                };
+                            })
+                            .catch(() => {
+                                // JSONパース失敗時はステータスのみでエラーを投げる
+                                throw {
+                                    status: response.status,
+                                    data: {
+                                        message: `サーバーエラー (${response.status})`,
+                                    },
+                                };
+                            });
+                    }
+                    return response.json();
+                })
                 .then((data) => {
-                    // 注文完了モーダルを表示（注文番号を渡す）
-                    makeOrderSuccessModal(data.order_code);
+                    if (data.order_code) {
+                        // 注文完了モーダルを表示（注文番号を渡す）
+                        makeOrderSuccessModal(data.order_code);
+                    } else {
+                        // サーバーから order_code が返ってこない場合もエラーとして扱う
+                        console.error(
+                            "[execModal] Order success but no order_code in response:",
+                            data
+                        );
+                        makeOrderFailModal(
+                            data.message ||
+                                "注文処理中に不明なエラーが発生しました。"
+                        );
+                    }
                 })
                 .catch((error) => {
-                    console.error("エラー:", error);
-                    makeOrderFailModal();
+                    console.error(
+                        "[execModal] Fetch error or server error:",
+                        error
+                    );
+                    let errorMessage = "注文処理中にエラーが発生しました。";
+                    if (error && error.data && error.data.message) {
+                        errorMessage = error.data.message;
+                    } else if (error && error.message) {
+                        errorMessage = error.message;
+                    }
+                    makeOrderFailModal(errorMessage);
                 });
         });
     }

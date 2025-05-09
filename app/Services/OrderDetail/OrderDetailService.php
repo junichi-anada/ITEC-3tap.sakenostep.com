@@ -105,4 +105,52 @@ final class OrderDetailService
             "注文詳細の更新に失敗しました。ID: {$id}"
         );
     }
+
+    /**
+     * 注文IDと商品IDに基づいて注文詳細の数量、価格、税を更新する。
+     * (OrderController@order から呼び出されることを想定)
+     *
+     * @param int $orderId 注文ID
+     * @param int $itemId 商品ID
+     * @param int $newVolume 新しい数量
+     * @param int $userId ユーザーID (将来的な拡張やログのため)
+     * @param int $siteId サイトID (将来的な拡張やログのため)
+     * @param \App\Models\Item $item 更新対象の商品モデル (単価情報を含む)
+     * @return bool 更新の成否
+     */
+    public function updateOrAddOrderDetailByItem(
+        int $orderId,
+        int $itemId,
+        int $newVolume,
+        int $userId,
+        int $siteId,
+        \App\Models\Item $item
+    ): bool {
+        return $this->executeWithErrorHandling(function () use ($orderId, $itemId, $newVolume, $item) {
+            $existingOrderDetail = $this->orderDetailRepository->findBy([
+                'order_id' => $orderId,
+                'item_id' => $itemId,
+            ])->first();
+
+            if ($existingOrderDetail) {
+                $updateData = [
+                    'volume' => $newVolume,
+                    'price' => $item->unit_price * $newVolume,
+                    'tax' => $item->unit_price * $newVolume * 0.1, // 税率が0.1固定と仮定
+                    // unit_price や unit_name は商品マスタに依存するため、ここでは更新しない
+                ];
+                return $this->orderDetailRepository->update($existingOrderDetail->id, $updateData);
+            } else {
+                // 基本的には /order/add で OrderDetail は作成されているはずなので、ここに来るケースは例外的。
+                // もし、注文確定時にカートになかった商品を追加する仕様であれば、ここで新規作成ロジックが必要。
+                // 今回は、既存のものが必ずある前提で、見つからなければエラー(falseを返す)とする。
+                \Illuminate\Support\Facades\Log::warning('[OrderDetailService] OrderDetail not found for update in order confirmation.', [
+                    'order_id' => $orderId,
+                    'item_id' => $itemId,
+                    'new_volume' => $newVolume
+                ]);
+                return false; // または例外をスローする
+            }
+        }, "注文詳細の数量更新に失敗しました。注文ID: {$orderId}, 商品ID: {$itemId}");
+    }
 }
