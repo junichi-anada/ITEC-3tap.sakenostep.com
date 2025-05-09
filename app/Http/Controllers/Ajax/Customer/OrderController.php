@@ -212,27 +212,69 @@ class OrderController extends BaseAjaxController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function order()
+    public function order(Request $request) // Request $request を引数に追加
     {
         $auth = $this->getAuthenticatedUser();
-        
-        // デバッグログを追加
-        Log::debug('User authentication info', [
-            'user_id' => $auth->id,
-            'line_user_id' => $auth->line_user_id ?? null,
-            'has_line' => !empty($auth->line_user_id)
+
+        // リクエストデータのバリデーション
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*.item_code' => 'required|string|exists:items,item_code',
+            'items.*.volume' => 'required|integer|min:1',
         ]);
 
+        Log::debug('[OrderController@order] User authentication info', [
+            'user_id' => $auth->id,
+            'line_user_id' => $auth->line_user_id ?? null,
+            'has_line' => !empty($auth->line_user_id),
+            'request_items' => $validated['items']
+        ]);
+
+        DB::beginTransaction();
         try {
-            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
-            if (!$order) {
-                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            if (!$currentOrder) {
+                Log::error('[OrderController@order] No unordered order found for user.', ['user_id' => $auth->id, 'site_id' => $auth->site_id]);
+                DB::rollBack();
+                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, ['message' => '注文対象のカートが見つかりません。'], 404);
             }
 
-            $updatedOrder = $this->orderService->updateOrderDate($order->id);
-            if (!$updatedOrder) {
-                return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
+            // 各注文詳細の数量を更新
+            foreach ($validated['items'] as $itemData) {
+                $item = $this->itemService->getByCode($itemData['item_code'], $auth->site_id);
+                if (!$item) {
+                    Log::error('[OrderController@order] Item not found or does not belong to site.', ['item_code' => $itemData['item_code'], 'site_id' => $auth->site_id]);
+                    DB::rollBack();
+                    return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['message' => "商品コード {$itemData['item_code']} が見つかりません。"], 400);
+                }
+
+                // OrderDetailServiceに数量更新メソッドを呼び出す (後でOrderDetailServiceに実装)
+                // 既存のOrderDetailを特定し、数量と価格、税を更新する想定
+                $success = $this->orderDetailService->updateOrAddOrderDetailByItem(
+                    $currentOrder->id,
+                    $item->id, // item_id を渡す
+                    $itemData['volume'],
+                    $auth->id,
+                    $auth->site_id,
+                    $item // Itemモデルも渡して価格計算等に利用
+                );
+
+                if (!$success) {
+                    Log::error('[OrderController@order] Failed to update order detail.', ['order_id' => $currentOrder->id, 'item_id' => $item->id, 'volume' => $itemData['volume']]);
+                    DB::rollBack();
+                    return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['message' => "商品 {$item->name} の数量更新に失敗しました。"], 500);
+                }
             }
+
+            // 注文日を更新して注文を確定
+            $updatedOrder = $this->orderService->updateOrderDate($currentOrder->id);
+            if (!$updatedOrder) {
+                Log::error('[OrderController@order] Failed to update order date (finalize order).', ['order_id' => $currentOrder->id]);
+                DB::rollBack();
+                return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['message' => '注文の確定処理に失敗しました。'], 500);
+            }
+
+            DB::commit();
 
             // LINE連携している場合はLINE通知を送信
             if ($auth->line_user_id) {
