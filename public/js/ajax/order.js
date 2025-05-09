@@ -254,6 +254,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": csrfToken,
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
                 },
                 body: JSON.stringify({ items: collectedItems }), // 収集した商品情報を送信
             })
