@@ -77,43 +77,41 @@ class OrderController extends BaseAjaxController
 
             $orderDetail = $this->orderDetailService->addOrderDetail($orderDetailData);
 
-            // LINE通知の送信処理をコメントアウト
-            // 依頼主の指示により、注文ボタン（カート追加時）のLINE通知は現在不要なためコメントアウトしています。 (2025-05-09 Cline)
-            // 将来的にこの通知を再開する場合は、以下のブロックのコメントアウトを解除してください。
-            // もしこの機能が恒久的に不要と判断された場合は、このブロック全体を削除することを検討してください。
-            // if ($auth->line_user_id) {
-            //     try {
-            //         // メッセージテンプレートの作成
-            //         $message = "ご注文ありがとうございます。\n"
-            //             . "注文番号：{$orderDetail->order_code}\n"
-            //             . "合計金額：" . number_format($orderDetail->total_price) . "円\n"
-            //             . "\n注文の詳細はこちらから確認できます。\n"
-            //             . url("/customer/order/{$orderDetail->order_code}");
+            // LINE通知の送信処理 (フィーチャーフラグにより制御)
+            // 注文ボタン（カート追加時）のLINE通知は config('features.enable_line_notification', false) で制御します。
+            if (config('features.enable_line_notification', false) && $auth->line_user_id) {
+                try {
+                    // メッセージテンプレートの作成
+                    $message = "ご注文ありがとうございます。\n"
+                        . "注文番号：{$orderDetail->order_code}\n"
+                        . "合計金額：" . number_format($orderDetail->total_price) . "円\n"
+                        . "\n注文の詳細はこちらから確認できます。\n"
+                        . url("/customer/order/{$orderDetail->order_code}");
 
-            //         // LineMessagingServiceを使用してメッセージを送信
-            //         $result = $this->lineMessagingService->pushMessage($auth->line_user_id, $message);
+                    // LineMessagingServiceを使用してメッセージを送信
+                    $result = $this->lineMessagingService->pushMessage($auth->line_user_id, $message);
                     
-            //         if ($result) {
-            //             Log::info('LINE通知送信成功', [
-            //                 'user_id' => $auth->id,
-            //                 'line_user_id' => $auth->line_user_id,
-            //                 'order_code' => $orderDetail->order_code
-            //             ]);
-            //         } else {
-            //             throw new \Exception('LINE通知の送信に失敗しました');
-            //         }
+                    if ($result) {
+                        Log::info('LINE通知送信成功 (カート追加時)', [
+                            'user_id' => $auth->id,
+                            'line_user_id' => $auth->line_user_id,
+                            'order_code' => $orderDetail->order_code
+                        ]);
+                    } else {
+                        throw new \Exception('LINE通知の送信に失敗しました (カート追加時)');
+                    }
 
-            //     } catch (\Exception $e) {
-            //         // LINE送信失敗のログを記録するが、注文処理は継続
-            //         Log::error('LINE通知の送信に失敗しました', [
-            //             'user_id' => $auth->id,
-            //             'line_user_id' => $auth->line_user_id,
-            //             'order_code' => $orderDetail->order_code,
-            //             'error' => $e->getMessage(),
-            //             'trace' => $e->getTraceAsString()
-            //         ]);
-            //     }
-            // }
+                } catch (\Exception $e) {
+                    // LINE送信失敗のログを記録するが、注文処理は継続
+                    Log::error('LINE通知の送信に失敗しました (カート追加時)', [
+                        'user_id' => $auth->id,
+                        'line_user_id' => $auth->line_user_id,
+                        'order_code' => $orderDetail->order_code,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
 
             return $this->jsonResponse(
                 self::SUCCESS_MESSAGE, 
