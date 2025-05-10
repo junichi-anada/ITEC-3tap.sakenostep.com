@@ -77,8 +77,11 @@ class OrderController extends BaseAjaxController
 
             $orderDetail = $this->orderDetailService->addOrderDetail($orderDetailData);
 
-            // LINE通知の送信
-            if ($auth->line_user_id) {
+            // LINE通知の送信処理 (フィーチャーフラグにより制御)
+            // 注文ボタン（カート追加時）のLINE通知は config('features.enable_line_notification', false) で制御します。
+            // 詳細はプロジェクトの設定ドキュメント (README.md および config/features.php) を参照してください。
+            $isLineNotificationEnabled = config('features.enable_line_notification', false);
+            if ($isLineNotificationEnabled && $auth->line_user_id) {
                 try {
                     // メッセージテンプレートの作成
                     $message = "ご注文ありがとうございます。\n"
@@ -91,18 +94,18 @@ class OrderController extends BaseAjaxController
                     $result = $this->lineMessagingService->pushMessage($auth->line_user_id, $message);
                     
                     if ($result) {
-                        Log::info('LINE通知送信成功', [
+                        Log::info('LINE通知送信成功 (カート追加時)', [
                             'user_id' => $auth->id,
                             'line_user_id' => $auth->line_user_id,
                             'order_code' => $orderDetail->order_code
                         ]);
                     } else {
-                        throw new \Exception('LINE通知の送信に失敗しました');
+                        throw new \Exception('LINE通知の送信に失敗しました (カート追加時)');
                     }
 
                 } catch (\Exception $e) {
                     // LINE送信失敗のログを記録するが、注文処理は継続
-                    Log::error('LINE通知の送信に失敗しました', [
+                    Log::error('LINE通知の送信に失敗しました: ' . $e->getMessage(), [
                         'user_id' => $auth->id,
                         'line_user_id' => $auth->line_user_id,
                         'order_code' => $orderDetail->order_code,
