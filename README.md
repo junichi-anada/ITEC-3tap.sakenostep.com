@@ -21,6 +21,19 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Feature Flags
+
+This project utilizes feature flags to enable or disable certain functionalities.
+Feature flags are typically controlled via environment variables and defined in `config/features.php`.
+
+### LINE Notification on Cart Add
+
+-   **Environment Variable:** `ENABLE_LINE_NOTIFICATION_ON_CART_ADD`
+-   **Config Key:** `features.enable_line_notification`
+-   **Description:** Controls whether a LINE notification is sent to the customer when an item is added to their cart (via the "注文" button).
+-   **Default Value:** `false` (Disabled)
+-   **To Enable:** Set the `ENABLE_LINE_NOTIFICATION_ON_CART_ADD` environment variable to `true`.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
