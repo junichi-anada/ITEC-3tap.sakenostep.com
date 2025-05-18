@@ -45,16 +45,16 @@ class OrderController extends Controller
             $categories = $this->itemCategoryService->getAllCategories($auth->site_id);
 
             // 最新の未発注伝票を確認
-            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->entity_id, $auth->site_id);
 
             // 未発注伝票が存在しない場合
             if (!$order) {
                 // 最新の発注済み伝票を取得
-                $latestOrderedOrder = $this->orderService->getLatestOrderedOrderByUserAndSite($auth->id, $auth->site_id);
+                $latestOrderedOrder = $this->orderService->getLatestOrderedOrderByUserAndSite($auth->entity_id, $auth->site_id);
                 
                 if ($latestOrderedOrder) {
                     // 最新の発注済み伝票から新規の未発注伝票を作成
-                    $order = $this->orderService->createUnorderedOrderFromLatestOrdered($auth->id, $auth->site_id);
+                    $order = $this->orderService->createUnorderedOrderFromLatestOrdered($auth->entity_id, $auth->site_id);
                     
                     if ($order && $latestOrderedOrder->ordered_at) {
                         $orderDate = $latestOrderedOrder->ordered_at instanceof \DateTime 
