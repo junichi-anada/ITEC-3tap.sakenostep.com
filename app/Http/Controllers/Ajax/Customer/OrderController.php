@@ -235,9 +235,11 @@ class OrderController extends BaseAjaxController
 
         DB::beginTransaction();
         try {
-            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            // 未発注の注文を取得する際に、Authenticate ID ($auth->id) ではなく User ID ($auth->entity_id) を使用
+            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->entity_id, $auth->site_id);
             if (!$currentOrder) {
-                Log::error('[OrderController@order] No unordered order found for user.', ['user_id' => $auth->id, 'site_id' => $auth->site_id]);
+                // ログ出力時も正しいユーザーIDを使用
+                Log::error('[OrderController@order] No unordered order found for user.', ['user_id' => $auth->entity_id, 'site_id' => $auth->site_id]);
                 DB::rollBack();
                 return $this->jsonResponse(self::NOT_FOUND_MESSAGE, ['message' => '注文対象のカートが見つかりません。'], 404);
             }
