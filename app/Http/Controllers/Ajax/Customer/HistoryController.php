@@ -59,10 +59,12 @@ class HistoryController extends Controller
 
             // 未発注の注文基本データがない場合、新しい注文基本データを作成
             if (!$currentOrder) {
-                $currentOrder = $this->orderService->create([
+                // OrderData::fromRequest() を使用して配列を OrderData オブジェクトに変換
+                $orderData = \App\Services\Order\DTOs\OrderData::fromRequest([
                     'site_id' => $auth->site_id,
                     'user_id' => $auth->id
                 ]);
+                $currentOrder = $this->orderService->create($orderData);
             }
 
             // 注文履歴のアイテムを未注文の注文に追加
