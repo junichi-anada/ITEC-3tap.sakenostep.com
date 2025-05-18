@@ -153,13 +153,13 @@ class OrderController extends BaseAjaxController
             }
 
             // 未発注の注文を検索
-            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->entity_id, $auth->site_id);
             if (!$order) {
                 return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
             }
 
             $orderDetailData = new OrderDetailData(
-                userId: $auth->id,
+                userId: $auth->entity_id,
                 siteId: $auth->site_id,
                 orderId: $order->id,
                 itemId: $item->id
@@ -187,13 +187,13 @@ class OrderController extends BaseAjaxController
         $auth = $this->getAuthenticatedUser();
 
         try {
-            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $order = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->entity_id, $auth->site_id);
             if (!$order) {
                 return $this->jsonResponse(self::NOT_FOUND_MESSAGE, [], 404);
             }
 
             $orderDetailData = new OrderDetailData(
-                userId: $auth->id,
+                userId: $auth->entity_id,
                 siteId: $auth->site_id,
                 orderId: $order->id
             );
@@ -227,7 +227,7 @@ class OrderController extends BaseAjaxController
         ]);
 
         Log::debug('[OrderController@order] User authentication info', [
-            'user_id' => $auth->id,
+            'user_id' => $auth->entity_id,
             'line_user_id' => $auth->line_user_id ?? null,
             'has_line' => !empty($auth->line_user_id),
             'request_items' => $validated['items']
