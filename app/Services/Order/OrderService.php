@@ -15,6 +15,7 @@ use App\Services\OrderDetail\DTOs\OrderDetailData;
 use App\Services\OrderDetail\Actions\AddOrderDetailAction;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * 注文サービスクラス
@@ -134,7 +135,10 @@ final class OrderService
             // 新規注文を作成
             $orderData = new OrderData(
                 siteId: $siteId,
-                userId: $userId,
+                // ここで $userId (Authenticate ID) ではなく、
+                // 認証ユーザーの User モデルの ID を使用する
+                // Authenticate モデルに entity_id があると仮定
+                userId: \Illuminate\Support\Facades\Auth::user()->entity_id, // <-- ここを修正
                 orderCode: Order::generateOrderCode()
             );
             $newOrder = $this->create($orderData);
