@@ -43,7 +43,7 @@ class HistoryController extends Controller
 
             // 注文履歴取得
             $criteria = new OrderSearchCriteria(
-                userId: $auth->id,
+                userId: $auth->entity_id,
                 siteId: $auth->site_id,
                 isOrdered: true,
                 orderBy: ['ordered_at' => 'desc']
