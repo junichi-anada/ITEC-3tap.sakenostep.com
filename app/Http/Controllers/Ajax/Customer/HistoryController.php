@@ -50,19 +50,19 @@ class HistoryController extends Controller
             $orderDetails = $this->orderDetailService->getOrderDetailsByOrderId($order->id);
             Log::info('orderDetails: ' . json_encode($orderDetails));
 
-            if (!$order || $order->user_id !== $auth->id) {
+            if (!$order || $order->user_id !== $auth->entity_id) {
                 return $this->jsonResponse('注文が見つかりません。', [], 404);
             }
 
             // 未発注の注文基本データを取得
-            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->entity_id, $auth->site_id);
 
             // 未発注の注文基本データがない場合、新しい注文基本データを作成
             if (!$currentOrder) {
                 // OrderData::fromRequest() を使用して配列を OrderData オブジェクトに変換
                 $orderData = \App\Services\Order\DTOs\OrderData::fromRequest([
                     'site_id' => $auth->site_id,
-                    'user_id' => $auth->id
+                    'user_id' => $auth->entity_id
                 ]);
                 $currentOrder = $this->orderService->create($orderData);
             }
@@ -72,7 +72,7 @@ class HistoryController extends Controller
                 // orderDetailがオブジェクトであることを確認
                 if (is_object($orderDetail)) {
                     $orderDetailData = new OrderDetailData(
-                        userId: $auth->id,
+                        userId: $auth->entity_id,
                         siteId: $auth->site_id,
                         orderId: $currentOrder->id,
                         itemId: $orderDetail->item_id,
