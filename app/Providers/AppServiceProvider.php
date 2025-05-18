@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\View;
 use App\Contracts\LineMessagingServiceInterface;
 use App\Services\Messaging\LineMessagingService;
 use App\Services\Customer\Analytics\OperatorCustomerCountAnalytics;
@@ -18,6 +19,7 @@ use App\View\Components\Operator\Widgets\Order\TodayCountComponent;
 use App\View\Components\Operator\Widgets\Item\PopularRankingComponent;
 use App\View\Components\Operator\Widgets\Order\EachAreaOrderComponent;
 use App\View\Components\Operator\Widgets\SystemInfo\SystemInfoComponent;
+use App\View\Composers\MenuComposer; // MenuComposerを追加
 use GuzzleHttp\Client;
 use LINE\Clients\MessagingApi\Configuration;
 use LINE\Clients\MessagingApi\Api\MessagingApiApi;
@@ -55,6 +57,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // View Composers Registration
+        View::composer(
+            'customer.widgets.menu', // 対象のビュー
+            MenuComposer::class     // 使用するView Composer
+        );
+
         // Operator Widgets Components Registration
         Blade::component('operator.widgets.customer.customer-list-component', CustomerListComponent::class);
         Blade::component('operator.widgets.customer.customer-search-form-component', CustomerSearchFormComponent::class);
