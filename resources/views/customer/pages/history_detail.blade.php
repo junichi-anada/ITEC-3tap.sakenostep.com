@@ -31,21 +31,25 @@
             <div class="flex justify-between">
                 <div class="flex gap-x-4">
                     {{-- 注文リストへの追加ボタン --}}
-                    <button class="border-2 border-[#00D41C] px-1.5 add-to-order"
+                    <button class="border-2 border-[#00D41C] px-1.5 add-to-order
+                            {{ $orderDetail->isInOrderList ? 'hidden' : '' }}" {{-- ここを修正 --}}
                             data-item-code="{{ $orderDetail->item->item_code ?? '' }}"
-                            data-item-id="{{ $orderDetail->item_id }}">
+                            data-item-id="{{ $orderDetail->item_id }}"
+                            type="button">
                         <div class="flex items-center gap-x-1 py-0.5">
                             <span class="material-symbols-outlined text-[#00D41C] text-3xl">add_shopping_cart</span>
                             <span class="text-xs">注文</span>
                         </div>
                     </button>
                     {{-- 注文リストから削除ボタン（最初は非表示） --}}
-                    <button class="border-2 border-[#00D41C] bg-[#00D41C] px-1.5 del-to-order hidden"
+                    <button class="border-2 border-[#00D41C] bg-[#00D41C] px-1.5 del-to-order
+                            {{ $orderDetail->isInOrderList ? '' : 'hidden' }}" {{-- ここを修正 --}}
                             data-item-code="{{ $orderDetail->item->item_code ?? '' }}"
-                            data-item-id="{{ $orderDetail->item_id }}">
+                            data-item-id="{{ $orderDetail->item_id }}"
+                            type="button">
                         <div class="flex items-center gap-x-1 py-0.5">
-                            <span class="material-symbols-outlined text-white text-3xl">check</span>
-                            <span class="text-xs text-white">追加済み</span>
+                            <span class="material-symbols-outlined text-white text-3xl">remove_shopping_cart</span>
+                            <span class="text-xs text-white">削除</span>
                         </div>
                     </button>
                 </div>

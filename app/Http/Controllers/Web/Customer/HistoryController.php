@@ -90,6 +90,23 @@ class HistoryController extends Controller
 
             $orderDetails = $this->orderDetailService->getOrderDetailsByOrderId($order->id);
 
+            // --- ここから追加 ---
+            // 未発注の注文基本データを取得
+            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+
+            // 未注文リストのアイテムIDのコレクションを作成
+            $unorderedItemIds = collect();
+            if ($currentOrder) {
+                 $unorderedItems = $this->orderDetailService->getOrderDetailsByOrderId($currentOrder->id);
+                 $unorderedItemIds = $unorderedItems->pluck('item_id');
+            }
+
+            // 各注文詳細アイテムが未注文リストに含まれているかフラグを設定
+            $orderDetails->each(function ($orderDetail) use ($unorderedItemIds) {
+                $orderDetail->isInOrderList = $unorderedItemIds->contains($orderDetail->item_id);
+            });
+            // --- ここまで追加 ---
+
             return view('customer.pages.history_detail', compact('order', 'orderDetails', 'categories', 'message'));
         } catch (\Exception $e) {
             Log::error('Error fetching order details: ' . $e->getMessage());
