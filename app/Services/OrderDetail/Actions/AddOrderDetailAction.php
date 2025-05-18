@@ -59,11 +59,16 @@ class AddOrderDetailAction
 
                 // 未発注の注文がない場合は新規作成
                 if (!$order) {
+                    // ここで $data->userId (Authenticate ID) ではなく、
+                    // 認証ユーザーの User モデルの ID を使用する
+                    // Authenticate モデルに entity_id があると仮定
+                    $authenticatedUser = \Illuminate\Support\Facades\Auth::user(); // 再度認証ユーザーを取得
+                    $correctUserId = $authenticatedUser->entity_id; // User モデルの ID を取得
+
                     $order = $this->orderRepository->create([
-                        'user_id' => $data->userId,
+                        'user_id' => $correctUserId, // <-- ここを修正
                         'site_id' => $data->siteId,
-                        'status' => 'draft',
-                        'ordered_at' => null
+                        'ordered_at' => null // 未発注を示す
                     ]);
                 }
             }
