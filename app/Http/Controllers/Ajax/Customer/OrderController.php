@@ -69,7 +69,7 @@ class OrderController extends BaseAjaxController
 
         try {
             $orderDetailData = new OrderDetailData(
-                userId: $auth->id,
+                userId: $auth->entity_id,
                 siteId: $auth->site_id,
                 itemCode: $itemCode,
                 volume: $volume
