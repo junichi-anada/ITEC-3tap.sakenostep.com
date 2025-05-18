@@ -82,7 +82,7 @@ class HistoryController extends Controller
             // order_codeを使用して注文を取得
             $order = $this->orderService->getByOrderCode($orderCode);
 
-            if (!$order || $order->user_id !== $auth->id) {
+            if (!$order || $order->user_id !== $auth->entity_id) {
                 $message = __('注文が見つかりません。');
                 $orderDetails = collect([]);
                 return view('customer.pages.history_detail', compact('message', 'categories', 'order', 'orderDetails'));
@@ -92,7 +92,7 @@ class HistoryController extends Controller
 
             // --- ここから追加 ---
             // 未発注の注文基本データを取得
-            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->id, $auth->site_id);
+            $currentOrder = $this->orderService->getLatestUnorderedOrderByUserAndSite($auth->entity_id, $auth->site_id);
 
             // 未注文リストのアイテムIDのコレクションを作成
             $unorderedItemIds = collect();
