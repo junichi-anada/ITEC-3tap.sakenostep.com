@@ -10,6 +10,7 @@ use App\Repositories\Order\OrderRepository;
 use App\Repositories\Item\ItemRepository;
 use App\Services\Item\ItemService;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class AddOrderDetailAction
 {
@@ -64,7 +65,7 @@ class AddOrderDetailAction
                     // Authenticate モデルに entity_id があると仮定
                     $authenticatedUser = \Illuminate\Support\Facades\Auth::user(); // 再度認証ユーザーを取得
                     $correctUserId = $authenticatedUser->entity_id; // User モデルの ID を取得
-
+                    Log::info("message", ['user_id' => $correctUserId]); // ログに出力
                     $order = $this->orderRepository->create([
                         'user_id' => $correctUserId, // <-- ここを修正
                         'site_id' => $data->siteId,
