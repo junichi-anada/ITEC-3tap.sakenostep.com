@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use App\Contracts\LineMessagingServiceInterface;
+use App\View\Composers\HeaderComposer; // HeaderComposerを追加
 use App\Services\Messaging\LineMessagingService;
 use App\Services\Customer\Analytics\OperatorCustomerCountAnalytics;
 use App\Services\Operator\Customer\Log\CustomerLogService;
@@ -61,6 +62,12 @@ class AppServiceProvider extends ServiceProvider
         View::composer(
             'customer.widgets.menu', // 対象のビュー
             MenuComposer::class     // 使用するView Composer
+        );
+
+        // Header View Composer Registration
+        View::composer(
+            'customer.layouts.include.site.header', // 対象のビュー
+            HeaderComposer::class     // 使用するView Composer
         );
 
         // Operator Widgets Components Registration

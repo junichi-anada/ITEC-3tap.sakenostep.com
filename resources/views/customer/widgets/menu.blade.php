@@ -12,9 +12,6 @@
 <div class="bg-[#F4CF41] absolute px-5 py-2 top-0 transition-all ease-linear -translate-x-full" style="width: 100%; z-index: 10;"
     id="menu">
     <div class="flex items-center justify-end gap-x-4"> {{-- 名前とLINEアイコンを横並びにするためのflexコンテナを追加 --}}
-        @isset($userName) {{-- $userNameが存在する場合のみ表示 --}}
-            <span class="mr-2 text-sm font-semibold">{{ $userName }} 様</span> {{-- お客様の名前を表示 --}}
-        @endisset
         <div class="w-[22px]"> {{-- ml-autoを削除してflexコンテナで配置を調整 --}}
             @if(config('services.line.url'))
             <a href="{{ config('services.line.url') }}" target="_blank" rel="noopener noreferrer">

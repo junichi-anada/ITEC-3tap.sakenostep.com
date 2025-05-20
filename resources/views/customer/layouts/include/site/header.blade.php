@@ -6,14 +6,20 @@
     </div>
     <!-- //logout -->
 
-    <div class="flex justify-center">
+    <div class="flex flex-col justify-center items-center">
         <a href="{{ route('user.order.item.list') }}" class="tracking-widest text-xl font-extrabold">
             <div class="w-32">
                 <img src="{{ asset('image/step_logo.png') }}" alt="酒のステップ">
             </div>
             {{-- <span class=" text-[#DC2626]">酒</span><span class="text-sm text-[#DC2626]">の</span>ステップ --}}
         </a>
+    
+        {{-- お客様の名前を表示 --}}
+        @isset($userName)
+            <div class="text-center text-sm font-semibold mt-1">{{ $userName }} 様</div>
+        @endisset
     </div>
+
 
     @component('customer.widgets.menu')
         {{-- categoriesが定義されていたら、引き渡し --}}
@@ -30,4 +36,3 @@
 @include('customer.widgets.search')
 
 @include('customer.widgets.tabnavi')
-

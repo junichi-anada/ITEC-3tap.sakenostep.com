@@ -3,10 +3,9 @@
 namespace App\View\Composers;
 
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log; // Logファサードは不要になったので削除
+// use Illuminate\Support\Facades\Auth; // ヘルパー関数を使用するため不要に
 
-class MenuComposer
+class HeaderComposer
 {
     /**
      * Bind data to the view.
