@@ -28,6 +28,10 @@ class SendOrderNotification // Potentially implements ShouldQueue later
     public function handle(OrderCreated $event): void
     {
         $order = $event->order;
+
+        // orderDetails リレーションと、その中の item リレーションをロード
+        $order->load('orderDetails.item');
+
         $customer = $order->customer; // Assuming relation exists
 
         // Send email to customer

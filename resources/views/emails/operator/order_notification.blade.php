@@ -7,7 +7,7 @@
 - **注文コード:** {{ $order->order_code }}
 - **注文日時:** {{ $order->created_at->format('Y年m月d日 H:i') }}
 @if($order->customer)
-- **顧客名:** {{ $order->customer->name ?? 'N/A' }} (ID: {{ $order->customer->id ?? 'N/A' }})
+- **顧客名:** {{ $order->customer->name ?? '未登録' }}
 @else
 - **顧客情報:** 登録されていません
 @endif
@@ -19,9 +19,9 @@
 @if($order->orderDetails && $order->orderDetails->count() > 0)
 @foreach($order->orderDetails as $detail)
 @php
-    $quantity = $detail->quantity ?? 0;
+    $volume = $detail->volume ?? 0;
 @endphp
-| {{ $detail->item_name ?? ($detail->item->name ?? 'N/A') }} | {{ $quantity }} |
+| {{ $detail->item_name ?? ($detail->item->name ?? 'N/A') }} | {{ $volume }} |
 @endforeach
 @else
 | 商品情報がありません | - |
