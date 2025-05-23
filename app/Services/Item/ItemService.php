@@ -136,6 +136,7 @@ final class ItemService
         $criteria = new ItemSearchCriteria(
             keyword: $keyword,
             siteId: $siteId,
+            isPublished: true,
             perPage: $perPage
         );
         return $this->searchItemsByKeywordQuery->execute($criteria);
