@@ -279,9 +279,12 @@ class OrderController extends BaseAjaxController
                 return $this->jsonResponse(self::UNEXPECTED_ERROR_MESSAGE, ['message' => '注文の確定処理に失敗しました。'], 500);
             }
 
+            // 注文確定イベントを発行
+            \App\Events\OrderCreated::dispatch($updatedOrder);
+
             DB::commit();
 
-            // LINE連携している場合はLINE通知を送信
+            // LINE連携している場合はLINE通知を送信 (これは既存のまま)
             if ($auth->line_user_id) {
                 try {
                     // メッセージテンプレートの作成

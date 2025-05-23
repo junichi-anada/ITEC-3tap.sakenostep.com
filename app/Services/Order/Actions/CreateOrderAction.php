@@ -43,8 +43,8 @@ final class CreateOrderAction
                 $this->createOrderDetails($order, $data->items);
             }
 
-            // 注文作成イベントを発行
-            OrderCreated::dispatch($order);
+            // 注文作成イベントの発行 // この行と次の行を削除
+            // OrderCreated::dispatch($order);
 
             return $order;
         } catch (\Exception $e) {
